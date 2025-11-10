@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_ThanhDieuHuong"
+    app:startDestination="@+id/thanhDieuHuong_Bang">
+
+    <fragment
+        android:id="@+id/thanhDieuHuong_Bang"
+        android:name="com.kan_n.ui.fragments.bang.BangFragment"
+        android:label="@string/title_Bang"
+        tools:layout="@layout/fragment_bang" />
+
+    <fragment
+        android:id="@+id/thanhDieuHuong_HoatDong"
+        android:name="com.kan_n.ui.fragments.hoatdong.HoatDongFragment"
+        android:label="@string/title_HoatDong"
+        tools:layout="@layout/fragment_hoatdong" />
+
+    <fragment
+        android:id="@+id/thanhDieuHuong_ThongTin"
+        android:name="com.kan_n.ui.fragments.thongtin.ThongTinFragment"
+        android:label="@string/title_ThongTin"
+        tools:layout="@layout/fragment_thongtin" />
+</navigation>
