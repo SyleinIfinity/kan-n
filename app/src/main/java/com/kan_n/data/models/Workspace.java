@@ -1,45 +1,82 @@
 package com.kan_n.data.models;
 
-import java.util.List;
+import com.google.firebase.database.Exclude;
+import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@IgnoreExtraProperties
 public class Workspace {
-    private String workspaceId;
-    private String workspaceName;
-    private List<Board> boards; // Danh sách các bảng trong không gian làm việc này
+    private String uid;
+    private String name;
+    private String description;
+    private long createdAt;
+    private String createdBy; // ✨ ĐÃ BỔ SUNG
 
-    // Constructor rỗng cần cho Firebase/Gson
     public Workspace() {
+        // Constructor trống
     }
 
-    // Constructor đầy đủ
-    public Workspace(String workspaceId, String workspaceName, List<Board> boards) {
-        this.workspaceId = workspaceId;
-        this.workspaceName = workspaceName;
-        this.boards = boards;
+    // ✨ Constructor đã cập nhật
+    public Workspace(String name, String description, String createdBy) {
+        this.name = name;
+        this.description = description;
+        this.createdBy = createdBy; // ✨ ĐÃ BỔ SUNG
+        this.createdAt = System.currentTimeMillis();
     }
 
-    // Getters and Setters
-    public String getWorkspaceId() {
-        return workspaceId;
+    // --- Getters and Setters ---
+
+    @Exclude
+    public String getUid() {
+        return uid;
     }
 
-    public void setWorkspaceId(String workspaceId) {
-        this.workspaceId = workspaceId;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
-    public String getWorkspaceName() {
-        return workspaceName;
+    public String getName() {
+        return name;
     }
 
-    public void setWorkspaceName(String workspaceName) {
-        this.workspaceName = workspaceName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public List<Board> getBoards() {
-        return boards;
+    public String getDescription() {
+        return description;
     }
 
-    public void setBoards(List<Board> boards) {
-        this.boards = boards;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // ✨ Getter/Setter cho createdBy
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    @Exclude
+    public Map<String, Object> toMap() {
+        HashMap<String, Object> result = new HashMap<>();
+        result.put("name", name);
+        result.put("description", description);
+        result.put("createdAt", createdAt);
+        result.put("createdBy", createdBy); // ✨ ĐÃ BỔ SUNG
+        return result;
     }
 }

@@ -39,19 +39,19 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         Workspace workspace = workspaceList.get(position);
 
         // 1. Đặt tên cho Không gian làm việc
-        holder.tvWorkspaceName.setText(workspace.getWorkspaceName());
+        holder.tvWorkspaceName.setText(workspace.getName());
 
-        // 2. Chuẩn bị dữ liệu cho RecyclerView con (Board)
-        List<Board> boardsInThisWorkspace = workspace.getBoards();
-
-        // 3. Khởi tạo và thiết lập BoardAdapter
-        BoardAdapter boardAdapter = new BoardAdapter(context, boardsInThisWorkspace);
-
-        // 4. Cấu hình RecyclerView con (rv_boards)
-        // Đặt LayoutManager theo chiều ngang
-        holder.rvBoards.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
-        holder.rvBoards.setHasFixedSize(true);
-        holder.rvBoards.setAdapter(boardAdapter);
+//        // 2. Chuẩn bị dữ liệu cho RecyclerView con (Board)
+//        List<Board> boardsInThisWorkspace = workspace.get;
+//
+//        // 3. Khởi tạo và thiết lập BoardAdapter
+//        BoardAdapter boardAdapter = new BoardAdapter(context, boardsInThisWorkspace);
+//
+//        // 4. Cấu hình RecyclerView con (rv_boards)
+//        // Đặt LayoutManager theo chiều ngang
+//        holder.rvBoards.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+//        holder.rvBoards.setHasFixedSize(true);
+//        holder.rvBoards.setAdapter(boardAdapter);
     }
 
     @Override
