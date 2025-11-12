@@ -6,4 +6,12 @@
     </style>
 
     <style name="Theme.Kann" parent="Base.Theme.Kann" />
+
+    <style name="Widget.App.ShapeableImageView.CornerRight" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">0dp</item>
+        <item name="cornerSizeTopRight">@dimen/cardview_default_radius</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">@dimen/cardview_default_radius</item>
+    </style>
 </resources>

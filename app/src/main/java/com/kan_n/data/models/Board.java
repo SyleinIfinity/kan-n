@@ -12,7 +12,7 @@ public class Board {
     private String workspaceId; // Workspace UID
     private String name;
     private String description;
-    private String visibility;
+    private Boolean visibility;
     private String createdBy; // User UID
     private long createdAt;
     private boolean isArchived;
@@ -21,7 +21,7 @@ public class Board {
         // Constructor trống
     }
 
-    public Board(String workspaceId, String name, String description, String visibility, String createdBy) {
+    public Board(String workspaceId, String name, String description, Boolean visibility, String createdBy) {
         this.workspaceId = workspaceId;
         this.name = name;
         this.description = description;
@@ -66,11 +66,11 @@ public class Board {
         this.description = description;
     }
 
-    public String getVisibility() {
+    public Boolean getVisibility() {
         return visibility;
     }
 
-    public void setVisibility(String visibility) {
+    public void setVisibility(Boolean visibility) {
         this.visibility = visibility;
     }
 
