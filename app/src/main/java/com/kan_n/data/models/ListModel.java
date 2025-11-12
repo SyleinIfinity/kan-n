@@ -2,10 +2,10 @@ package com.kan_n.data.models;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
+
 import java.util.HashMap;
 import java.util.Map;
 
-// Đặt tên là ListModel để tránh xung đột với java.util.List
 @IgnoreExtraProperties
 public class ListModel {
 
@@ -15,15 +15,18 @@ public class ListModel {
     private double position; // Dùng double để dễ dàng sắp xếp lại
     private boolean isClosed;
     private long createdAt;
+    private String createdBy; // ✨ ĐÃ BỔ SUNG
 
     public ListModel() {
         // Constructor trống
     }
 
-    public ListModel(String boardId, String title, double position) {
+    // ✨ Constructor đã cập nhật
+    public ListModel(String boardId, String title, double position, String createdBy) {
         this.boardId = boardId;
         this.title = title;
         this.position = position;
+        this.createdBy = createdBy; // ✨ ĐÃ BỔ SUNG
         this.isClosed = false;
         this.createdAt = System.currentTimeMillis();
     }
@@ -79,6 +82,15 @@ public class ListModel {
         this.createdAt = createdAt;
     }
 
+    // ✨ Getter/Setter cho createdBy
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
     @Exclude
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
@@ -87,6 +99,7 @@ public class ListModel {
         result.put("position", position);
         result.put("isClosed", isClosed);
         result.put("createdAt", createdAt);
+        result.put("createdBy", createdBy); // ✨ ĐÃ BỔ SUNG
         return result;
     }
 }

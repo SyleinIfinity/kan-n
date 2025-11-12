@@ -28,22 +28,22 @@ public class BangViewModel extends ViewModel {
     private void loadWorkspaces() {
         // --- DỮ LIỆU GIẢ (DEMO) ---
         // Thay thế phần này bằng logic tải dữ liệu thật
-        List<Workspace> demoList = new ArrayList<>();
-
-        // Workspace 1
-        List<Board> boards1 = new ArrayList<>();
-        boards1.add(new Board("board1", "Bảng dự án A", "https://example.com/image1.jpg", true, null));
-        boards1.add(new Board("board2", "Kế hoạch Marketing", "https://example.com/image2.jpg", false, null));
-        boards1.add(new Board("board3", "Kế hoạch Marketing", "https://example.com/image2.jpg", false, null));
-        demoList.add(new Workspace("ws1", "Không gian làm việc của Kan-n", boards1));
-
-        // Workspace 2
-        List<Board> boards2 = new ArrayList<>();
-        boards2.add(new Board("board3", "Phát triển App", "https://example.com/image3.jpg", false, null));
-        demoList.add(new Workspace("ws2", "Dự án cá nhân", boards2));
-
-        // Cập nhật LiveData
-        workspacesLiveData.setValue(demoList);
+//        List<Workspace> demoList = new ArrayList<>();
+//
+//        // Workspace 1
+//        List<Board> boards1 = new ArrayList<>();
+//        boards1.add(new Board("board1", "Bảng dự án A", "https://example.com/image1.jpg", true, null));
+//        boards1.add(new Board("board2", "Kế hoạch Marketing", "https://example.com/image2.jpg", false, null));
+//        boards1.add(new Board("board3", "Kế hoạch Marketing", "https://example.com/image2.jpg", false, null));
+//        demoList.add(new Workspace("ws1", "Không gian làm việc của Kan-n", boards1));
+//
+//        // Workspace 2
+//        List<Board> boards2 = new ArrayList<>();
+//        boards2.add(new Board("board3", "Phát triển App", "https://example.com/image3.jpg", false, null));
+//        demoList.add(new Workspace("ws2", "Dự án cá nhân", boards2));
+//
+//        // Cập nhật LiveData
+//        workspacesLiveData.setValue(demoList);
         // --- KẾT THÚC DỮ LIỆU GIẢ ---
     }
 }

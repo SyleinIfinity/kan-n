@@ -1,52 +1,36 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/interfaces/AuthRepository.java
+
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseUser;
-import com.kan_n.data.models.User; // Bạn cần tạo model User
+import com.kan_n.data.models.User;
 
 public interface AuthRepository {
 
     /**
-     * Lấy người dùng Firebase hiện tại (nếu đã đăng nhập).
-     * @return LiveData<FirebaseUser>
+     * Định nghĩa các callback interface lồng nhau
+     * để AuthRepositoryImpl có thể sử dụng và báo cáo kết quả.
      */
-    LiveData<FirebaseUser> getCurrentUser();
+    public interface AuthCallback {
+        void onSuccess(User user);
+        void onError(String message);
+    }
+
+    public interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
 
     /**
-     * Lấy chi tiết thông tin người dùng (từ Realtime Database/Firestore) bằng ID.
-     * @param userId ID của người dùng
-     * @return LiveData<User>
+     * Hành động đăng ký user mới.
+     * Phương thức này khớp với phương thức trong AuthRepositoryImpl,
+     * yêu cầu cả username và email.
      */
-    LiveData<User> getUserDetails(String userId);
+    void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, GeneralCallback callback);
 
     /**
-     * Thực hiện đăng nhập bằng email và mật khẩu.
-     * @param email Email người dùng
-     * @param password Mật khẩu
-     * @return Task<AuthResult> để theo dõi kết quả
+     * Hành động đăng nhập.
+     * Phương thức này khớp với phương thức trong AuthRepositoryImpl,
+     * cho phép đăng nhập bằng username.
      */
-    Task<AuthResult> login(String email, String password);
-
-    /**
-     * Thực hiện đăng ký người dùng mới.
-     * @param email Email
-     * @param password Mật khẩu
-     * @param username Tên hiển thị
-     * @return Task<AuthResult>
-     */
-    Task<AuthResult> register(String email, String password, String username);
-
-    /**
-     * Lưu thông tin người dùng (như username, email) vào cơ sở dữ liệu sau khi đăng ký thành công.
-     * @param user Đối tượng User chứa thông tin
-     * @return Task<Void>
-     */
-    Task<Void> saveUserDetails(User user);
-
-    /**
-     * Đăng xuất người dùng hiện tại.
-     */
-    void logout();
+    void login(String username, String passwordPlain, AuthCallback callback);
 }
