@@ -5,4 +5,17 @@
     <string name="title_ThongTin">Thông tin</string>
     <string name="title_HoatDong">Hoạt động</string>
     <string name="title_activity_bottom_navigation">Bottom_navigation_Activity</string>
+
+    <string-array name="quyen_xem_options">
+        <item>Riêng tư (Chỉ thành viên)</item>
+        <item>Không gian làm việc (Mọi thành viên)</item>
+        <item>Công khai (Bất kỳ ai)</item>
+    </string-array>
+    <string-array name="khong_gian_lam_viec_options">
+        <item>Không gian làm việc mặc định</item>
+        <item>Không gian làm việc cá nhân</item>
+        <item>Công ty A</item>
+        <item>Dự án B</item>
+    </string-array>
+
 </resources>
