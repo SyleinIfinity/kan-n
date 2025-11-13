@@ -81,7 +81,6 @@ public class DangNhapFragment extends Fragment {
         startActivity(intent);
 
         // 2. Sử dụng Handler để trì hoãn việc hủy Activity
-        // Điều này cho hệ thống đủ thời gian để xử lý Intent vừa gửi.
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (getActivity() != null) {
                 getActivity().finish();

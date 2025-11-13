@@ -65,7 +65,8 @@ public class AuthViewModel extends AndroidViewModel {
         authRepository.login(email, password, new AuthRepository.AuthCallback() {
             @Override
             public void onSuccess(User user) {
-                _loginSuccess.postValue(user);
+                // SỬA LỖI: Dùng setValue() để cập nhật LiveData ngay lập tức
+                _loginSuccess.setValue(user);
             }
 
             @Override
@@ -75,7 +76,7 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
-    // --- HÀNH ĐỘNG ĐĂNG KÝ (Đã cập nhật) ---
+    // --- HÀNH ĐỘNG ĐĂNG KÝ (Giữ nguyên) ---
     public void register(String displayName, String phone, String email, String password, String confirmPassword) {
         // 1. Kiểm tra nhập đầy đủ
         if (TextUtils.isEmpty(displayName) || TextUtils.isEmpty(phone) ||
