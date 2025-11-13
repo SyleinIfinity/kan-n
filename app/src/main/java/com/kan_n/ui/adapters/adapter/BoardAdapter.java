@@ -48,11 +48,11 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
         // 2. Xử lý logic hiển thị sao (yêu thích)
         // Sử dụng getVisibility() thay vì isStarred()
         // Cần kiểm tra null vì getVisibility() trả về Boolean
-        if (board.getVisibility() != null && board.getVisibility()) {
-            holder.ivBoardStarred.setImageResource(R.drawable.ic_clicked_star);
-        } else {
-            holder.ivBoardStarred.setImageResource(R.drawable.ic_unclicked_star);
-        }
+//        if (board.getVisibility() != null && board.getVisibility()) {
+//            holder.ivBoardStarred.setImageResource(R.drawable.ic_clicked_star);
+//        } else {
+//            holder.ivBoardStarred.setImageResource(R.drawable.ic_unclicked_star);
+//        }
 
         // 3. Tải ảnh nền bằng Glide
         // Sử dụng getDescription() vì bạn đang lưu URL ảnh trong đó

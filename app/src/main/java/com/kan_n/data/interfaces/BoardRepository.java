@@ -1,67 +1,82 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/interfaces/BoardRepository.java
+
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
 import com.kan_n.data.models.Board;
-import com.kan_n.data.models.Workspace;
+import com.kan_n.data.models.Workspace; // Cần import model
 
 import java.util.List;
+import java.util.Map;
 
 public interface BoardRepository {
 
+    // === ĐỊNH NGHĨA CÁC CALLBACK ===
+
     /**
-     * Lấy danh sách tất cả các Không gian làm việc (Workspace) CÙNG VỚI các Bảng (Board)
-     * lồng bên trong chúng, dành cho người dùng hiện tại.
-     * Đây là phương thức quan trọng cho BangViewModel.
-     *
-     * @param userId ID của người dùng
-     * @return LiveData<List<Workspace>>
+     * Callback chung cho các hành động không cần trả về dữ liệu (Tạo, Sửa, Xóa).
      */
-    LiveData<List<Workspace>> getWorkspacesWithBoards(String userId);
+    public interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
+
+    /**
+     * Callback trả về danh sách Workspace (đã chứa các Board).
+     */
+    public interface WorkspacesWithBoardsCallback {
+        void onSuccess(List<Workspace> workspaces);
+        void onError(String message);
+    }
+
+    /**
+     * Callback trả về chi tiết một Board.
+     */
+    public interface BoardCallback {
+        void onSuccess(Board board);
+        void onError(String message);
+    }
+
+
+    // === ĐỊNH NGHĨA CÁC HÀNH ĐỘNG (Đã chuẩn hóa) ===
+
+    /**
+     * Lấy danh sách Workspace và các Board lồng bên trong.
+     * Đã chuyển từ LiveData sang Callback.
+     */
+    void getWorkspacesWithBoards(String userId, WorkspacesWithBoardsCallback callback);
 
     /**
      * Lấy chi tiết của một Bảng cụ thể.
-     * @param boardId ID của bảng
-     * @return LiveData<Board>
+     * Đã chuyển từ LiveData sang Callback.
      */
-    LiveData<Board> getBoardDetails(String boardId);
+    void getBoardDetails(String boardId, BoardCallback callback);
 
     /**
-     * Tạo một Bảng mới trong một Không gian làm việc.
-     * @param workspaceId ID của không gian làm việc
-     * @param board Đối tượng Bảng mới
-     * @return Task<Void>
+     * Tạo một bảng mới (Giữ nguyên, đã chuẩn).
      */
-    Task<Void> createBoard(String workspaceId, Board board);
+    void createBoard(String workspaceId, String name, String visibility, Map<String, String> background, GeneralCallback callback);
 
     /**
-     * Cập nhật thông tin một Bảng (ví dụ: đổi tên, đổi ảnh nền).
-     * @param boardId ID của bảng
-     * @param updates Map chứa các trường cần cập nhật
-     * @return Task<Void>
+     * Cập nhật thông tin một Bảng.
+     * Đã chuyển từ Task sang Callback.
      */
-    Task<Void> updateBoard(String boardId, java.util.Map<String, Object> updates);
+    void updateBoard(String boardId, Map<String, Object> updates, GeneralCallback callback);
 
     /**
      * Xóa một Bảng.
-     * @param boardId ID của bảng
-     * @return Task<Void>
+     * Đã chuyển từ Task sang Callback.
      */
-    Task<Void> deleteBoard(String boardId);
+    void deleteBoard(String boardId, GeneralCallback callback);
 
     /**
      * Thêm một thành viên vào Bảng.
-     * @param boardId ID của bảng
-     * @param userId ID người dùng được thêm
-     * @return Task<Void>
+     * Đã chuyển từ Task sang Callback.
      */
-    Task<Void> addMemberToBoard(String boardId, String userId);
+    void addMemberToBoard(String boardId, String userId, GeneralCallback callback);
 
     /**
      * Xóa một thành viên khỏi Bảng.
-     * @param boardId ID của bảng
-     * @param userId ID người dùng bị xóa
-     * @return Task<Void>
+     * Đã chuyển từ Task sang Callback.
      */
-    Task<Void> removeMemberFromBoard(String boardId, String userId);
+    void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback);
 }

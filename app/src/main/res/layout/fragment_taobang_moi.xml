@@ -59,8 +59,9 @@
                 android:id="@+id/spinner_quyenXem"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/quyen_xem_options"
                 android:layout_marginTop="4dp"
+                android:entries="@array/quyen_xem_options"
+                android:minHeight="48dp"
                 android:spinnerMode="dropdown" />
 
             <View
@@ -84,8 +85,9 @@
                 android:id="@+id/spinner_khongGianLamViec"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:entries="@array/khong_gian_lam_viec_options"
                 android:layout_marginTop="4dp"
+                android:entries="@array/khong_gian_lam_viec_options"
+                android:minHeight="48dp"
                 android:spinnerMode="dropdown" />
 
             <View

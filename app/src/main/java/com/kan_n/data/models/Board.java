@@ -1,3 +1,5 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/models/Board.java
+
 package com.kan_n.data.models;
 
 import com.google.firebase.database.Exclude;
@@ -9,29 +11,34 @@ import java.util.Map;
 public class Board {
 
     private String uid;
-    private String workspaceId; // Workspace UID
+    private String workspaceId;
     private String name;
     private String description;
-    private Boolean visibility;
-    private String createdBy; // User UID
+    private String visibility;
+    private String createdBy;
     private long createdAt;
     private boolean isArchived;
+
+    // ✨ 1. BỔ SUNG TRƯỜNG MỚI
+    private Map<String, String> background;
 
     public Board() {
         // Constructor trống
     }
 
-    public Board(String workspaceId, String name, String description, Boolean visibility, String createdBy) {
+    // ✨ 2. CẬP NHẬT CONSTRUCTOR (thêm background)
+    public Board(String workspaceId, String name, String description, String visibility, String createdBy, Map<String, String> background) {
         this.workspaceId = workspaceId;
         this.name = name;
         this.description = description;
         this.visibility = visibility;
         this.createdBy = createdBy;
+        this.background = background; // Gán giá trị
         this.createdAt = System.currentTimeMillis();
         this.isArchived = false;
     }
 
-    // --- Getters and Setters ---
+    // --- Getters and Setters (Giữ nguyên các getter/setter cũ) ---
 
     @Exclude
     public String getUid() {
@@ -66,11 +73,11 @@ public class Board {
         this.description = description;
     }
 
-    public Boolean getVisibility() {
+    public String getVisibility() {
         return visibility;
     }
 
-    public void setVisibility(Boolean visibility) {
+    public void setVisibility(String visibility) {
         this.visibility = visibility;
     }
 
@@ -98,6 +105,15 @@ public class Board {
         isArchived = archived;
     }
 
+    // ✨ 3. BỔ SUNG GETTER/SETTER CHO BACKGROUND
+    public Map<String, String> getBackground() {
+        return background;
+    }
+
+    public void setBackground(Map<String, String> background) {
+        this.background = background;
+    }
+
     @Exclude
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
@@ -108,6 +124,7 @@ public class Board {
         result.put("createdBy", createdBy);
         result.put("createdAt", createdAt);
         result.put("isArchived", isArchived);
+        result.put("background", background); // ✨ 4. BỔ SUNG VÀO HÀM TOMAP
         return result;
     }
 }
