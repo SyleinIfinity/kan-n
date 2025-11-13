@@ -7,6 +7,7 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.ListRepository;
 import com.kan_n.data.models.ListModel;
@@ -21,6 +22,8 @@ public class ListRepositoryImpl implements ListRepository {
     private final DatabaseReference mRootRef;
     private final DatabaseReference mListsRef;
     private final DatabaseReference mCardsRef; // Cần tham chiếu Cards để xóa
+
+    private final DatabaseReference listsRef = FirebaseUtils.getDatabaseInstance().getReference("lists");
 
     public ListRepositoryImpl() {
         this.mRootRef = FirebaseUtils.getRootRef();
@@ -55,8 +58,13 @@ public class ListRepositoryImpl implements ListRepository {
 
     @Override
     public void getListsForBoard(String boardId, ChildEventListener listener) {
-        // Dùng ChildEventListener để lắng nghe real-time
-        mListsRef.orderByChild("boardId").equalTo(boardId).addChildEventListener(listener);
+        // Truy vấn các danh sách thuộc boardId này,
+        // sắp xếp theo "position" (neu ban co truong position)
+        // Neu khong co truong position, Firebase se sap xep theo Key
+        Query listsQuery = listsRef.orderByChild("boardId").equalTo(boardId);
+
+        // Gắn ChildEventListener vào truy vấn
+        listsQuery.addChildEventListener(listener);
     }
 
     @Override

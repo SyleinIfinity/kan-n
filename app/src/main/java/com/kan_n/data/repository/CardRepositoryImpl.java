@@ -1,44 +1,54 @@
-// Đặt tại: app/src/main/java/com/kan_n/data/repository/CardRepositoryImpl.java
-
 package com.kan_n.data.repository;
 
+import androidx.annotation.NonNull; // <-- Thêm import
+
+import com.google.android.gms.tasks.OnCompleteListener; // <-- Thêm import
+import com.google.android.gms.tasks.Task; // <-- Thêm import
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.kan_n.data.interfaces.CardRepository;
-import com.kan_n.data.models.Card;
+import com.kan_n.data.models.Card; // <-- Thêm import
 import com.kan_n.utils.FirebaseUtils;
 
-import java.util.Map;
+import java.util.HashMap; // <-- Thêm import
+import java.util.Map; // <-- Thêm import
 
 public class CardRepositoryImpl implements CardRepository {
 
-    private final DatabaseReference mRootRef;
-    private final DatabaseReference mCardsRef;
-    // Chúng ta không cần tham chiếu tagCards ở đây,
-    // vì việc đó nên được xử lý trong TagRepository
+    // Tham chiếu đến node "cards"
+    private final DatabaseReference cardsRef = FirebaseUtils.getDatabaseInstance().getReference("cards");
 
-    public CardRepositoryImpl() {
-        this.mRootRef = FirebaseUtils.getRootRef();
-        this.mCardsRef = mRootRef.child("cards");
+    @Override
+    public void getCardsForList(String listId, ChildEventListener listener) {
+        // Truy vấn các thẻ thuộc listId này,
+        // sắp xếp theo "position"
+        Query cardsQuery = cardsRef.orderByChild("listId").equalTo(listId).orderByChild("position"); // <-- Sắp xếp theo position
+
+        // Gắn ChildEventListener vào truy vấn
+        cardsQuery.addChildEventListener(listener);
     }
+
+    // --- CÁC PHƯƠNG THỨC CÒN THIẾU ---
 
     @Override
     public void createCard(String listId, String title, double position, GeneralCallback callback) {
         String currentUserId = FirebaseUtils.getCurrentUserId();
         if (currentUserId == null) {
-            callback.onError("Người dùng chưa đăng nhập.");
+            callback.onError("Nguoi dung chua dang nhap.");
             return;
         }
 
-        String cardId = mCardsRef.push().getKey();
+        String cardId = cardsRef.push().getKey();
         if (cardId == null) {
-            callback.onError("Không thể tạo ID cho thẻ mới.");
+            callback.onError("Khong the tao ID cho the.");
             return;
         }
 
+        // Su dung model Card de tao the moi
         Card newCard = new Card(listId, title, position, currentUserId);
 
-        mCardsRef.child(cardId).setValue(newCard.toMap()).addOnCompleteListener(task -> {
+        cardsRef.child(cardId).setValue(newCard.toMap()).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 callback.onSuccess();
             } else {
@@ -48,60 +58,41 @@ public class CardRepositoryImpl implements CardRepository {
     }
 
     @Override
-    public void getCardsForList(String listId, ChildEventListener listener) {
-        // Lắng nghe real-time các thẻ thuộc listId này
-        mCardsRef.orderByChild("listId").equalTo(listId).addChildEventListener(listener);
-    }
-
-    @Override
     public void setCardCompleted(String cardId, boolean isCompleted, GeneralCallback callback) {
-        // Chỉ cập nhật một trường duy nhất
-        mCardsRef.child(cardId).child("isCompleted").setValue(isCompleted)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onSuccess();
-                    } else {
-                        callback.onError(task.getException().getMessage());
-                    }
-                });
+        updateCardField(cardId, "completed", isCompleted, callback); // Su dung ham `isCompleted` tu model
     }
 
     @Override
     public void updateCardField(String cardId, String fieldName, Object value, GeneralCallback callback) {
-        mCardsRef.child(cardId).child(fieldName).setValue(value)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onSuccess();
-                    } else {
-                        callback.onError(task.getException().getMessage());
-                    }
-                });
+        cardsRef.child(cardId).child(fieldName).setValue(value).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                callback.onSuccess();
+            } else {
+                callback.onError(task.getException().getMessage());
+            }
+        });
     }
 
     @Override
     public void updateCard(String cardId, Map<String, Object> updates, GeneralCallback callback) {
-        mCardsRef.child(cardId).updateChildren(updates)
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onSuccess();
-                    } else {
-                        callback.onError(task.getException().getMessage());
-                    }
-                });
+        cardsRef.child(cardId).updateChildren(updates).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                callback.onSuccess();
+            } else {
+                callback.onError(task.getException().getMessage());
+            }
+        });
     }
 
     @Override
     public void deleteCard(String cardId, GeneralCallback callback) {
-        // Cần xóa thẻ và cả trong 'tagCards'
-        // (Logic xóa tagCards nên nằm trong hàm riêng hoặc TagRepository)
-        mCardsRef.child(cardId).removeValue()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onSuccess();
-                    } else {
-                        callback.onError(task.getException().getMessage());
-                    }
-                });
-        // (Lưu ý: Logic xóa trong tagCards chưa được triển khai ở đây)
+        // TODO: Can xu ly xoa ca tagCards mapping neu can
+        cardsRef.child(cardId).removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                callback.onSuccess();
+            } else {
+                callback.onError(task.getException().getMessage());
+            }
+        });
     }
 }

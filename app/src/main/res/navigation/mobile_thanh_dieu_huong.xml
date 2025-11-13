@@ -14,6 +14,27 @@
         <action
             android:id="@+id/action_bangFragment_to_taoBangMoiFragment"
             app:destination="@id/taoBangMoiFragment" />
+
+        <action
+            android:id="@+id/action_bangFragment_to_bangSpaceFragment"
+            app:destination="@id/bangSpaceFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/bangSpaceFragment"
+        android:name="com.kan_n.ui.fragments.bang_space.BangSpaceFragment"
+        android:label="Chi tiết Bảng"
+        tools:layout="@layout/fragment_bang_space" >
+
+        <argument
+            android:name="boardId"
+            app:argType="string" />
+        <argument
+            android:name="boardTitle"
+            app:argType="string"
+            android:defaultValue="KAN-N" />
+
     </fragment>
 
     <fragment
