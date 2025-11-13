@@ -14,6 +14,7 @@ import com.kan_n.R;
 import com.kan_n.data.models.Board;
 import com.kan_n.data.models.Workspace;
 
+import java.util.ArrayList; // <-- Them import
 import java.util.List;
 import java.util.Objects;
 
@@ -21,40 +22,33 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
 
     private List<Workspace> workspaceList;
     private final Context context;
+    private final BoardAdapter.OnBoardClickListener boardClickListener; // ✨ 1. Them bien listener
 
-    public WorkspaceAdapter(Context context, List<Workspace> workspaceList) {
+    // ✨ 2. Cap nhat constructor
+    public WorkspaceAdapter(Context context, List<Workspace> workspaceList, BoardAdapter.OnBoardClickListener boardClickListener) {
         this.context = context;
         this.workspaceList = workspaceList;
+        this.boardClickListener = boardClickListener; // Gan listener
     }
 
     @NonNull
     @Override
     public WorkspaceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Tải layout cho mỗi Workspace
         View view = LayoutInflater.from(context).inflate(R.layout.item_workspace, parent, false);
-        return new WorkspaceViewHolder(view);
+        // ✨ 3. Truyen listener vao ViewHolder khi tao
+        return new WorkspaceViewHolder(view, context, boardClickListener);
     }
 
     @Override
     public void onBindViewHolder(@NonNull WorkspaceViewHolder holder, int position) {
         Workspace workspace = workspaceList.get(position);
+        if (workspace == null) return;
 
-        // 1. Đặt tên cho Không gian làm việc
-        // SỬA: Sử dụng getName() theo định nghĩa trong mô hình Workspace.java
         holder.tvWorkspaceName.setText(workspace.getName());
-
-        // 2. Chuẩn bị dữ liệu cho RecyclerView con (Board)
         List<Board> boardsInThisWorkspace = workspace.getBoards();
 
-        // 3. Quản lý RecyclerView con: Tái sử dụng/Cập nhật BoardAdapter
-        if (holder.rvBoards.getAdapter() == null) {
-            // Lần đầu tiên: Khởi tạo BoardAdapter
-            BoardAdapter boardAdapter = new BoardAdapter(context, boardsInThisWorkspace);
-            holder.rvBoards.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
-            holder.rvBoards.setAdapter(boardAdapter);
-        } else {
-            ((BoardAdapter) Objects.requireNonNull(holder.rvBoards.getAdapter())).updateData(boardsInThisWorkspace);
-        }
+        // ✨ 4. Cap nhat du lieu cho adapter con (da duoc khoi tao trong ViewHolder)
+        holder.updateBoards(boardsInThisWorkspace);
     }
 
     @Override
@@ -62,25 +56,36 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         return workspaceList != null ? workspaceList.size() : 0;
     }
 
-    /**
-     * Phương thức cập nhật dữ liệu cho WorkspaceAdapter cha.
-     * @param newWorkspaceList Danh sách Workspaces mới
-     */
     public void updateData(List<Workspace> newWorkspaceList) {
         this.workspaceList = newWorkspaceList;
         notifyDataSetChanged();
     }
 
-    // Lớp ViewHolder cho item_workspace.xml
+    // ✨ 5. Sua lai ViewHolder (RAT QUAN TRONG)
     public static class WorkspaceViewHolder extends RecyclerView.ViewHolder {
         TextView tvWorkspaceName;
         RecyclerView rvBoards;
+        BoardAdapter boardAdapter; // Giu tham chieu den adapter con
+        Context context;
 
-        public WorkspaceViewHolder(@NonNull View itemView) {
+        public WorkspaceViewHolder(@NonNull View itemView, Context context, BoardAdapter.OnBoardClickListener boardClickListener) {
             super(itemView);
-            // Ánh xạ các View trong item_workspace.xml
+            this.context = context;
             tvWorkspaceName = itemView.findViewById(R.id.tv_workspace_name);
             rvBoards = itemView.findViewById(R.id.rv_boards);
+
+            // Khoi tao adapter con mot lan duy nhat o day
+            // Truyen listener vao
+            boardAdapter = new BoardAdapter(context, new ArrayList<>(), boardClickListener);
+            rvBoards.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+            rvBoards.setAdapter(boardAdapter);
+        }
+
+        // Phuong thuc de cap nhat du lieu cho adapter con
+        public void updateBoards(List<Board> boards) {
+            if (boardAdapter != null) {
+                boardAdapter.updateData(boards);
+            }
         }
     }
 }

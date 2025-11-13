@@ -2,7 +2,7 @@ package com.kan_n.ui.activities;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView; // Đảm bảo import TextView
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,10 +15,6 @@ import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
-// --- CÓ THỂ BẠN CẦN THÊM IMPORT NÀY ---
-// (Mặc dù binding.fabCreateBoard có thể đã xử lý)
-// import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import com.google.firebase.FirebaseApp;
 import com.kan_n.R;
@@ -67,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
         // 5. Tìm TextView tùy chỉnh (toolbar_title)
         TextView toolbarTitle = findViewById(R.id.toolbar_title);
 
-        // 6. [ĐÃ SỬA] Chỉ cập nhật tiêu đề Toolbar.
-        // Logic ẩn/hiện FAB đã được xóa bỏ vì nó không còn thuộc về Activity này.
+        // 6. [ĐÃ SỬA] Cập nhật tiêu đề, Ẩn/Hiện Toolbar chính, và NavView.
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
 
             // --- Phần 1: Cập nhật tiêu đề (giữ nguyên) ---
@@ -77,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 toolbarTitle.setText(label);
             }
 
-            // --- Phần 2: [SỬA ĐỔI] Ẩn/hiện NavView và đổi Icon ---
+            // --- Phần 2: [SỬA ĐỔI] Ẩn/hiện Toolbar chính, NavView và đổi Icon ---
             int destId = destination.getId();
 
             if (destId == R.id.thanhDieuHuong_Bang ||
@@ -85,25 +80,27 @@ public class MainActivity extends AppCompatActivity {
                     destId == R.id.thanhDieuHuong_ThongTin)
             {
                 // Đây là 3 fragment chính (cấp cao nhất)
-                binding.navView.setVisibility(View.VISIBLE);
-
-                // Xóa icon 'X' nếu có (để NavController tự quản lý)
-                binding.toolbar.getRoot().setNavigationIcon(null);
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.VISIBLE); // HIỆN NavView
+                binding.toolbar.getRoot().setNavigationIcon(null); // NavController tự quản lý
 
             } else if (destId == R.id.taoBangMoiFragment) {
                 // Đây là fragment Tạo Bảng Mới
-                binding.navView.setVisibility(View.GONE); // Ẩn NavView
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_huy); // Đặt icon 'X'
 
-                // Đặt icon 'X' (Hủy) cho nút "Up"
-                // (Bạn đã có file ic_huy.xml)
-                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_huy);
+            } else if (destId == R.id.bangSpaceFragment) {
+                // === ✨ PHẦN SỬA LỖI CỦA BẠN ===
+                // Đây là fragment BangSpace (có toolbar riêng)
+                binding.toolbar.getRoot().setVisibility(View.GONE); // ẨN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
 
             } else {
                 // Đây là các fragment "con" khác (nếu có)
-                binding.navView.setVisibility(View.GONE); // Ẩn NavView
-
-                // Xóa icon 'X' để dùng icon "mũi tên quay lại" (<-) mặc định
-                binding.toolbar.getRoot().setNavigationIcon(null);
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(null); // Dùng icon "mũi tên quay lại"
             }
         });
 
