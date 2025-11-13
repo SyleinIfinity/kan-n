@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#CCCCCC"
-    tools:context=".ui.auth.AuthFragment">
+    tools:context=".ui.fragments.auth.AuthFragment">
 
     <ImageView
         android:id="@+id/anh_logo"

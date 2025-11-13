@@ -11,10 +11,10 @@ public class User {
 
     private String uid;
     private String username;
-    // private String password_hash; // <-- 1. XÓA DÒNG NÀY
     private String displayName;
     private String email;
     private String avatarUrl;
+    private String phone; // ✨ 1. BỔ SUNG TRƯỜNG SDT
     private long createdAt;
     private boolean isActive;
 
@@ -22,12 +22,13 @@ public class User {
         // Constructor trống
     }
 
-    // 2. CẬP NHẬT CONSTRUCTOR (bỏ password_hash)
-    public User(String username, String displayName, String email, String avatarUrl) {
+    // ✨ 2. CẬP NHẬT CONSTRUCTOR
+    public User(String username, String displayName, String email, String avatarUrl, String phone) {
         this.username = username;
         this.displayName = displayName;
         this.email = email;
         this.avatarUrl = avatarUrl;
+        this.phone = phone; // Gán SDT
         this.createdAt = System.currentTimeMillis();
         this.isActive = true;
     }
@@ -41,20 +42,22 @@ public class User {
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
-    // 3. XÓA GETTER/SETTER CỦA PASSWORD_HASH
-    // public String getPassword_hash() { ... }
-    // public void setPassword_hash(String password_hash) { ... }
-
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
 
-    // (Giữ nguyên các getter/setter còn lại...)
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    // ✨ 3. BỔ SUNG GETTER/SETTER CHO PHONE
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
 
@@ -62,10 +65,10 @@ public class User {
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
         result.put("username", username);
-        // result.put("password_hash", password_hash); // <-- 4. XÓA DÒNG NÀY
         result.put("displayName", displayName);
         result.put("email", email);
         result.put("avatarUrl", avatarUrl);
+        result.put("phone", phone); // ✨ 4. BỔ SUNG VÀO MAP
         result.put("createdAt", createdAt);
         result.put("isActive", isActive);
         return result;

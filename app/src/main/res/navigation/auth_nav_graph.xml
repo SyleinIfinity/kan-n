@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/auth_nav_graph"
+    app:startDestination="@id/khoiDongFragment">
+
+    <fragment
+        android:id="@+id/khoiDongFragment"
+        android:name="com.kan_n.ui.fragments.auth.KhoiDongFragment"
+        android:label="Khởi động"
+        tools:layout="@layout/fragment_trang_khoidong" >
+        <action
+            android:id="@+id/action_khoiDongFragment_to_dangNhapFragment"
+            app:destination="@id/dangNhapFragment" />
+        <action
+            android:id="@+id/action_khoiDongFragment_to_dangKyFragment"
+            app:destination="@id/dangKyFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dangNhapFragment"
+        android:name="com.kan_n.ui.fragments.auth.DangNhapFragment"
+        android:label="Đăng nhập"
+        tools:layout="@layout/fragment_trang_dangnhap" />
+
+    <fragment
+        android:id="@+id/dangKyFragment"
+        android:name="com.kan_n.ui.fragments.auth.DangKyFragment"
+        android:label="Đăng ký"
+        tools:layout="@layout/fragment_trang_dangky" />
+
+</navigation>

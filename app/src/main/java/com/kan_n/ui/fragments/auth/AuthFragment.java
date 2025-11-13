@@ -1,4 +1,4 @@
-package com.kan_n.ui.auth;
+package com.kan_n.ui.fragments.auth;
 
 import androidx.lifecycle.ViewModelProvider;
 

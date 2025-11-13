@@ -6,10 +6,6 @@ import com.kan_n.data.models.User;
 
 public interface AuthRepository {
 
-    /**
-     * Định nghĩa các callback interface lồng nhau
-     * để AuthRepositoryImpl có thể sử dụng và báo cáo kết quả.
-     */
     public interface AuthCallback {
         void onSuccess(User user);
         void onError(String message);
@@ -22,15 +18,13 @@ public interface AuthRepository {
 
     /**
      * Hành động đăng ký user mới.
-     * Phương thức này khớp với phương thức trong AuthRepositoryImpl,
-     * yêu cầu cả username và email.
+     * ✨ Đã bổ sung 'phone'
      */
-    void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, GeneralCallback callback);
+    void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback);
 
     /**
      * Hành động đăng nhập.
-     * Phương thức này khớp với phương thức trong AuthRepositoryImpl,
-     * cho phép đăng nhập bằng username.
+     * ✨ Đã thay đổi 'username' thành 'email'
      */
-    void login(String username, String passwordPlain, AuthCallback callback);
+    void login(String email, String passwordPlain, AuthCallback callback);
 }

@@ -45,8 +45,6 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        FirebaseApp.initializeApp(this);
-
         // 1. Thiết lập Toolbar
         setSupportActionBar(binding.toolbar.getRoot());
         if (getSupportActionBar() != null) {
