@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_notification"
+        android:icon="@drawable/ic_thongbao"
+        android:title="Thông báo"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_options"
+        android:icon="@drawable/ic_menu_option"
+        android:title="Tùy chọn"
+        app:showAsAction="ifRoom" />
+
+</menu>
