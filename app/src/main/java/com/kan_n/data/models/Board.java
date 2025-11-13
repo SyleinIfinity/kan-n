@@ -20,22 +20,22 @@ public class Board {
     private boolean isArchived;
 
     // ✨ 1. BỔ SUNG TRƯỜNG MỚI
-    private Map<String, String> background;
+    private Background background;
 
     public Board() {
         // Constructor trống
     }
 
     // ✨ 2. CẬP NHẬT CONSTRUCTOR (thêm background)
-    public Board(String workspaceId, String name, String description, String visibility, String createdBy, Map<String, String> background) {
+    public Board(String workspaceId, String name, String description, String visibility, String createdBy, Background background) {
         this.workspaceId = workspaceId;
         this.name = name;
         this.description = description;
         this.visibility = visibility;
         this.createdBy = createdBy;
-        this.background = background; // Gán giá trị
         this.createdAt = System.currentTimeMillis();
         this.isArchived = false;
+        this.background = background; // <--- Cập nhật
     }
 
     // --- Getters and Setters (Giữ nguyên các getter/setter cũ) ---
@@ -106,11 +106,11 @@ public class Board {
     }
 
     // ✨ 3. BỔ SUNG GETTER/SETTER CHO BACKGROUND
-    public Map<String, String> getBackground() {
+    public Background getBackground() {
         return background;
     }
 
-    public void setBackground(Map<String, String> background) {
+    public void setBackground(Background background) {
         this.background = background;
     }
 

@@ -9,6 +9,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.BoardRepository;
+import com.kan_n.data.models.Background;
 import com.kan_n.data.models.Board;
 import com.kan_n.data.models.Membership;
 import com.kan_n.data.models.Workspace;
@@ -168,7 +169,7 @@ public class BoardRepositoryImpl implements BoardRepository {
     // --- CÁC PHƯƠNG THỨC GHI DỮ LIỆU (WRITE) ---
 
     @Override
-    public void createBoard(String workspaceId, String name, String visibility, Map<String, String> background, GeneralCallback callback) {
+    public void createBoard(String workspaceId, String name, String visibility, Background background, GeneralCallback callback) {
 
         String currentUserId = FirebaseUtils.getCurrentUserId();
         if (currentUserId == null) {
@@ -182,6 +183,8 @@ public class BoardRepositoryImpl implements BoardRepository {
             return;
         }
 
+        // [CẬP NHẬT] Sử dụng constructor mới với Background object
+        // Lưu ý: Trường description trong Board hiện tại chỉ được dùng để lưu mô tả
         Board newBoard = new Board(workspaceId, name, "", visibility, currentUserId, background);
 
         String membershipId = mMembershipsRef.push().getKey();
