@@ -59,21 +59,20 @@
                 app:layout_constraintTop_toBottomOf="@id/nut_quay_lai" />
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/khung_nhap_gmail"
+                android:id="@+id/khung_nhap_taikhoan"
                 style="@style/Style.Input.Kann"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
-                android:hint="Gmail"
+                android:hint="Tên tài khoản"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/anh_dai_dien">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/nhap_gmail"
+                    android:id="@+id/nhap_taikhoan"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textEmailAddress"
                     android:textColor="#000000" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -87,7 +86,7 @@
                 app:endIconMode="password_toggle"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/khung_nhap_gmail">
+                app:layout_constraintTop_toBottomOf="@id/khung_nhap_taikhoan">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/nhap_mat_khau"
