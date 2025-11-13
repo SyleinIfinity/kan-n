@@ -30,6 +30,7 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
     @NonNull
     @Override
     public WorkspaceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Tải layout cho mỗi Workspace
         View view = LayoutInflater.from(context).inflate(R.layout.item_workspace, parent, false);
         return new WorkspaceViewHolder(view);
     }
@@ -39,20 +40,19 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         Workspace workspace = workspaceList.get(position);
 
         // 1. Đặt tên cho Không gian làm việc
+        // SỬA: Sử dụng getName() theo định nghĩa trong mô hình Workspace.java
         holder.tvWorkspaceName.setText(workspace.getName());
 
         // 2. Chuẩn bị dữ liệu cho RecyclerView con (Board)
         List<Board> boardsInThisWorkspace = workspace.getBoards();
 
-        // 3. Quản lý RecyclerView con: Cài đặt Adapter nếu chưa có, hoặc chỉ cập nhật dữ liệu.
+        // 3. Quản lý RecyclerView con: Tái sử dụng/Cập nhật BoardAdapter
         if (holder.rvBoards.getAdapter() == null) {
+            // Lần đầu tiên: Khởi tạo BoardAdapter
             BoardAdapter boardAdapter = new BoardAdapter(context, boardsInThisWorkspace);
-
-            // Cấu hình LayoutManager (Vertical)
             holder.rvBoards.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
             holder.rvBoards.setAdapter(boardAdapter);
         } else {
-            // Nếu Adapter đã tồn tại, chỉ cần cập nhật dữ liệu
             ((BoardAdapter) Objects.requireNonNull(holder.rvBoards.getAdapter())).updateData(boardsInThisWorkspace);
         }
     }
@@ -62,19 +62,25 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         return workspaceList != null ? workspaceList.size() : 0;
     }
 
+    /**
+     * Phương thức cập nhật dữ liệu cho WorkspaceAdapter cha.
+     * @param newWorkspaceList Danh sách Workspaces mới
+     */
+    public void updateData(List<Workspace> newWorkspaceList) {
+        this.workspaceList = newWorkspaceList;
+        notifyDataSetChanged();
+    }
+
+    // Lớp ViewHolder cho item_workspace.xml
     public static class WorkspaceViewHolder extends RecyclerView.ViewHolder {
         TextView tvWorkspaceName;
         RecyclerView rvBoards;
 
         public WorkspaceViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Ánh xạ các View trong item_workspace.xml
             tvWorkspaceName = itemView.findViewById(R.id.tv_workspace_name);
             rvBoards = itemView.findViewById(R.id.rv_boards);
         }
-    }
-
-    public void updateData(List<Workspace> newWorkspaceList) {
-        this.workspaceList = newWorkspaceList;
-        notifyDataSetChanged();
     }
 }
