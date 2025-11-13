@@ -109,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 7. Liên kết BottomNavigationView với NavController
         NavigationUI.setupWithNavController(binding.navView, navController);
+
     }
 
     @Override
