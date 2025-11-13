@@ -7,18 +7,12 @@ import com.google.firebase.database.FirebaseDatabase;
 
 public class FirebaseUtils {
 
-    // Thể hiện (instance) của FirebaseAuth
-    private static FirebaseAuth mAuth;
+    // ✨ XÓA DÒNG NÀY ĐI
+    // private static final String DATABASE_URL = "...";
 
-    // Thể hiện (instance) của FirebaseDatabase
+    private static FirebaseAuth mAuth;
     private static FirebaseDatabase mDatabase;
 
-    /**
-     * Trả về thể hiện duy nhất của FirebaseAuth.
-     * Nếu chưa được khởi tạo, nó sẽ được khởi tạo.
-     *
-     * @return Thể hiện của FirebaseAuth.
-     */
     public static FirebaseAuth getAuthInstance() {
         if (mAuth == null) {
             mAuth = FirebaseAuth.getInstance();
@@ -28,43 +22,27 @@ public class FirebaseUtils {
 
     /**
      * Trả về thể hiện duy nhất của FirebaseDatabase.
-     * Nếu chưa được khởi tạo, nó sẽ được khởi tạo.
-     *
-     * @return Thể hiện của FirebaseDatabase.
+     * ✨ ĐÃ CẬP NHẬT: Nó sẽ tự động lấy instance [DEFAULT]
+     * (đã được cấu hình trong MyApplication)
      */
     public static FirebaseDatabase getDatabaseInstance() {
         if (mDatabase == null) {
-            // Khởi tạo FirebaseDatabase
-            // Bạn có thể bật tính năng duy trì dữ liệu offline nếu cần
-            // mDatabase.setPersistenceEnabled(true);
+            // ✨ CHỈ GỌI getInstance()
             mDatabase = FirebaseDatabase.getInstance();
         }
         return mDatabase;
     }
 
-    /**
-     * Phương thức tiện ích để lấy DatabaseReference gốc.
-     *
-     * @return DatabaseReference gốc.
-     */
     public static DatabaseReference getRootRef() {
         return getDatabaseInstance().getReference();
     }
 
-    /**
-     * Phương thức tiện ích để lấy người dùng hiện tại đang đăng nhập.
-     *
-     * @return FirebaseUser nếu đã đăng nhập, ngược lại trả về null.
-     */
+    // (Các hàm còn lại giữ nguyên...)
+
     public static FirebaseUser getCurrentUser() {
         return getAuthInstance().getCurrentUser();
     }
 
-    /**
-     * Phương thức tiện ích để lấy ID của người dùng hiện tại.
-     *
-     * @return Chuỗi String UID của người dùng nếu đã đăng nhập, ngược lại trả về null.
-     */
     public static String getCurrentUserId() {
         FirebaseUser user = getCurrentUser();
         if (user != null) {
@@ -73,18 +51,10 @@ public class FirebaseUtils {
         return null;
     }
 
-    /**
-     * Kiểm tra xem có người dùng nào đang đăng nhập hay không.
-     *
-     * @return true nếu có người dùng đăng nhập, false nếu không.
-     */
     public static boolean isLoggedIn() {
         return getCurrentUser() != null;
     }
 
-    /**
-     * Đăng xuất người dùng hiện tại.
-     */
     public static void signOut() {
         getAuthInstance().signOut();
     }

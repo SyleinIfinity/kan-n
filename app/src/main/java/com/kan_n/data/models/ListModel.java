@@ -1,3 +1,5 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/models/ListModel.java
+
 package com.kan_n.data.models;
 
 import com.google.firebase.database.Exclude;

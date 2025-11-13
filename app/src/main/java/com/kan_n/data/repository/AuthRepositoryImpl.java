@@ -9,38 +9,32 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.AuthRepository;
 import com.kan_n.data.models.User;
-import com.kan_n.utils.FirebaseUtils; // <-- SỬ DỤNG UTILS CỦA BẠN
-
-// KHÔNG CẦN PasswordUtils nữa
+import com.kan_n.utils.FirebaseUtils;
 
 public class AuthRepositoryImpl implements AuthRepository {
 
-    // Lấy instance từ FirebaseUtils
     private final FirebaseAuth mAuth;
     private final DatabaseReference mUsersRef;
 
     public AuthRepositoryImpl() {
-        // Khởi tạo các dịch vụ thông qua Utils
         this.mAuth = FirebaseUtils.getAuthInstance();
         this.mUsersRef = FirebaseUtils.getRootRef().child("users");
     }
 
     /**
-     * Bước 1: Tạo tài khoản trên Firebase Auth (dùng email, password).
-     * Bước 2: Lưu thông tin bổ sung (username, displayName) vào Realtime Database.
+     * ✨ Đã cập nhật: Thêm 'phone'
      */
     @Override
-    public void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, GeneralCallback callback) {
+    public void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback) {
 
         // Bước 1: Tạo user bằng email và password trên FirebaseAuth
         mAuth.createUserWithEmailAndPassword(email, passwordPlain)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // Tạo tài khoản Auth thành công
                         String uid = task.getResult().getUser().getUid();
 
-                        // Bước 2: Tạo đối tượng User mới (đã bỏ password_hash)
-                        User newUser = new User(username, displayName, email, avatarUrl);
+                        // Bước 2: Tạo đối tượng User mới (đã thêm 'phone')
+                        User newUser = new User(username, displayName, email, avatarUrl, phone);
 
                         // Lưu thông tin user vào Realtime Database với key là UID
                         mUsersRef.child(uid).setValue(newUser.toMap())
@@ -48,7 +42,6 @@ public class AuthRepositoryImpl implements AuthRepository {
                                     if (dbTask.isSuccessful()) {
                                         callback.onSuccess(); // Hoàn tất!
                                     } else {
-                                        // (Xử lý lỗi: không lưu được vào DB, nhưng đã tạo Auth)
                                         callback.onError(dbTask.getException().getMessage());
                                     }
                                 });
@@ -60,63 +53,45 @@ public class AuthRepositoryImpl implements AuthRepository {
     }
 
     /**
-     * Logic đăng nhập này phức tạp hơn vì interface của bạn dùng (username, password),
-     * nhưng FirebaseAuth dùng (email, password).
-     *
-     * Bước 1: Tìm email dựa trên username.
-     * Bước 2: Dùng email + password để đăng nhập vào FirebaseAuth.
+     * ✨ Đã cập nhật: Đăng nhập bằng Email, sau đó lấy chi tiết User từ DB
      */
     @Override
-    public void login(String username, String passwordPlain, AuthCallback callback) {
+    public void login(String email, String passwordPlain, AuthCallback callback) {
 
-        // Bước 1: Tìm user trong Realtime Database bằng username
-        mUsersRef.orderByChild("username").equalTo(username)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (!snapshot.exists()) {
-                            // Không tìm thấy username
-                            callback.onError("Username không tồn tại.");
-                            return;
-                        }
+        // Bước 1: Đăng nhập bằng Firebase Auth
+        mAuth.signInWithEmailAndPassword(email, passwordPlain)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        // Đăng nhập Auth thành công
+                        String uid = task.getResult().getUser().getUid();
 
-                        // Lấy email của user
-                        User foundUser = null;
-                        String uid = null;
-                        for (DataSnapshot userSnapshot : snapshot.getChildren()) {
-                            foundUser = userSnapshot.getValue(User.class);
-                            uid = userSnapshot.getKey();
-                            break; // Chỉ lấy user đầu tiên tìm thấy
-                        }
-
-                        if (foundUser == null || foundUser.getEmail() == null) {
-                            callback.onError("Lỗi dữ liệu người dùng.");
-                            return;
-                        }
-
-                        foundUser.setUid(uid);
-                        String email = foundUser.getEmail();
-
-                        // ✨ BƯỚC SỬA LỖI:
-                        // Tạo một biến final mới để lambda có thể sử dụng
-                        final User userToLogin = foundUser;
-
-                        // Bước 2: Dùng email + password để đăng nhập FirebaseAuth
-                        mAuth.signInWithEmailAndPassword(email, passwordPlain)
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        // Đăng nhập thành công!
-                                        callback.onSuccess(userToLogin); // <-- Sử dụng biến final
+                        // Bước 2: Lấy thông tin chi tiết của User từ Realtime Database
+                        mUsersRef.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                if (snapshot.exists()) {
+                                    User user = snapshot.getValue(User.class);
+                                    if (user != null) {
+                                        user.setUid(snapshot.getKey());
+                                        callback.onSuccess(user); // Trả về User model đầy đủ
                                     } else {
-                                        // Đăng nhập thất bại (sai mật khẩu)
-                                        callback.onError("Sai mật khẩu.");
+                                        callback.onError("Không thể đọc dữ liệu người dùng.");
                                     }
-                                });
-                    }
+                                } else {
+                                    // Hiếm khi xảy ra nếu đăng ký đúng: Auth có user nhưng DB không có
+                                    callback.onError("Không tìm thấy dữ liệu người dùng trong DB.");
+                                }
+                            }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        callback.onError(error.getMessage());
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {
+                                callback.onError(error.getMessage());
+                            }
+                        });
+
+                    } else {
+                        // Đăng nhập Auth thất bại (sai email, sai mật khẩu, user không tồn tại)
+                        callback.onError("Email hoặc mật khẩu không đúng.");
                     }
                 });
     }
