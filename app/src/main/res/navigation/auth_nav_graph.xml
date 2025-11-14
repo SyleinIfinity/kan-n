@@ -33,16 +33,37 @@
         android:id="@+id/dangKyFragment"
         android:name="com.kan_n.ui.fragments.auth.DangKyFragment"
         android:label="Đăng ký"
-        tools:layout="@layout/fragment_trang_dangky" />
+        tools:layout="@layout/fragment_trang_dangky" >
+        <action
+            android:id="@+id/action_dangkyFragment_to_nhapOtpFragment"
+            app:destination="@id/nhapOtpFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/nhapGmailFragment"
         android:name="com.kan_n.ui.fragments.auth.NhapGmailFragment"
         android:label="Nhập Gmail"
-        tools:layout="@layout/fragment_nhap_gmail" />
+        tools:layout="@layout/fragment_nhap_gmail" >
+        <action
+            android:id="@+id/action_nhapGmailFragment_to_nhapOtpFragment"
+            app:destination="@id/nhapOtpFragment" />
+    </fragment>
 
-<!--    <fragment-->
-<!--        android:id="@+id/nhapMatKhauFragment"-->
+    <fragment
+        android:id="@+id/nhapOtpFragment"
+        android:name="com.kan_n.ui.fragments.auth.NhapOtpFragment"
+        android:label="Nhập Gmail"
+        tools:layout="@layout/fragment_nhap_otp" >
+        <action
+            android:id="@+id/action_nhapOtpFragment_to_nhapLaiMatKhauFragment"
+            app:destination="@id/nhapLaiMatKhauFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nhapLaiMatKhauFragment"
+        android:name="com.kan_n.ui.fragments.auth.NhapLaiMatKhauFragment"
+        android:label="Nhập Gmail"
+        tools:layout="@layout/fragment_nhaplai_matkhau" />
 
 
 </navigation>
