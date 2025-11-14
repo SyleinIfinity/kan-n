@@ -22,12 +22,27 @@
         android:id="@+id/dangNhapFragment"
         android:name="com.kan_n.ui.fragments.auth.DangNhapFragment"
         android:label="Đăng nhập"
-        tools:layout="@layout/fragment_trang_dangnhap" />
+        tools:layout="@layout/fragment_trang_dangnhap">
+        <action
+            android:id="@+id/action_dangNhapFragment_to_nhapGmailFragment"
+            app:destination="@id/nhapGmailFragment" />
+    </fragment>
+
 
     <fragment
         android:id="@+id/dangKyFragment"
         android:name="com.kan_n.ui.fragments.auth.DangKyFragment"
         android:label="Đăng ký"
         tools:layout="@layout/fragment_trang_dangky" />
+
+    <fragment
+        android:id="@+id/nhapGmailFragment"
+        android:name="com.kan_n.ui.fragments.auth.NhapGmailFragment"
+        android:label="Nhập Gmail"
+        tools:layout="@layout/fragment_nhap_gmail" />
+
+<!--    <fragment-->
+<!--        android:id="@+id/nhapMatKhauFragment"-->
+
 
 </navigation>
