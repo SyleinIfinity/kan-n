@@ -24,8 +24,8 @@ public class HoatDongFragment extends Fragment {
         binding = FragmentHoatdongBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textHoatdong;
-        hoatDongViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+//        final TextView textView = binding.textHoatdong;
+//        hoatDongViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 
