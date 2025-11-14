@@ -28,7 +28,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/textTitle"
-        tools:srcCompat="@drawable/shape_button_v2"
+        tools:srcCompat="@drawable/logo"
         android:contentDescription="Ảnh minh họa" />
 
     <TextView
