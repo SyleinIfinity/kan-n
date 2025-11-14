@@ -4,16 +4,17 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.kan_n.data.models.User;
+
 public class ThongTinViewModel extends ViewModel {
 
-    private final MutableLiveData<String> mText;
+    private final MutableLiveData<User> userLiveData = new MutableLiveData<>();
 
-    public ThongTinViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("Đây là fragment: Thông tin");
+    public LiveData<User> getUser() {
+        return userLiveData;
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public void setUser(User user) {
+        userLiveData.setValue(user);
     }
 }
