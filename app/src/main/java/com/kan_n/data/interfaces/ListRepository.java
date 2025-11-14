@@ -1,48 +1,44 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/interfaces/ListRepository.java
+
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
-import com.kan_n.data.models.ListModel; // Bạn cần tạo model ListModel
-
+import com.google.firebase.database.ChildEventListener;
+import com.kan_n.data.models.ListModel;
 import java.util.List;
 
 public interface ListRepository {
 
-    /**
-     * Lấy tất cả các Danh sách (cột) thuộc về một Bảng.
-     * @param boardId ID của bảng
-     * @return LiveData<List<ListModel>>
-     */
-    LiveData<List<ListModel>> getListsForBoard(String boardId);
+    // --- Callbacks ---
+    public interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
+
+    public interface ListsCallback {
+        void onSuccess(List<ListModel> lists);
+        void onError(String message);
+    }
+
+    // --- Methods ---
 
     /**
-     * Tạo một Danh sách (cột) mới trong Bảng.
-     * @param boardId ID của bảng
-     * @param listModel Đối tượng Danh sách mới
-     * @return Task<Void>
+     * Tạo một danh sách (cột) mới trong bảng.
      */
-    Task<Void> createList(String boardId, ListModel listModel);
+    void createList(String boardId, String title, double position, GeneralCallback callback);
 
     /**
-     * Cập nhật một Danh sách (ví dụ: đổi tên).
-     * @param listId ID của danh sách
-     * @param updates Map chứa các trường cần cập nhật
-     * @return Task<Void>
+     * Lắng nghe (real-time) các danh sách (cột) của một bảng.
+     * Dùng ChildEventListener để RecyclerView tự động cập nhật khi có thêm/sửa/xóa.
      */
-    Task<Void> updateList(String listId, java.util.Map<String, Object> updates);
+    void getListsForBoard(String boardId, ChildEventListener listener);
 
     /**
-     * Xóa một Danh sách (cột).
-     * @param listId ID của danh sách
-     * @return Task<Void>
+     * Cập nhật tiêu đề của một danh sách (cột).
      */
-    Task<Void> deleteList(String listId);
+    void updateListTitle(String listId, String newTitle, GeneralCallback callback);
 
     /**
-     * Cập nhật thứ tự của các Danh sách trong một Bảng (khi kéo-thả).
-     * @param boardId ID của bảng
-     * @param sortedListIds Danh sách các ID đã được sắp xếp
-     * @return Task<Void>
+     * Xóa một danh sách (cột) VÀ tất cả các thẻ (cards) bên trong nó.
      */
-    Task<Void> updateListOrder(String boardId, List<String> sortedListIds);
+    void deleteList(String listId, GeneralCallback callback);
 }

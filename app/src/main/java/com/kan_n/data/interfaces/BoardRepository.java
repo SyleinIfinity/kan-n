@@ -1,67 +1,47 @@
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
 import com.kan_n.data.models.Board;
 import com.kan_n.data.models.Workspace;
+import com.kan_n.data.models.Background; // <--- Import Background
 
 import java.util.List;
+import java.util.Map;
 
 public interface BoardRepository {
 
-    /**
-     * Lấy danh sách tất cả các Không gian làm việc (Workspace) CÙNG VỚI các Bảng (Board)
-     * lồng bên trong chúng, dành cho người dùng hiện tại.
-     * Đây là phương thức quan trọng cho BangViewModel.
-     *
-     * @param userId ID của người dùng
-     * @return LiveData<List<Workspace>>
-     */
-    LiveData<List<Workspace>> getWorkspacesWithBoards(String userId);
+    // --- Định nghĩa Callbacks ---
+    interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
+    interface BoardCallback {
+        void onSuccess(Board board);
+        void onError(String message);
+    }
+    interface WorkspacesWithBoardsCallback {
+        void onSuccess(List<Workspace> workspaces);
+        void onError(String message);
+    }
 
-    /**
-     * Lấy chi tiết của một Bảng cụ thể.
-     * @param boardId ID của bảng
-     * @return LiveData<Board>
-     */
-    LiveData<Board> getBoardDetails(String boardId);
+    // --- PHƯƠNG THỨC LẤY DỮ LIỆU ---
+
+    void getWorkspacesWithBoards(String userId, WorkspacesWithBoardsCallback callback);
+    void getBoardDetails(String boardId, BoardCallback callback);
+
+    // --- PHƯƠNG THỨC GHI DỮ LIỆU ---
 
     /**
      * Tạo một Bảng mới trong một Không gian làm việc.
      * @param workspaceId ID của không gian làm việc
-     * @param board Đối tượng Bảng mới
-     * @return Task<Void>
+     * @param name Tên bảng
+     * @param visibility "private" hoặc "workspace"
+     * @param background Đối tượng Background chứa type và value (color/image) <--- CẬP NHẬT
+     * @param callback Callback kết quả
      */
-    Task<Void> createBoard(String workspaceId, Board board);
+    void createBoard(String workspaceId, String name, String visibility, Background background, GeneralCallback callback); // <--- CẬP NHẬT
 
-    /**
-     * Cập nhật thông tin một Bảng (ví dụ: đổi tên, đổi ảnh nền).
-     * @param boardId ID của bảng
-     * @param updates Map chứa các trường cần cập nhật
-     * @return Task<Void>
-     */
-    Task<Void> updateBoard(String boardId, java.util.Map<String, Object> updates);
-
-    /**
-     * Xóa một Bảng.
-     * @param boardId ID của bảng
-     * @return Task<Void>
-     */
-    Task<Void> deleteBoard(String boardId);
-
-    /**
-     * Thêm một thành viên vào Bảng.
-     * @param boardId ID của bảng
-     * @param userId ID người dùng được thêm
-     * @return Task<Void>
-     */
-    Task<Void> addMemberToBoard(String boardId, String userId);
-
-    /**
-     * Xóa một thành viên khỏi Bảng.
-     * @param boardId ID của bảng
-     * @param userId ID người dùng bị xóa
-     * @return Task<Void>
-     */
-    Task<Void> removeMemberFromBoard(String boardId, String userId);
+    void updateBoard(String boardId, Map<String, Object> updates, GeneralCallback callback);
+    void deleteBoard(String boardId, GeneralCallback callback);
+    void addMemberToBoard(String boardId, String userId, GeneralCallback callback);
+    void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback);
 }

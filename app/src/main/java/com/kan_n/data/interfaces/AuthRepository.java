@@ -1,52 +1,30 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/interfaces/AuthRepository.java
+
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseUser;
-import com.kan_n.data.models.User; // Bạn cần tạo model User
+import com.kan_n.data.models.User;
 
 public interface AuthRepository {
 
-    /**
-     * Lấy người dùng Firebase hiện tại (nếu đã đăng nhập).
-     * @return LiveData<FirebaseUser>
-     */
-    LiveData<FirebaseUser> getCurrentUser();
+    public interface AuthCallback {
+        void onSuccess(User user);
+        void onError(String message);
+    }
+
+    public interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
 
     /**
-     * Lấy chi tiết thông tin người dùng (từ Realtime Database/Firestore) bằng ID.
-     * @param userId ID của người dùng
-     * @return LiveData<User>
+     * Hành động đăng ký user mới.
+     * ✨ Đã bổ sung 'phone'
      */
-    LiveData<User> getUserDetails(String userId);
+    void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback);
 
     /**
-     * Thực hiện đăng nhập bằng email và mật khẩu.
-     * @param email Email người dùng
-     * @param password Mật khẩu
-     * @return Task<AuthResult> để theo dõi kết quả
+     * Hành động đăng nhập.
+     * ✨ Đã thay đổi 'username' thành 'email'
      */
-    Task<AuthResult> login(String email, String password);
-
-    /**
-     * Thực hiện đăng ký người dùng mới.
-     * @param email Email
-     * @param password Mật khẩu
-     * @param username Tên hiển thị
-     * @return Task<AuthResult>
-     */
-    Task<AuthResult> register(String email, String password, String username);
-
-    /**
-     * Lưu thông tin người dùng (như username, email) vào cơ sở dữ liệu sau khi đăng ký thành công.
-     * @param user Đối tượng User chứa thông tin
-     * @return Task<Void>
-     */
-    Task<Void> saveUserDetails(User user);
-
-    /**
-     * Đăng xuất người dùng hiện tại.
-     */
-    void logout();
+    void login(String email, String passwordPlain, AuthCallback callback);
 }

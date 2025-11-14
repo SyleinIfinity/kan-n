@@ -1,7 +1,8 @@
 package com.kan_n.ui.activities;
 
 import android.os.Bundle;
-import android.widget.TextView; // Đảm bảo import TextView
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,10 +15,6 @@ import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
-// --- CÓ THỂ BẠN CẦN THÊM IMPORT NÀY ---
-// (Mặc dù binding.fabCreateBoard có thể đã xử lý)
-// import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import com.google.firebase.FirebaseApp;
 import com.kan_n.R;
@@ -44,70 +41,76 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        FirebaseApp.initializeApp(this);
-
-
-        // --- BẮT ĐẦU PHẦN CÀI ĐẶT NAVIGATION ---
-
-        // 1. Thiết lập Toolbar làm ActionBar
-        setSupportActionBar(binding.toolbar);
-
-        // 2. Ẩn tiêu đề mặc định
+        // 1. Thiết lập Toolbar
+        setSupportActionBar(binding.toolbar.getRoot());
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        // 3. Lấy NavController (Code của bạn đã đúng)
+        // 2. Lấy NavController
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.nav_host_fragment); // Đảm bảo ID này là "nav_host_fragment"
+                .findFragmentById(R.id.nav_host_fragment);
         this.navController = navHostFragment.getNavController();
 
-        // 4. Cấu hình AppBarConfiguration (Code của bạn đã đúng)
+        // 3. Cấu hình AppBarConfiguration
         appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.thanhDieuHuong_Bang, R.id.thanhDieuHuong_HoatDong, R.id.thanhDieuHuong_ThongTin)
                 .build();
 
-        // 5. Liên kết ActionBar (Toolbar) với NavController
+        // 4. Liên kết ActionBar (Toolbar) với NavController
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        // 6. Tìm TextView tùy chỉnh (toolbar_title)
+        // 5. Tìm TextView tùy chỉnh (toolbar_title)
         TextView toolbarTitle = findViewById(R.id.toolbar_title);
 
-        // 7. [SỬA ĐỔI] Thêm Listener để cập nhật tiêu đề VÀ ẩn/hiện FAB
+        // 6. [ĐÃ SỬA] Cập nhật tiêu đề, Ẩn/Hiện Toolbar chính, và NavView.
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
 
-            // --- PHẦN 1: Cập nhật tiêu đề Toolbar (Code cũ của bạn) ---
+            // --- Phần 1: Cập nhật tiêu đề (giữ nguyên) ---
             CharSequence label = destination.getLabel();
             if (toolbarTitle != null && label != null) {
                 toolbarTitle.setText(label);
             }
 
-            // --- PHẦN 2: [THÊM MỚI] Ẩn/Hiện nút FAB ---
+            // --- Phần 2: [SỬA ĐỔI] Ẩn/hiện Toolbar chính, NavView và đổi Icon ---
+            int destId = destination.getId();
 
-            // Lấy ID của fragment đích
-            int destinationId = destination.getId();
+            if (destId == R.id.thanhDieuHuong_Bang ||
+                    destId == R.id.thanhDieuHuong_HoatDong ||
+                    destId == R.id.thanhDieuHuong_ThongTin)
+            {
+                // Đây là 3 fragment chính (cấp cao nhất)
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.VISIBLE); // HIỆN NavView
+                binding.toolbar.getRoot().setNavigationIcon(null); // NavController tự quản lý
 
-            // Kiểm tra xem ID có khớp với fragment "Bảng" không
-            // (Sử dụng ID từ tệp navigation của bạn)
-            if (destinationId == R.id.thanhDieuHuong_Bang) {
-                // Nếu ĐÚNG, hiện FAB
-                binding.fabCreateBoard.show();
+            } else if (destId == R.id.taoBangMoiFragment) {
+                // Đây là fragment Tạo Bảng Mới
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_huy); // Đặt icon 'X'
+
+            } else if (destId == R.id.bangSpaceFragment) {
+                // === ✨ PHẦN SỬA LỖI CỦA BẠN ===
+                // Đây là fragment BangSpace (có toolbar riêng)
+                binding.toolbar.getRoot().setVisibility(View.GONE); // ẨN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+
             } else {
-                // Nếu là bất kỳ fragment nào khác (Hoạt động, Thông tin), ẩn FAB
-                binding.fabCreateBoard.hide();
+                // Đây là các fragment "con" khác (nếu có)
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(null); // Dùng icon "mũi tên quay lại"
             }
         });
 
-        // 8. [XÓA] Bỏ dòng code cũ này đi (Code của bạn đã xóa, rất tốt)
-
-        // 9. Liên kết BottomNavigationView với NavController
+        // 7. Liên kết BottomNavigationView với NavController
         NavigationUI.setupWithNavController(binding.navView, navController);
+
     }
 
-    // 10. Hàm xử lý nút "Back" trên Toolbar (Giữ nguyên)
     @Override
     public boolean onSupportNavigateUp() {
-        // Đảm bảo ID "nav_host_fragment" khớp với ID ở mục 3
         navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(this.navController, this.appBarConfiguration)
                 || super.onSupportNavigateUp();

@@ -1,49 +1,121 @@
 package com.kan_n.ui.fragments.bang;
 
+import androidx.annotation.NonNull; // ✨ Thêm
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.kan_n.data.models.Board;
+// ✨ Thêm các import này
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
+// ---
+import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.models.Workspace;
+import com.kan_n.data.repository.BoardRepositoryImpl;
+import com.kan_n.utils.FirebaseUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BangViewModel extends ViewModel {
 
-    // Sử dụng MutableLiveData để giữ danh sách các không gian làm việc
+    private final BoardRepository boardRepository;
     private final MutableLiveData<List<Workspace>> workspacesLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
+
+    // ✨ 1. Thêm các biến để lắng nghe
+    private DatabaseReference membershipsRef;
+    private ValueEventListener membershipListener;
+    private String currentUserId;
 
     public BangViewModel() {
-        loadWorkspaces();
+        this.boardRepository = new BoardRepositoryImpl();
+        this.currentUserId = FirebaseUtils.getCurrentUserId(); // Lấy UID 1 lần
+        if (this.currentUserId != null) {
+            // ✨ 2. Khởi tạo tham chiếu
+            this.membershipsRef = FirebaseUtils.getRootRef().child("memberships");
+        }
+        // Xóa loadWorkspaces(); ở đây
     }
 
     public LiveData<List<Workspace>> getWorkspaces() {
         return workspacesLiveData;
     }
 
-    // Phương thức tải dữ liệu
-    // Trong thực tế, bạn sẽ gọi Repository để lấy dữ liệu từ Firebase/API ở đây
-    private void loadWorkspaces() {
-        // --- DỮ LIỆU GIẢ (DEMO) ---
-        // Thay thế phần này bằng logic tải dữ liệu thật
-        List<Workspace> demoList = new ArrayList<>();
+    public LiveData<String> getError() {
+        return errorLiveData;
+    }
 
-        // Workspace 1
-        List<Board> boards1 = new ArrayList<>();
-        boards1.add(new Board("board1", "Bảng dự án A", "https://example.com/image1.jpg", true, null));
-        boards1.add(new Board("board2", "Kế hoạch Marketing", "https://example.com/image2.jpg", false, null));
-        boards1.add(new Board("board3", "Kế hoạch Marketing", "https://example.com/image2.jpg", false, null));
-        demoList.add(new Workspace("ws1", "Không gian làm việc của Kan-n", boards1));
+    /**
+     * ✨ 3. TẠO HÀM BẮT ĐẦU LẮNG NGHE
+     * Fragment sẽ gọi hàm này trong onViewCreated.
+     */
+    public void startListeningForChanges() {
+        if (currentUserId == null) {
+            errorLiveData.setValue("Người dùng chưa đăng nhập.");
+            return;
+        }
 
-        // Workspace 2
-        List<Board> boards2 = new ArrayList<>();
-        boards2.add(new Board("board3", "Phát triển App", "https://example.com/image3.jpg", false, null));
-        demoList.add(new Workspace("ws2", "Dự án cá nhân", boards2));
+        // Chỉ tạo listener 1 lần duy nhất
+        if (membershipListener == null) {
+            membershipListener = new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    // Bất cứ khi nào memberships của user thay đổi (thêm/xóa)
+                    // HÃY TẢI LẠI TOÀN BỘ DANH SÁCH BẢNG
+                    loadWorkspaces();
+                }
 
-        // Cập nhật LiveData
-        workspacesLiveData.setValue(demoList);
-        // --- KẾT THÚC DỮ LIỆU GIẢ ---
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    errorLiveData.postValue("Lỗi lắng nghe: " + error.getMessage());
+                }
+            };
+
+            // ✨ 4. Gắn listener vào query (dùng addValueEventListener)
+            // Lắng nghe TẤT CẢ memberships CỦA USER NÀY
+            membershipsRef.orderByChild("userId").equalTo(currentUserId)
+                    .addValueEventListener(membershipListener);
+        }
+    }
+
+
+    /**
+     * Phương thức tải dữ liệu thật từ Firebase.
+     * (Hàm này giờ sẽ được gọi bởi listener ở trên)
+     */
+    public void loadWorkspaces() {
+        if (currentUserId == null) {
+            errorLiveData.setValue("Người dùng chưa đăng nhập.");
+            workspacesLiveData.setValue(new ArrayList<>());
+            return;
+        }
+
+        boardRepository.getWorkspacesWithBoards(currentUserId, new BoardRepository.WorkspacesWithBoardsCallback() {
+            @Override
+            public void onSuccess(List<Workspace> workspaces) {
+                workspacesLiveData.postValue(workspaces);
+            }
+
+            @Override
+            public void onError(String message) {
+                errorLiveData.postValue("Lỗi tải dữ liệu: " + message);
+                workspacesLiveData.postValue(new ArrayList<>());
+            }
+        });
+    }
+
+    /**
+     * ✨ 5. Dọn dẹp listener khi ViewModel bị hủy
+     */
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        if (membershipListener != null && currentUserId != null) {
+            membershipsRef.orderByChild("userId").equalTo(currentUserId)
+                    .removeEventListener(membershipListener);
+        }
     }
 }
