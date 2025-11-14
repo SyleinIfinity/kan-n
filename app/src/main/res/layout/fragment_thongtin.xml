@@ -61,10 +61,10 @@
                 app:tint="#000000" />
         </LinearLayout>
 
-        <include layout="@layout/item_thongtin_luachon" />
-        <include layout="@layout/item_thongtin_luachon" />
-        <include layout="@layout/item_thongtin_luachon" />
-        <include layout="@layout/item_thongtin_luachon" />
+        <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_khonggianlamviec"/>
+        <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_caidat"/>
+        <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_hoidap"/>
+        <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_dãnguat"/>
 
     </LinearLayout>
 </ScrollView>
