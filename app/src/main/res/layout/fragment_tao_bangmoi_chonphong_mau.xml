@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_gray"> <com.google.android.material.appbar.AppBarLayout
+    android:id="@+id/appBarLayout"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar_chon_mau"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/iv_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Quay lại"
+                android:padding="8dp"
+                android:src="@drawable/ic_quaylai_v1"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/tv_toolbar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="Phông nền bảng"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/iv_back"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.appbar.MaterialToolbar>
+
+</com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_mau_sac"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:padding="4dp"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
+        app:spanCount="3"
+        tools:listitem="@layout/item_background_option" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

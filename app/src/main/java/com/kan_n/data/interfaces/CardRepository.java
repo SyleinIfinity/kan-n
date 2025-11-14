@@ -1,79 +1,57 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/interfaces/CardRepository.java
+
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
-import com.kan_n.data.models.Card; // Bạn cần tạo model Card
-
-import java.util.List;
+import com.google.firebase.database.ChildEventListener;
+import com.kan_n.data.models.Card;
+import java.util.Map;
 
 public interface CardRepository {
 
-    /**
-     * Lấy tất cả các Thẻ (card) thuộc về một Danh sách (cột).
-     * @param listId ID của danh sách
-     * @return LiveData<List<Card>>
-     */
-    LiveData<List<Card>> getCardsForList(String listId);
+    // Callback chung
+    public interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
+
+    // Callback trả về 1 Card (ví dụ khi tạo mới)
+    public interface CardCallback {
+        void onSuccess(Card card);
+        void onError(String message);
+    }
 
     /**
-     * Lấy chi tiết một Thẻ cụ thể.
-     * @param cardId ID của thẻ
-     * @return LiveData<Card>
+     * Tạo một thẻ mới trong một danh sách.
      */
-    LiveData<Card> getCardDetails(String cardId);
+    void createCard(String listId, String title, double position, GeneralCallback callback);
 
     /**
-     * Tạo một Thẻ mới trong một Danh sách.
-     * @param listId ID của danh sách
-     * @param card Đối tượng Thẻ mới
-     * @return Task<Void>
+     * Lắng nghe (real-time) tất cả các thẻ trong một danh sách cụ thể.
+     * Đây là phương thức quan trọng cho RecyclerView lồng bên trong item_ListModel.
+     *
+     * @param listId ID của danh sách (ListModel)
+     * @param listener Một ChildEventListener sẽ được kích hoạt khi có thẻ
+     * thêm/sửa/xóa/di chuyển.
      */
-    Task<Void> createCard(String listId, Card card);
+    void getCardsForList(String listId, ChildEventListener listener);
 
     /**
-     * Cập nhật chi tiết một Thẻ (ví dụ: mô tả, ngày hết hạn).
-     * @param cardId ID của thẻ
-     * @param updates Map chứa các trường cần cập nhật
-     * @return Task<Void>
+     * Cập nhật trạng thái 'isCompleted' của một thẻ (khi nhấn ic_tron_v1).
      */
-    Task<Void> updateCard(String cardId, java.util.Map<String, Object> updates);
+    void setCardCompleted(String cardId, boolean isCompleted, GeneralCallback callback);
 
     /**
-     * Xóa một Thẻ.
-     * @param cardId ID của thẻ
-     * @return Task<Void>
+     * Cập nhật một trường bất kỳ của thẻ (ví dụ: coverImageUrl).
      */
-    Task<Void> deleteCard(String cardId);
+    void updateCardField(String cardId, String fieldName, Object value, GeneralCallback callback);
 
     /**
-     * Di chuyển một Thẻ sang Danh sách (cột) khác.
-     * @param cardId ID của thẻ
-     * @param newListId ID của danh sách mới
-     * @return Task<Void>
+     * Cập nhật nhiều trường của thẻ.
      */
-    Task<Void> moveCardToList(String cardId, String newListId);
+    void updateCard(String cardId, Map<String, Object> updates, GeneralCallback callback);
 
     /**
-     * Cập nhật thứ tự các Thẻ trong một Danh sách (khi kéo-thả).
-     * @param listId ID của danh sách
-     * @param sortedCardIds Danh sách các ID thẻ đã được sắp xếp
-     * @return Task<Void>
+     * Xóa một thẻ.
      */
-    Task<Void> updateCardOrder(String listId, List<String> sortedCardIds);
-
-    /**
-     * Gán một thành viên vào Thẻ.
-     * @param cardId ID của thẻ
-     * @param userId ID của người dùng
-     * @return Task<Void>
-     */
-    Task<Void> addMemberToCard(String cardId, String userId);
-
-    /**
-     * Xóa một thành viên khỏi Thẻ.
-     * @param cardId ID của thẻ
-     * @param userId ID của người dùng
-     * @return Task<Void>
-     */
-    Task<Void> removeMemberFromCard(String cardId, String userId);
+    void deleteCard(String cardId, GeneralCallback callback);
 }

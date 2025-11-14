@@ -8,8 +8,32 @@
     <fragment
         android:id="@+id/thanhDieuHuong_Bang"
         android:name="com.kan_n.ui.fragments.bang.BangFragment"
-        android:label="@string/title_Bang"
-        tools:layout="@layout/fragment_bang" />
+        android:label="Bảng"
+        tools:layout="@layout/fragment_bang" >
+
+        <action
+            android:id="@+id/action_bangFragment_to_taoBangMoiFragment"
+            app:destination="@id/taoBangMoiFragment" />
+
+        <action
+            android:id="@+id/action_bangFragment_to_bangSpaceFragment"
+            app:destination="@id/bangSpaceFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/bangSpaceFragment"
+        android:name="com.kan_n.ui.fragments.bang_space.BangSpaceFragment"
+        android:label="Chi tiết Bảng"
+        tools:layout="@layout/fragment_bang_space" >
+        <argument
+            android:name="boardId"
+            app:argType="string" />
+        <argument
+            android:name="boardTitle"
+            app:argType="string"
+            android:defaultValue="KAN-N" />
+    </fragment>
 
     <fragment
         android:id="@+id/thanhDieuHuong_HoatDong"
@@ -22,4 +46,43 @@
         android:name="com.kan_n.ui.fragments.thongtin.ThongTinFragment"
         android:label="@string/title_ThongTin"
         tools:layout="@layout/fragment_thongtin" />
+
+    <fragment
+        android:id="@+id/taoBangMoiFragment"
+        android:name="com.kan_n.ui.fragments.taobangmoi.TaoBangMoiFragment"
+        android:label="Tạo Bảng Mới"
+        tools:layout="@layout/fragment_taobang_moi" >
+
+        <action
+            android:id="@+id/action_taoBangMoiFragment_to_chonPhongFragment"
+            app:destination="@id/taoBangMoiChonPhongFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/taoBangMoiChonPhongFragment"
+        android:name="com.kan_n.ui.fragments.taobangmoi.TaoBangMoiChonPhongFragment"
+        android:label="Chọn Phông Nền"
+        tools:layout="@layout/fragment_tao_bangmoi_chonphong" >
+
+        <action
+            android:id="@+id/action_chonPhongFragment_to_chonMauFragment"
+            app:destination="@id/taoBangMoiChonPhongMauFragment" />
+
+        <action
+            android:id="@+id/action_chonPhongFragment_to_chonAnhFragment"
+            app:destination="@id/taoBangMoiChonPhongAnhFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/taoBangMoiChonPhongMauFragment"
+        android:name="com.kan_n.ui.fragments.taobangmoi.TaoBangMoiChonPhongMauFragment"
+        android:label="Chọn Màu"
+        tools:layout="@layout/fragment_tao_bangmoi_chonphong_mau" />
+
+    <fragment
+        android:id="@+id/taoBangMoiChonPhongAnhFragment"
+        android:name="com.kan_n.ui.fragments.taobangmoi.TaoBangMoiChonPhongAnhFragment"
+        android:label="Chọn Ảnh"
+        tools:layout="@layout/fragment_tao_bangmoi_chonphong_anh" />
+
 </navigation>

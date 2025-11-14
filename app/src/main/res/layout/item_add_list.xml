@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="#DADEE2"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:id="@+id/layoutThemDanhSach"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp"
+        android:background="?attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_daucong"
+            app:tint="#172B4D"
+            android:contentDescription="Thêm danh sách" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Thêm danh sách khác"
+            android:textColor="#172B4D"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

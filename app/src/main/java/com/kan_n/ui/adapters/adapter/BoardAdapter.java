@@ -1,6 +1,7 @@
 package com.kan_n.ui.adapters.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,28 +12,34 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+// import com.google.android.material.imageview.ShapeableImageView; // Khong can neu da cast
 import com.kan_n.R;
 import com.kan_n.data.models.Board;
-
-// Thêm thư viện Glide để tải ảnh. Bạn cần thêm thư viện này vào build.gradle.kts (app)
-// implementation("com.github.bumptech.glide:glide:4.16.0")
+import com.kan_n.data.models.Background;
 
 import java.util.List;
 
 public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHolder> {
 
     private List<Board> boardList;
-    private Context context;
+    private final Context context;
+    private final OnBoardClickListener boardClickListener; // ✨ 1. Them bien listener
 
-    public BoardAdapter(Context context, List<Board> boardList) {
+    // ✨ 2. Dinh nghia Interface
+    public interface OnBoardClickListener {
+        void onBoardClick(Board board);
+    }
+
+    // ✨ 3. Cap nhat constructor
+    public BoardAdapter(Context context, List<Board> boardList, OnBoardClickListener listener) {
         this.context = context;
         this.boardList = boardList;
+        this.boardClickListener = listener; // Gan listener
     }
 
     @NonNull
     @Override
     public BoardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Sử dụng layout item_board.xml đã thiết kế ở bước trước
         View view = LayoutInflater.from(context).inflate(R.layout.item_board, parent, false);
         return new BoardViewHolder(view);
     }
@@ -40,36 +47,58 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
     @Override
     public void onBindViewHolder(@NonNull BoardViewHolder holder, int position) {
         Board board = boardList.get(position);
+        if (board == null) return;
 
         // 1. Đặt tiêu đề cho Bảng
-        // Sử dụng getName() thay vì getTitle()
-        holder.tvBoardTitle.setText(board.getName()); //
+        holder.tvBoardTitle.setText(board.getName());
 
         // 2. Xử lý logic hiển thị sao (yêu thích)
-        // Sử dụng getVisibility() thay vì isStarred()
-        // Cần kiểm tra null vì getVisibility() trả về Boolean
-        if (board.getVisibility() != null && board.getVisibility()) {
+        // (Logic cua ban)
+        if (board.getVisibility() != null &&
+                (board.getVisibility().equalsIgnoreCase("public") || board.getVisibility().equalsIgnoreCase("workspace"))) {
             holder.ivBoardStarred.setImageResource(R.drawable.ic_clicked_star);
         } else {
             holder.ivBoardStarred.setImageResource(R.drawable.ic_unclicked_star);
         }
 
-        // 3. Tải ảnh nền bằng Glide
-        // Sử dụng getDescription() vì bạn đang lưu URL ảnh trong đó
-        Glide.with(context)
-                .load(board.getDescription()) // Lấy URL từ trường description
-                .placeholder(R.drawable.ic_launcher_background) // Ảnh chờ
-                .error(R.drawable.ic_huy) // Ảnh khi lỗi
-                .centerCrop() // Cắt ảnh cho vừa
-                .into(holder.ivBoardBackground);
+        // 3. Xử lý hiển thị Background
+        Background background = board.getBackground();
+        int defaultColor = Color.parseColor("#4D8DDB");
 
-        // 4. (Tùy chọn) Thêm sự kiện click cho mỗi bảng
+        if (background != null) {
+            String type = background.getType();
+            String value = background.getValue();
+
+            if ("color".equalsIgnoreCase(type) && value != null && !value.isEmpty()) {
+                holder.ivBoardBackground.setVisibility(View.GONE);
+                try {
+                    holder.viewScrim.setBackgroundColor(Color.parseColor(value));
+                } catch (IllegalArgumentException e) {
+                    holder.viewScrim.setBackgroundColor(defaultColor);
+                }
+            } else if ("image".equalsIgnoreCase(type) && value != null && !value.isEmpty()) {
+                holder.ivBoardBackground.setVisibility(View.VISIBLE);
+                // holder.viewScrim.setBackgroundColor(Color.TRANSPARENT); // Dam bao scrim trong suot
+                Glide.with(context)
+                        .load(value)
+                        .placeholder(R.drawable.ic_launcher_background)
+                        .error(R.drawable.ic_huy)
+                        .centerCrop()
+                        .into(holder.ivBoardBackground);
+            } else {
+                holder.ivBoardBackground.setVisibility(View.GONE);
+                holder.viewScrim.setBackgroundColor(defaultColor);
+            }
+        } else {
+            holder.ivBoardBackground.setVisibility(View.GONE);
+            holder.viewScrim.setBackgroundColor(defaultColor);
+        }
+
+        // ✨ 4. Gan su kien click vao toan bo item
         holder.itemView.setOnClickListener(v -> {
-            // Xử lý khi người dùng nhấn vào một bảng
-            // Ví dụ: Chuyển sang một Activity/Fragment chi tiết của bảng
-            // Intent intent = new Intent(context, BoardDetailActivity.class);
-            // intent.putExtra("BOARD_ID", board.getBoardId());
-            // context.startActivity(intent);
+            if (boardClickListener != null) {
+                boardClickListener.onBoardClick(board);
+            }
         });
     }
 
@@ -78,17 +107,23 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
         return boardList != null ? boardList.size() : 0;
     }
 
-    // Lớp ViewHolder để giữ các tham chiếu đến View
+    public void updateData(List<Board> newBoardList) {
+        this.boardList = newBoardList;
+        notifyDataSetChanged();
+    }
+
     public static class BoardViewHolder extends RecyclerView.ViewHolder {
         ImageView ivBoardBackground;
         TextView tvBoardTitle;
         ImageView ivBoardStarred;
+        View viewScrim;
 
         public BoardViewHolder(@NonNull View itemView) {
             super(itemView);
             ivBoardBackground = itemView.findViewById(R.id.iv_board_background);
             tvBoardTitle = itemView.findViewById(R.id.tv_board_title);
             ivBoardStarred = itemView.findViewById(R.id.iv_board_starred);
+            viewScrim = itemView.findViewById(R.id.view_scrim);
         }
     }
 }

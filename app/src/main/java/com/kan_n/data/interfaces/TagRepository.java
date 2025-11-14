@@ -1,56 +1,56 @@
+// Đặt tại: app/src/main/java/com/kan_n/data/interfaces/TagRepository.java
+
 package com.kan_n.data.interfaces;
 
-import androidx.lifecycle.LiveData;
-import com.google.android.gms.tasks.Task;
-import com.kan_n.data.models.Tag; // Bạn cần tạo model Tag
-
+import com.kan_n.data.models.Tag;
 import java.util.List;
+import java.util.Map;
 
 public interface TagRepository {
 
-    /**
-     * Lấy tất cả các Nhãn (tag) có sẵn trong một Bảng.
-     * @param boardId ID của bảng
-     * @return LiveData<List<Tag>>
-     */
-    LiveData<List<Tag>> getTagsForBoard(String boardId);
+    // === ĐỊNH NGHĨA CALLBACKS ===
+
+    public interface GeneralCallback {
+        void onSuccess();
+        void onError(String message);
+    }
+
+    public interface TagsCallback {
+        void onSuccess(List<Tag> tags);
+        void onError(String message);
+    }
+
+    // === ĐỊNH NGHĨA HÀNH ĐỘNG (Đã chuẩn hóa) ===
 
     /**
-     * Tạo một Nhãn mới cho Bảng.
-     * @param boardId ID của bảng
-     * @param tag Đối tượng Nhãn mới (ví dụ: tên, màu sắc)
-     * @return Task<Void>
+     * Lấy tất cả các Nhãn (tag) mà người dùng hiện tại đã tạo.
+     * (Trong cấu trúc của chúng ta, Tag thuộc về User, không phải Board).
      */
-    Task<Void> createTagForBoard(String boardId, Tag tag);
+    void getTagsForUser(String userId, TagsCallback callback);
+
+    /**
+     * Tạo một Nhãn mới.
+     * (Model Tag đã chứa createdBy).
+     */
+    void createTag(Tag tag, GeneralCallback callback);
 
     /**
      * Cập nhật một Nhãn (ví dụ: đổi màu, đổi tên).
-     * @param tagId ID của nhãn
-     * @param updates Map chứa các trường cần cập nhật
-     * @return Task<Void>
      */
-    Task<Void> updateTag(String tagId, java.util.Map<String, Object> updates);
+    void updateTag(String tagId, Map<String, Object> updates, GeneralCallback callback);
 
     /**
-     * Xóa một Nhãn khỏi Bảng.
-     * @param tagId ID của nhãn
-     * @return Task<Void>
+     * Xóa một Nhãn VÀ gỡ nó khỏi tất cả các Thẻ.
      */
-    Task<Void> deleteTag(String tagId);
+    void deleteTag(String tagId, GeneralCallback callback);
 
     /**
-     * Gắn một Nhãn vào một Thẻ.
-     * @param cardId ID của thẻ
-     * @param tagId ID của nhãn
-     * @return Task<Void>
+     * Gắn một Nhãn vào một Thẻ (Atomic update).
      */
-    Task<Void> addTagToCard(String cardId, String tagId);
+    void addTagToCard(String cardId, String tagId, GeneralCallback callback);
 
     /**
-     * Gỡ một Nhãn khỏi một Thẻ.
-     * @param cardId ID của thẻ
-     * @param tagId ID của nhãn
-     * @return Task<Void>
+     * Gỡ một Nhãn khỏi một Thẻ (Atomic update).
      */
-    Task<Void> removeTagFromCard(String cardId, String tagId);
+    void removeTagFromCard(String cardId, String tagId, GeneralCallback callback);
 }
