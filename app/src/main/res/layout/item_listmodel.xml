@@ -45,49 +45,13 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"
             app:layout_constraintTop_toBottomOf="@id/tvTieuDeDanhSach"
-            app:layout_constraintBottom_toTopOf="@+id/layoutThemThe"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             tools:listitem="@layout/item_card" />
-
-
-        <LinearLayout
-            android:id="@+id/layoutThemThe"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="12dp"
-            android:background="?attr/selectableItemBackground"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_daucong" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Thêm thẻ"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="14sp" />
-
-        </LinearLayout>
-
-        <ImageView
-            android:id="@+id/ivThongTinDanhSach"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_thongtin"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="12dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
