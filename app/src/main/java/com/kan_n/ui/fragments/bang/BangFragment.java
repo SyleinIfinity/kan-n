@@ -38,16 +38,13 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         binding = FragmentBangBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
         rvWorkspaces = binding.rvWorkspaces;
-
-        // Thiet lap Adapter
         setupRecyclerView();
-
         return root;
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle SavedInstanceState) {
+        super.onViewCreated(view, SavedInstanceState);
 
         navController = NavHostFragment.findNavController(this);
 
@@ -60,6 +57,11 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                 workspaceAdapter.updateData(workspaces);
             }
         });
+
+        // ✨ 1. THAY THẾ loadWorkspaces() BẰNG
+        // Hàm này sẽ tự động gọi loadWorkspaces() lần đầu
+        // và mỗi khi có thay đổi trên Firebase.
+        bangViewModel.startListeningForChanges();
     }
 
     private void setupRecyclerView() {
