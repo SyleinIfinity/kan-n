@@ -1,113 +1,135 @@
 package com.kan_n.ui.fragments.thongtin;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.auth.FirebaseUser;
 import com.kan_n.R;
 import com.kan_n.data.models.User;
 import com.kan_n.databinding.FragmentThongtinBinding;
+import com.kan_n.ui.activities.AuthActivity;
 
 public class ThongTinFragment extends Fragment {
 
+    private FragmentThongtinBinding binding;
     private ThongTinViewModel viewModel;
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_thongtin, container, false);
-
-        // Thuộc tính User
-        TextView txtUsername = root.findViewById(R.id.txtUsername);
-        TextView txtEmail = root.findViewById(R.id.txtEmail);
-        ImageView imgAvatar = root.findViewById(R.id.imgAvatar);
-
-        // Tên các lựa chọn
-
-        // Lựa chọn Không gian làm việc
-        LinearLayout itemKhongGianLamViec = root.findViewById(R.id.item_khonggianlamviec);
-        ImageView iconKhongGianLamViec = itemKhongGianLamViec.findViewById(R.id.iconMenu);
-        TextView titleKhongGianLamViec = itemKhongGianLamViec.findViewById(R.id.txtMenuTitle);
-
-        iconKhongGianLamViec.setImageResource(R.drawable.ic_khonggianlamviec);
-        titleKhongGianLamViec.setText("Không gian làm việc");
-
-        // Lựa chọn Cài Đặt
-        LinearLayout itemCaiDat = root.findViewById(R.id.item_caidat);
-        ImageView iconCaiDat = itemCaiDat.findViewById(R.id.iconMenu);
-        TextView titleCaiDat = itemCaiDat.findViewById(R.id.txtMenuTitle);
-
-        iconCaiDat.setImageResource(R.drawable.ic_caidat);
-        titleCaiDat.setText("Cài đặt");
-
-        // Lựa chọn Hỏi Đáp
-        LinearLayout itemHoiDap = root.findViewById(R.id.item_hoidap);
-        ImageView iconHoiDap = itemHoiDap.findViewById(R.id.iconMenu);
-        TextView titleHoiDap = itemHoiDap.findViewById(R.id.txtMenuTitle);
-
-        iconHoiDap.setImageResource(R.drawable.ic_hoidap);
-        titleHoiDap.setText("Hỏi đáp");
-
-        // Lựa chọn Đăng Xuất
-        LinearLayout itemDangXuat = root.findViewById(R.id.item_dangxuat);
-        ImageView iconDangXuat = itemDangXuat.findViewById(R.id.iconMenu);
-        TextView titleDangXuat = itemDangXuat.findViewById(R.id.txtMenuTitle);
-
-        iconDangXuat.setImageResource(R.drawable.ic_dangxuat);
-        titleDangXuat.setText("Đăng xuất");
-
-
-
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
+        // Khởi tạo ViewModel
         viewModel = new ViewModelProvider(this).get(ThongTinViewModel.class);
 
-        // Quan sát LiveData
-        viewModel.getUser().observe(getViewLifecycleOwner(), user -> {
-            if (user != null) {
-                txtUsername.setText(user.getDisplayName());
-                txtEmail.setText(user.getEmail());
-
-                // Load avatar (nếu dùng Glide)
-                Glide.with(this)
-                        .load(user.getAvatarUrl())
-                        .placeholder(R.drawable.ic_caidat)
-                        .into(imgAvatar);
-            }
-        });
-
-        // Lấy dữ liệu từ Firebase
-        loadUserData();
+        // Inflate layout sử dụng View Binding
+        binding = FragmentThongtinBinding.inflate(inflater, container, false);
+        View root = binding.getRoot();
 
         return root;
     }
 
-    private void loadUserData() {
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("users")
-                .child("DhEoy760JAeQ2EEWjR1zpFTBfby2"); // ID người dùng
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                viewModel.setUser(user);
-            }
+        // MỚI: Gọi hàm thiết lập nội dung cho các item menu
+        setupMenuItems();
 
-            @Override
-            public void onCancelled(DatabaseError error) {
+        // Tải dữ liệu người dùng
+        loadUserData();
 
+        // Thiết lập sự kiện click cho item "Cài đặt"
+        binding.itemCaidat.getRoot().setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_TrangCaiDatFragment);
+        });
+
+        // Thiết lập sự kiện click cho item "Đăng xuất"
+        // (Giả sử bạn có item_dangxuat trong fragment_thongtin.xml)
+        binding.itemDangxuat.getRoot().setOnClickListener(v -> {
+            viewModel.logout();
+            Intent intent = new Intent(getActivity(), AuthActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            if (getActivity() != null) {
+                getActivity().finish();
             }
         });
+
+        // Bạn cũng có thể thêm sự kiện click cho các item khác ở đây
+        // binding.itemKhonggianlamviec.getRoot().setOnClickListener(v -> { ... });
+        // binding.itemHoidap.getRoot().setOnClickListener(v -> { ... });
+    }
+
+    /**
+     * MỚI: Thiết lập văn bản và biểu tượng cho các item lựa chọn
+     */
+    private void setupMenuItems() {
+        // 1. Thiết lập cho "Không gian làm việc"
+        // (Giả sử bạn có file drawable tên là ic_khonggianlamviec)
+        binding.itemKhonggianlamviec.iconMenu.setImageResource(R.drawable.ic_khonggianlamviec);
+        binding.itemKhonggianlamviec.txtMenuTitle.setText("Không gian làm việc");
+
+        // 2. Thiết lập cho "Cài đặt"
+        binding.itemCaidat.iconMenu.setImageResource(R.drawable.ic_caidat);
+        binding.itemCaidat.txtMenuTitle.setText("Cài đặt");
+
+        // 3. Thiết lập cho "Hỏi đáp"
+        // (Giả sử bạn có file drawable tên là ic_hoidap)
+        binding.itemHoidap.iconMenu.setImageResource(R.drawable.ic_hoidap);
+        binding.itemHoidap.txtMenuTitle.setText("Hỏi đáp");
+
+        // 4. Thiết lập cho "Đăng xuất"
+        // (Giả sử bạn có include-item với id "item_dangxuat" và drawable "ic_dangxuat")
+        binding.itemDangxuat.iconMenu.setImageResource(R.drawable.ic_dangxuat);
+        binding.itemDangxuat.txtMenuTitle.setText("Đăng xuất");
+
+        // CHỈNH SỬA: Thay đổi icon của nút "Edit Profile" (btnProfileEdit)
+        // ID này nằm trực tiếp trong fragment_thongtin.xml
+        binding.btnProfileEdit.setImageResource(R.drawable.ic_menu_v1); // Ví dụ đổi sang icon khác
+    }
+
+    /**
+     * Tải và hiển thị thông tin người dùng
+     */
+    private void loadUserData() {
+        FirebaseUser firebaseUser = viewModel.getCurrentUser();
+        if (firebaseUser != null) {
+            String uid = firebaseUser.getUid();
+            viewModel.getUserData(uid, task -> {
+                if (task.isSuccessful()) {
+                    User user = task.getResult();
+                    if (user != null && getContext() != null) {
+                        // Cập nhật giao diện
+                        binding.txtUsername.setText(user.getDisplayName());
+                        binding.txtEmail.setText(user.getEmail());
+
+                        // Kiểm tra Avatar URL
+                        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+                            Glide.with(requireContext())
+                                    .load(user.getAvatarUrl())
+                                    .placeholder(R.drawable.logo)
+                                    .error(R.drawable.logo)
+                                    .into(binding.imgAvatar);
+                        } else {
+                            binding.imgAvatar.setImageResource(R.drawable.logo);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }
