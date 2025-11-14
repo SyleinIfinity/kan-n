@@ -1,6 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="#d3e0ff">
+
+    <TextView
+    android:id="@+id/tv_thank_you_message"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:text="Cảm ơn ý kiến đóng góp của bạn!\nChúng tôi sẽ cố gắng phản hồi sớm nhất"
+    android:textColor="@android:color/black"
+    android:textSize="18sp"
+    android:lineSpacingExtra="4dp"
+    android:textStyle="bold"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/img_illustration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toBottomOf="@id/tv_thank_you_message"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:src="@tools:sample/backgrounds/scenic"
+        android:contentDescription="Hình ảnh minh họa" />
+
+    <Button
+        android:id="@+id/btn_go_back"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginTop="6dp"
+        android:minWidth="120dp"
+        android:text="Quay về"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#457f89"
+        app:layout_constraintTop_toBottomOf="@id/img_illustration"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintBottom_toTopOf="@id/tv_add_feedback_title"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/tv_add_feedback_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="Thêm ý kiến"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/img_arrow_2"
+        app:layout_constraintTop_toBottomOf="@id/btn_go_back" />
+
+    <ImageView
+        android:id="@+id/img_arrow_2"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="24dp"
+        android:src="@drawable/next"
+        android:contentDescription="Mũi tên"
+        app:tint="@android:color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_add_feedback_title"
+        app:layout_constraintBottom_toBottomOf="@id/tv_add_feedback_title" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
