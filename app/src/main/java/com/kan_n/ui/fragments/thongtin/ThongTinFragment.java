@@ -24,8 +24,6 @@ public class ThongTinFragment extends Fragment {
         binding = FragmentThongtinBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView textView = binding.textThongtin;
-        thongTinViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 
