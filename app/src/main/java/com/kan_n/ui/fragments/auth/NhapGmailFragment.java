@@ -2,8 +2,8 @@ package com.kan_n.ui.fragments.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler; // <-- Thêm import này
-import android.os.Looper; // <-- Thêm import này
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,21 +17,20 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.kan_n.R;
-import com.kan_n.databinding.FragmentTrangDangnhapBinding;
+import com.kan_n.databinding.FragmentNhapGmailBinding;
 import com.kan_n.ui.activities.MainActivity;
 
-public class DangNhapFragment extends Fragment {
+public class NhapGmailFragment extends Fragment {
 
-    private FragmentTrangDangnhapBinding binding;
+    private FragmentNhapGmailBinding binding;
     private AuthViewModel viewModel;
 
     private NavController navController;
 
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = FragmentTrangDangnhapBinding.inflate(inflater, container, false);
+        binding = FragmentNhapGmailBinding.inflate(inflater, container, false);
 
         // Lấy ViewModel chung của AuthActivity
         viewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
@@ -46,19 +45,6 @@ public class DangNhapFragment extends Fragment {
         // Nút quay lại
         binding.nutQuayLai.setOnClickListener(v -> {
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
-        });
-
-        // Nút Đăng nhập
-        binding.nutDangNhap.setOnClickListener(v -> {
-            String email = binding.nhapGmail.getText().toString().trim();
-            String password = binding.nhapMatKhau.getText().toString().trim();
-            viewModel.login(email, password);
-        });
-
-        navController = NavHostFragment.findNavController(this);
-
-        binding.textQuenMatKhau.setOnClickListener(v -> {
-            navController.navigate(R.id.action_dangNhapFragment_to_nhapGmailFragment);
         });
 
         // Lắng nghe kết quả đăng nhập
@@ -104,4 +90,5 @@ public class DangNhapFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
 }
