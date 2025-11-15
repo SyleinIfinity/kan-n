@@ -64,7 +64,7 @@
         <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_khonggianlamviec"/>
         <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_caidat"/>
         <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_hoidap"/>
-        <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_dãnguat"/>
+        <include layout="@layout/item_thongtin_luachon" android:id="@+id/item_dangxuat"/>
 
     </LinearLayout>
 </ScrollView>
