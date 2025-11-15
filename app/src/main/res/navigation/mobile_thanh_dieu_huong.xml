@@ -45,7 +45,14 @@
         android:id="@+id/thanhDieuHuong_ThongTin"
         android:name="com.kan_n.ui.fragments.thongtin.ThongTinFragment"
         android:label="@string/title_ThongTin"
-        tools:layout="@layout/fragment_thongtin" />
+        tools:layout="@layout/fragment_thongtin" >
+        <action
+            android:id="@+id/action_thanhDieuHuong_ThongTin_to_infoUserFragment"
+            app:destination="@id/infoUserFragment" />
+        <action
+            android:id="@+id/action_thanhDieuHuong_ThongTin_to_TrangCaiDatFragment"
+            app:destination="@id/TrangCaiDatFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/taoBangMoiFragment"
@@ -84,5 +91,16 @@
         android:name="com.kan_n.ui.fragments.taobangmoi.TaoBangMoiChonPhongAnhFragment"
         android:label="Chọn Ảnh"
         tools:layout="@layout/fragment_tao_bangmoi_chonphong_anh" />
+    <fragment
+        android:id="@+id/infoUserFragment"
+        android:name="com.kan_n.ui.fragments.thongtin.InfoUserFragment"
+        android:label="Chọn Ảnh"
+        tools:layout="@layout/fragment_info_user" />
+    <fragment
+        android:id="@+id/TrangCaiDatFragment"
+        android:name="com.kan_n.ui.fragments.thongtin.TrangCaiDatFragment"
+        android:label="Chọn Ảnh"
+        tools:layout="@layout/fragment_trang_caidat" />
+
 
 </navigation>
