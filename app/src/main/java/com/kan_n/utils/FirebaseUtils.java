@@ -37,8 +37,6 @@ public class FirebaseUtils {
         return getDatabaseInstance().getReference();
     }
 
-    // (Các hàm còn lại giữ nguyên...)
-
     public static FirebaseUser getCurrentUser() {
         return getAuthInstance().getCurrentUser();
     }

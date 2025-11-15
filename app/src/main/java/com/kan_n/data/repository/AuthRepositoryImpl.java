@@ -52,9 +52,6 @@ public class AuthRepositoryImpl implements AuthRepository {
                 });
     }
 
-    /**
-     * ✨ Đã cập nhật: Đăng nhập bằng Email, sau đó lấy chi tiết User từ DB
-     */
     @Override
     public void login(String email, String passwordPlain, AuthCallback callback) {
 
