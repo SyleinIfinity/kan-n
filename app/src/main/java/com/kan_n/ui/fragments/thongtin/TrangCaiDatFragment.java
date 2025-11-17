@@ -10,14 +10,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.kan_n.R;
 import com.kan_n.databinding.FragmentTrangCaidatBinding;
 import com.kan_n.ui.activities.AuthActivity;
+import com.kan_n.ui.fragments.bm_rtu.TrangBaoMatQuyenRiengTuFragment;
 
 public class TrangCaiDatFragment extends Fragment {
     private FragmentTrangCaidatBinding binding;
     private ThongTinViewModel thongTinViewModel;
+
+    private NavController navController;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -31,9 +37,28 @@ public class TrangCaiDatFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        navController = NavHostFragment.findNavController(this);
 
-        // MỚI: Gọi hàm thiết lập nội dung cho các item menu
         setupMenuItems();
+        //Chuyển trang bảo mật quyền riêng tư
+        binding.itemBaomatvaquyenriengtu.getRoot().setOnClickListener(v -> {
+            navController.navigate(R.id.action_TrangCaiDatFragment_to_TrangBaoMatQuyenRiengTuFragment);
+        });
+
+        //Chuyển trang hỗ trợ_v1
+        binding.itemLienhehotro.getRoot().setOnClickListener(v -> {
+            navController.navigate(R.id.action_TrangCaiDatFragment_to_TrangHoTro_v1Fragment);
+        });
+
+        //Chuyển trang lịch sử đăng nhập
+        binding.itemKiemtralichsudangnhap.getRoot().setOnClickListener(v -> {
+            navController.navigate(R.id.action_TrangCaiDatFragment_to_TrangLichSuDangNhapFragment);
+        });
+
+        //Chuyển trang thông tin cá nhân
+        binding.itemHoso.getRoot().setOnClickListener(v -> {
+            navController.navigate(R.id.action_TrangCaiDatFragment_ThongTin_to_infoUserFragment);
+        });
 
         binding.itemDangxuat.getRoot().setOnClickListener(v -> {
             // 1. Gọi hàm logout từ ViewModel
