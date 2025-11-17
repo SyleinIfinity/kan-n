@@ -42,26 +42,38 @@ public class NhapGmailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Lấy NavController
+        navController = NavHostFragment.findNavController(this); // Đảm bảo bạn đã có dòng này
+
         // Nút quay lại
         binding.nutQuayLai.setOnClickListener(v -> {
-            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+            navController.popBackStack(); // Sửa lại: Dùng NavController để quay lại
         });
 
-        // Lắng nghe kết quả đăng nhập
-        observeViewModel();
+        // ✨ SỬA ĐỔI NÚT GỬI OTP
+        binding.nutGuiOtp.setOnClickListener(v -> {
+            String email = binding.nhapGmail.getText().toString().trim();
+            // (Bạn có thể hiển thị ProgressBar ở đây)
+            viewModel.sendPasswordResetLink(email);
+        });
+
+        // Lắng nghe kết quả
+        observeViewModel(); // Sửa: gọi hàm observeViewModel mới
     }
 
     private void observeViewModel() {
-        // 1. Đăng nhập thành công
-        viewModel.loginSuccess.observe(getViewLifecycleOwner(), user -> {
-            Toast.makeText(getContext(), "Đăng nhập thành công! Chào " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-            // ✨ Gọi hàm chuyển màn hình robust
-            goToMainActivityRobust();
+        // 1. Gửi link thành công
+        viewModel.resetEmailSuccess.observe(getViewLifecycleOwner(), successMessage -> {
+            // (Ẩn ProgressBar)
+            Toast.makeText(getContext(), successMessage, Toast.LENGTH_LONG).show();
+            // Quay về màn hình đăng nhập
+            navController.popBackStack();
         });
 
-        // 2. Đăng nhập thất bại
-        viewModel.loginError.observe(getViewLifecycleOwner(), error -> {
-            Toast.makeText(getContext(), "Lỗi: " + error, Toast.LENGTH_LONG).show();
+        // 2. Gửi link thất bại
+        viewModel.resetEmailError.observe(getViewLifecycleOwner(), errorMessage -> {
+            // (Ẩn ProgressBar)
+            Toast.makeText(getContext(), "Lỗi: " + errorMessage, Toast.LENGTH_LONG).show();
         });
     }
 

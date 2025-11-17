@@ -66,13 +66,15 @@ public class DangKyFragment extends Fragment {
         // 1. Đăng ký thành công
         viewModel.registerSuccess.observe(getViewLifecycleOwner(), successMessage -> {
             // (Ẩn loading...)
-            Toast.makeText(getContext(), successMessage, Toast.LENGTH_SHORT).show();
+
+            // ✨ THAY ĐỔI HÀNH VI
+            Toast.makeText(getContext(), "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.", Toast.LENGTH_LONG).show();
 
             // Điều hướng về trang đăng nhập
             navController.popBackStack();
         });
 
-        // 2. Đăng ký thất bại
+        // 2. Đăng ký thất bại (giữ nguyên)
         viewModel.registerError.observe(getViewLifecycleOwner(), errorMessage -> {
             // (Ẩn loading...)
             Toast.makeText(getContext(), "Lỗi: " + errorMessage, Toast.LENGTH_LONG).show();
