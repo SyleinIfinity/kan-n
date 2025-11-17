@@ -50,7 +50,12 @@ public class ThongTinFragment extends Fragment {
         binding.itemCaidat.getRoot().setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_TrangCaiDatFragment);
         });
-
+        binding.txtUsername.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_infoUserFragment);
+        });
+        binding.imgAvatar.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_infoUserFragment);
+        });
         // Thiết lập sự kiện click cho item "Đăng xuất"
         // (Giả sử bạn có item_dangxuat trong fragment_thongtin.xml)
         binding.itemDangxuat.getRoot().setOnClickListener(v -> {
@@ -61,6 +66,7 @@ public class ThongTinFragment extends Fragment {
             if (getActivity() != null) {
                 getActivity().finish();
             }
+          
         });
 
         // Bạn cũng có thể thêm sự kiện click cho các item khác ở đây
