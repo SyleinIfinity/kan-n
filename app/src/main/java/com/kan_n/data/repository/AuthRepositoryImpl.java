@@ -8,22 +8,36 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.AuthRepository;
+import com.kan_n.data.models.Background;
+import com.kan_n.data.models.Board;
+import com.kan_n.data.models.Membership;
 import com.kan_n.data.models.User;
+import com.kan_n.data.models.Workspace;
 import com.kan_n.utils.FirebaseUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AuthRepositoryImpl implements AuthRepository {
 
     private final FirebaseAuth mAuth;
-    private final DatabaseReference mUsersRef;
+    private final DatabaseReference mRootRef;
 
     public AuthRepositoryImpl() {
         this.mAuth = FirebaseUtils.getAuthInstance();
-        this.mUsersRef = FirebaseUtils.getRootRef().child("users");
+        // ✨ 3. Khởi tạo mRootRef
+        this.mRootRef = FirebaseUtils.getRootRef();
+    }
+
+    @Override
+    public FirebaseAuth getAuthInstance() {
+        return this.mAuth;
     }
 
     /**
      * ✨ Đã cập nhật: Thêm 'phone'
      */
+
     @Override
     public void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback) {
 
@@ -33,16 +47,72 @@ public class AuthRepositoryImpl implements AuthRepository {
                     if (task.isSuccessful()) {
                         String uid = task.getResult().getUser().getUid();
 
-                        // Bước 2: Tạo đối tượng User mới (đã thêm 'phone')
-                        User newUser = new User(username, displayName, email, avatarUrl, phone);
+                        // Bước 2: Gửi email kích hoạt (vẫn giữ nguyên)
+                        task.getResult().getUser().sendEmailVerification()
+                                .addOnCompleteListener(verificationTask -> {
+                                    if (verificationTask.isSuccessful()) {
 
-                        // Lưu thông tin user vào Realtime Database với key là UID
-                        mUsersRef.child(uid).setValue(newUser.toMap())
-                                .addOnCompleteListener(dbTask -> {
-                                    if (dbTask.isSuccessful()) {
-                                        callback.onSuccess(); // Hoàn tất!
+                                        // Bước 3: Tạo tất cả các đối tượng
+
+                                        // 1. Tạo User
+                                        User newUser = new User(username, displayName, email, avatarUrl, phone);
+
+                                        // 2. Tạo Workspace mặc định
+                                        Workspace defaultWorkspace = new Workspace(
+                                                "Không gian cá nhân", // Tên Workspace
+                                                "Không gian làm việc đầu tiên của bạn", // Mô tả
+                                                uid // createdBy
+                                        );
+                                        // Lấy key mới cho workspace
+                                        String workspaceId = mRootRef.child("workspaces").push().getKey();
+
+                                        // 3. Tạo Board "Chào mừng" mặc định
+                                        Background defaultBg = new Background("color", "#0079BF"); // Màu xanh Trello
+                                        Board defaultBoard = new Board(
+                                                workspaceId,
+                                                "Bảng Chào Mừng",
+                                                "Đây là bảng đầu tiên của bạn!",
+                                                "private", // Quyền riêng tư
+                                                uid, // createdBy
+                                                defaultBg
+                                        );
+                                        // Lấy key mới cho board
+                                        String boardId = mRootRef.child("boards").push().getKey();
+
+                                        // 4. Tạo Membership (liên kết User với Board)
+                                        Membership defaultMembership = new Membership(
+                                                boardId, // ID của bảng
+                                                uid, // ID của user
+                                                "owner" // Vai trò
+                                        );
+                                        // Lấy key mới cho membership
+                                        String membershipId = mRootRef.child("memberships").push().getKey();
+
+                                        // Kiểm tra null cho các key (phòng trường hợp lỗi)
+                                        if (workspaceId == null || boardId == null || membershipId == null) {
+                                            callback.onError("Không thể tạo ID cho dữ liệu ban đầu.");
+                                            return;
+                                        }
+
+                                        // Bước 4: Ghi tất cả vào DB bằng một lệnh updateChildren (an toàn)
+                                        Map<String, Object> updates = new HashMap<>();
+                                        updates.put("/users/" + uid, newUser.toMap());
+                                        updates.put("/workspaces/" + workspaceId, defaultWorkspace.toMap());
+                                        updates.put("/boards/" + boardId, defaultBoard.toMap());
+                                        updates.put("/memberships/" + membershipId, defaultMembership.toMap());
+
+                                        mRootRef.updateChildren(updates).addOnCompleteListener(dbTask -> {
+                                            if (dbTask.isSuccessful()) {
+                                                callback.onSuccess(); // Hoàn tất!
+                                            } else {
+                                                // Lỗi khi ghi DB
+                                                callback.onError(dbTask.getException().getMessage());
+                                            }
+                                        });
+
                                     } else {
-                                        callback.onError(dbTask.getException().getMessage());
+                                        // Gửi email thất bại
+                                        callback.onError(verificationTask.getException().getMessage());
                                     }
                                 });
                     } else {
@@ -52,9 +122,6 @@ public class AuthRepositoryImpl implements AuthRepository {
                 });
     }
 
-    /**
-     * ✨ Đã cập nhật: Đăng nhập bằng Email, sau đó lấy chi tiết User từ DB
-     */
     @Override
     public void login(String email, String passwordPlain, AuthCallback callback) {
 
@@ -62,11 +129,19 @@ public class AuthRepositoryImpl implements AuthRepository {
         mAuth.signInWithEmailAndPassword(email, passwordPlain)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // Đăng nhập Auth thành công
+
+                        // ✨ KIỂM TRA KÍCH HOẠT
+                        if (!task.getResult().getUser().isEmailVerified()) {
+                            callback.onError("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email.");
+                            mAuth.signOut(); // Đăng xuất user ra
+                            return;
+                        }
+
+                        // Đăng nhập Auth thành công và đã kích hoạt
                         String uid = task.getResult().getUser().getUid();
 
                         // Bước 2: Lấy thông tin chi tiết của User từ Realtime Database
-                        mUsersRef.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+                        mRootRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
                                 if (snapshot.exists()) {

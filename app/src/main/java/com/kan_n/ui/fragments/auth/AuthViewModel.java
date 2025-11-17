@@ -13,6 +13,8 @@ import com.kan_n.data.interfaces.AuthRepository;
 import com.kan_n.data.models.User;
 import com.kan_n.data.repository.AuthRepositoryImpl;
 
+import java.util.regex.Pattern;
+
 public class AuthViewModel extends AndroidViewModel {
 
     private final AuthRepository authRepository;
@@ -31,6 +33,35 @@ public class AuthViewModel extends AndroidViewModel {
     private final MutableLiveData<String> _registerError = new MutableLiveData<>();
     public LiveData<String> registerError = _registerError;
 
+    private final MutableLiveData<String> _resetEmailSuccess = new MutableLiveData<>();
+    public LiveData<String> resetEmailSuccess = _resetEmailSuccess;
+
+    private final MutableLiveData<String> _resetEmailError = new MutableLiveData<>();
+    public LiveData<String> resetEmailError = _resetEmailError;
+
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+            "^0[3|5|7|8|9][0-9]{8}$"
+    );
+
+    // ✨ Thêm phương thức này
+    public void sendPasswordResetLink(String email) {
+        if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _resetEmailError.setValue("Vui lòng nhập email hợp lệ.");
+            return;
+        }
+
+        // Lấy instance FirebaseAuth (bạn có thể lấy từ repo hoặc FirebaseUtils)
+        // Giả sử authRepository có hàm getAuthInstance()
+        authRepository.getAuthInstance().sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        _resetEmailSuccess.postValue("Đã gửi link đặt lại mật khẩu. Vui lòng kiểm tra email!");
+                    } else {
+                        // Xử lý lỗi (ví dụ: email không tồn tại)
+                        _resetEmailError.postValue("Email này chưa được đăng ký.");
+                    }
+                });
+    }
 
     public AuthViewModel(@NonNull Application application) {
         super(application);
@@ -86,47 +117,47 @@ public class AuthViewModel extends AndroidViewModel {
             return;
         }
 
-        // 2. Kiểm tra định dạng Email
+        // 2. Kiểm tra định dạng Email (Giữ nguyên)
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _registerError.setValue("Email không hợp lệ.");
             return;
         }
 
-        // 3. (Tùy chọn) Kiểm tra SĐT (đơn giản)
-        if (phone.length() < 10) {
-            _registerError.setValue("Số điện thoại không hợp lệ.");
+        // ✨ 3. SỬA ĐỔI: Kiểm tra SĐT bằng Regex
+        if (!PHONE_PATTERN.matcher(phone).matches()) {
+            _registerError.setValue("Số điện thoại không hợp lệ (Phải đủ 10 số, bắt đầu bằng 03, 05, 07, 08, 09).");
             return;
         }
 
-        // 4. Kiểm tra mật khẩu nhập lại
+        // 4. Kiểm tra mật khẩu nhập lại (Giữ nguyên)
         if (!password.equals(confirmPassword)) {
             _registerError.setValue("Mật khẩu xác nhận không khớp.");
             return;
         }
 
-        // 5. Kiểm tra độ dài mật khẩu (Firebase yêu cầu tối thiểu 6)
+        // 5. Kiểm tra độ dài mật khẩu (Giữ nguyên)
         if (password.length() < 6) {
             _registerError.setValue("Mật khẩu phải có ít nhất 6 ký tự.");
             return;
         }
 
-        // 6. Lấy username (tạm thời) từ email
+        // 6. Lấy username (Giữ nguyên)
         String username = deriveUsernameFromEmail(email);
         if (username == null) {
             _registerError.setValue("Email không hợp lệ (không thể tạo username).");
             return;
         }
 
-        // 7. ✨ Gọi hàm createUser (đã thêm 'phone')
+        // 7. Gọi hàm createUser (Giữ nguyên)
         authRepository.createUser(username, password, displayName, email, "", phone, new AuthRepository.GeneralCallback() {
             @Override
             public void onSuccess() {
-                _registerSuccess.postValue("Đăng ký thành công!");
+                // Sửa thông báo này để rõ ràng hơn
+                _registerSuccess.postValue("Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt.");
             }
 
             @Override
             public void onError(String message) {
-                // Xử lý lỗi từ Firebase (ví dụ: email đã tồn tại)
                 if (message.contains("email address is already in use")) {
                     _registerError.postValue("Email này đã được sử dụng.");
                 } else {
