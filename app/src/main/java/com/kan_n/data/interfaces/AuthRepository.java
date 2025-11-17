@@ -2,6 +2,7 @@
 
 package com.kan_n.data.interfaces;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.kan_n.data.models.User;
 
 public interface AuthRepository {
@@ -15,6 +16,8 @@ public interface AuthRepository {
         void onSuccess();
         void onError(String message);
     }
+
+    FirebaseAuth getAuthInstance();
 
     /**
      * Hành động đăng ký user mới.
