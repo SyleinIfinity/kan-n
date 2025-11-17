@@ -99,7 +99,7 @@
     <fragment
         android:id="@+id/TrangCaiDatFragment"
         android:name="com.kan_n.ui.fragments.thongtin.TrangCaiDatFragment"
-        android:label="Chọn Ảnh"
+        android:label="Cài đặt"
         tools:layout="@layout/fragment_trang_caidat" />
 
 
