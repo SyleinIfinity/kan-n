@@ -46,7 +46,7 @@
 
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_hoso"/>
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_ngonngu"/>
-        <include layout="@layout/item_trang_caidat" android:id="@+id/item_tiemhieuvekann"/>
+        <include layout="@layout/item_trang_caidat" android:id="@+id/item_timhieuvekann"/>
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_lienhehotro"/>
 
         <TextView
