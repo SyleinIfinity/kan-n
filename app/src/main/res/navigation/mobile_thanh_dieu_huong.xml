@@ -93,14 +93,42 @@
         tools:layout="@layout/fragment_tao_bangmoi_chonphong_anh" />
     <fragment
         android:id="@+id/infoUserFragment"
-        android:name="com.kan_n.ui.fragments.thongtin.InfoUserFragment"
+        android:name="com.kan_n.ui.fragments.info_user.InfoUserFragment"
         android:label="Chọn Ảnh"
         tools:layout="@layout/fragment_info_user" />
     <fragment
         android:id="@+id/TrangCaiDatFragment"
         android:name="com.kan_n.ui.fragments.thongtin.TrangCaiDatFragment"
         android:label="Cài đặt"
-        tools:layout="@layout/fragment_trang_caidat" />
+        tools:layout="@layout/fragment_trang_caidat" >
+        <action
+            android:id="@+id/action_TrangCaiDatFragment_to_TrangBaoMatQuyenRiengTuFragment"
+            app:destination="@id/TrangBaoMatQuyenRiengTuFragment" />
+        <action
+            android:id="@+id/action_TrangCaiDatFragment_to_TrangHoTro_v1Fragment"
+            app:destination="@id/TrangHoTro_v1Fragment" />
+        <action
+            android:id="@+id/action_TrangCaiDatFragment_to_TrangLichSuDangNhapFragment"
+            app:destination="@id/TrangLichSuDangNhapFragment" />
+        <action
+            android:id="@+id/action_TrangCaiDatFragment_ThongTin_to_infoUserFragment"
+            app:destination="@id/infoUserFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/TrangBaoMatQuyenRiengTuFragment"
+        android:name="com.kan_n.ui.fragments.bm_rtu.TrangBaoMatQuyenRiengTuFragment"
+        android:label="Cài đặt"
+        tools:layout="@layout/fragment_trang_bm_rtu" />
+    <fragment
+        android:id="@+id/TrangHoTro_v1Fragment"
+        android:name="com.kan_n.ui.fragments.hotro.TrangHoTroFragment"
+        android:label="Cài đặt"
+        tools:layout="@layout/fragment_trang_hotro_v1" />
+    <fragment
+        android:id="@+id/TrangLichSuDangNhapFragment"
+        android:name="com.kan_n.ui.fragments.lichsutk.TrangLichSuDangNhapFragment"
+        android:label="Cài đặt"
+        tools:layout="@layout/fragment_trang_lichsutk" />
 
 
 </navigation>
