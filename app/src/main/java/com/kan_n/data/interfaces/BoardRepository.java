@@ -32,11 +32,11 @@ public interface BoardRepository {
 
     /**
      * Tạo một Bảng mới trong một Không gian làm việc.
-     * @param workspaceId ID của không gian làm việc
-     * @param name Tên bảng
-     * @param visibility "private" hoặc "workspace"
-     * @param background Đối tượng Background chứa type và value (color/image) <--- CẬP NHẬT
-     * @param callback Callback kết quả
+     * workspaceId ID - của không gian làm việc
+     * name - Tên bảng
+     * visibility - "private" hoặc "workspace"
+     * background - Đối tượng Background chứa type và value (color/image) <--- CẬP NHẬT
+     * callback - Callback kết quả
      */
     void createBoard(String workspaceId, String name, String visibility, Background background, GeneralCallback callback); // <--- CẬP NHẬT
 

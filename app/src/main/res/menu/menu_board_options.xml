@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_board_star"
+        android:title="Đánh dấu bảng" />
+    <item
+        android:id="@+id/menu_board_share"
+        android:title="Chia sẻ liên kết bảng" />
+    <item
+        android:id="@+id/menu_board_delete"
+        android:title="Xóa bảng" />
+</menu>

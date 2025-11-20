@@ -24,7 +24,6 @@ public class BackgroundRepositoryImpl implements BackgroundRepository {
 
     /**
      * Lấy dữ liệu từ node `backgrounds`
-     * Vì nó là một Array trong JSON, Firebase sẽ đọc nó theo index (0, 1, 2...)
      */
     @Override
     public void getAllBackgrounds(BackgroundsCallback callback) {

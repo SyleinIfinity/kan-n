@@ -21,13 +21,11 @@ public interface AuthRepository {
 
     /**
      * Hành động đăng ký user mới.
-     * ✨ Đã bổ sung 'phone'
      */
     void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback);
 
     /**
      * Hành động đăng nhập.
-     * ✨ Đã thay đổi 'username' thành 'email'
      */
     void login(String email, String passwordPlain, AuthCallback callback);
 }
