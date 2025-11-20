@@ -35,14 +35,14 @@
             android:id="@+id/et_content"
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:padding="12dp"
-            android:hint="Nhập nội dung vấn đề tại đây..."
-            android:gravity="top|start"
+            android:autofillHints="emailAddress"
             android:background="@android:color/white"
+            android:gravity="top|start"
+            android:hint="Nhập nội dung vấn đề tại đây..."
             android:inputType="textMultiLine|textEmailAddress"
+            android:padding="12dp"
             android:textColor="@android:color/black"
-            android:textSize="16sp"
-            android:autofillHints="emailAddress" />
+            android:textSize="16sp" />
 
     </androidx.cardview.widget.CardView>
 
