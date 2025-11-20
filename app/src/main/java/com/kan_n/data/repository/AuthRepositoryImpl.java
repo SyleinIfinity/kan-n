@@ -33,11 +33,6 @@ public class AuthRepositoryImpl implements AuthRepository {
     public FirebaseAuth getAuthInstance() {
         return this.mAuth;
     }
-
-    /**
-     * ✨ Đã cập nhật: Thêm 'phone'
-     */
-
     @Override
     public void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback) {
 

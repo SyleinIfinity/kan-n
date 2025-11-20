@@ -26,6 +26,10 @@
         android:name="com.kan_n.ui.fragments.bang_space.BangSpaceFragment"
         android:label="Chi tiết Bảng"
         tools:layout="@layout/fragment_bang_space" >
+        <action
+            android:id="@+id/action_BangSpaceFragment_to_MenuBangFragment"
+            app:destination="@id/MenuBangFragment" />
+
         <argument
             android:name="boardId"
             app:argType="string" />
@@ -33,7 +37,15 @@
             android:name="boardTitle"
             app:argType="string"
             android:defaultValue="KAN-N" />
+
+
     </fragment>
+
+    <fragment
+        android:id="@+id/MenuBangFragment"
+        android:name="com.kan_n.ui.fragments.menu_bang.MenuBangFragment"
+        android:label="@string/title_HoatDong"
+        tools:layout="@layout/fragment_menu_bang" />
 
     <fragment
         android:id="@+id/thanhDieuHuong_HoatDong"

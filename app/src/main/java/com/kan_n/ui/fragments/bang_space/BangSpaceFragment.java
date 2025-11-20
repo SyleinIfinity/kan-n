@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -31,6 +33,8 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     private FragmentBangSpaceBinding binding;
     private BangSpaceViewModel viewModel;
     private ListModelAdapter listModelAdapter;
+
+    private NavController navController;
 
     private String boardId;
     private String boardTitle;
@@ -66,6 +70,8 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         setupToolbar();
         setupRecyclerView();
 
+        navController = NavHostFragment.findNavController(this);
+
         // ✨ BƯỚC 3: Xóa các lệnh gọi hàm observer
         // setupEmptyStateObserver(); // <-- XÓA
         // binding.btnAddListPlaceholder.setOnClickListener(...); // <-- XÓA
@@ -76,6 +82,10 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
             Toast.makeText(getContext(), "Lỗi: Không tìm thấy ID Bảng", Toast.LENGTH_LONG).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
+
+        binding.ivMenuOptions.setOnClickListener(v -> {
+            navController.navigate(R.id.action_BangSpaceFragment_to_MenuBangFragment);
+        });
     }
 
     private void setupToolbar() {
