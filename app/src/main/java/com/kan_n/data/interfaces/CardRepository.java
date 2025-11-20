@@ -29,8 +29,8 @@ public interface CardRepository {
      * Lắng nghe (real-time) tất cả các thẻ trong một danh sách cụ thể.
      * Đây là phương thức quan trọng cho RecyclerView lồng bên trong item_ListModel.
      *
-     * @param listId ID của danh sách (ListModel)
-     * @param listener Một ChildEventListener sẽ được kích hoạt khi có thẻ
+     * listId ID - của danh sách (ListModel)
+     * listener - Một ChildEventListener sẽ được kích hoạt khi có thẻ
      * thêm/sửa/xóa/di chuyển.
      */
     void getCardsForList(String listId, ChildEventListener listener);

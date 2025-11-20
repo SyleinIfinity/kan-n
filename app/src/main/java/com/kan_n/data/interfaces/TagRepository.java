@@ -24,7 +24,6 @@ public interface TagRepository {
 
     /**
      * Lấy tất cả các Nhãn (tag) mà người dùng hiện tại đã tạo.
-     * (Trong cấu trúc của chúng ta, Tag thuộc về User, không phải Board).
      */
     void getTagsForUser(String userId, TagsCallback callback);
 
