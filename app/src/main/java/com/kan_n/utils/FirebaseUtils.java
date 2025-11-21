@@ -79,8 +79,8 @@ public class FirebaseUtils {
      * Sử dụng .get() để lấy dữ liệu một lần và .continueWith để
      * chuyển đổi kết quả từ DataSnapshot sang đối tượng User.
      *
-     * @param uid UID của người dùng
-     * @param callback Hàm callback (OnCompleteListener<User>) để xử lý kết quả
+     * uid UID của người dùng
+     * callback Hàm callback (OnCompleteListener<User>) để xử lý kết quả
      */
     public static void getUserData(String uid, OnCompleteListener<User> callback) {
         DatabaseReference userRef = getRootRef().child("users").child(uid);
