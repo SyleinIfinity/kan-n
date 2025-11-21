@@ -11,10 +11,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.kan_n.data.models.User; // Đảm bảo đường dẫn này đúng tới model User của bạn
 
 public class FirebaseUtils {
-
-    // ✨ XÓA DÒNG NÀY ĐI
-    // private static final String DATABASE_URL = "...";
-
     private static FirebaseAuth mAuth;
     private static FirebaseDatabase mDatabase;
 
@@ -27,12 +23,10 @@ public class FirebaseUtils {
 
     /**
      * Trả về thể hiện duy nhất của FirebaseDatabase.
-     * ✨ ĐÃ CẬP NHẬT: Nó sẽ tự động lấy instance [DEFAULT]
      * (đã được cấu hình trong MyApplication)
      */
     public static FirebaseDatabase getDatabaseInstance() {
         if (mDatabase == null) {
-            // ✨ CHỈ GỌI getInstance()
             mDatabase = FirebaseDatabase.getInstance();
         }
         return mDatabase;
@@ -61,11 +55,6 @@ public class FirebaseUtils {
     public static void signOut() {
         getAuthInstance().signOut();
     }
-
-    // ===========================================
-    // ✨ PHẦN BỔ SUNG THEO YÊU CẦU ✨
-    // ===========================================
-
     /**
      * Thực hiện đăng xuất người dùng hiện tại.
      * Phương thức này gọi hàm signOut() đã tồn tại ở trên.

@@ -43,7 +43,6 @@ public class AuthViewModel extends AndroidViewModel {
             "^0[3|5|7|8|9][0-9]{8}$"
     );
 
-    // ✨ Thêm phương thức này
     public void sendPasswordResetLink(String email) {
         if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _resetEmailError.setValue("Vui lòng nhập email hợp lệ.");
@@ -91,7 +90,7 @@ public class AuthViewModel extends AndroidViewModel {
             return;
         }
 
-        // ✨ Gọi hàm login bằng email
+        // Gọi hàm login bằng email
         authRepository.login(email, password, new AuthRepository.AuthCallback() {
             @Override
             public void onSuccess(User user) {
@@ -122,7 +121,7 @@ public class AuthViewModel extends AndroidViewModel {
             return;
         }
 
-        // ✨ 3. SỬA ĐỔI: Kiểm tra SĐT bằng Regex
+        // Kiểm tra SĐT bằng Regex
         if (!PHONE_PATTERN.matcher(phone).matches()) {
             _registerError.setValue("Số điện thoại không hợp lệ (Phải đủ 10 số, bắt đầu bằng 03, 05, 07, 08, 09).");
             return;

@@ -31,19 +31,19 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     // 1. Listener cho nút "Thêm thẻ" (GIỮ NGUYÊN)
     private final OnAddCardClickListener addCardClickListener;
 
-    // ✨ [MỚI] 2. Listener cho việc Click vào thẻ để xem chi tiết
+    // Listener cho việc Click vào thẻ để xem chi tiết
     private final OnCardClickListener cardClickListener;
 
     public interface OnAddCardClickListener {
         void onAddCardClick();
     }
 
-    // ✨ [MỚI] Interface cho click vào thẻ
+    // Interface cho click vào thẻ
     public interface OnCardClickListener {
         void onCardClick(Card card);
     }
 
-    // ✨ [CẬP NHẬT] Constructor nhận thêm cardClickListener
+    // Constructor nhận thêm cardClickListener
     public CardAdapter(Context context, OnAddCardClickListener addListener, OnCardClickListener cardListener) {
         this.context = context;
         this.addCardClickListener = addListener;
@@ -81,7 +81,7 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             Card card = cardList.get(position);
             if (card == null) return;
 
-            // ✨ [CẬP NHẬT] Truyền thêm listener vào hàm bind
+            // Truyền thêm listener vào hàm bind
             ((CardViewHolder) holder).bind(card, context, cardClickListener);
 
         } else {
@@ -160,13 +160,13 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvChecklist = itemView.findViewById(R.id.tvChecklistThe);
         }
 
-        // ✨ [CẬP NHẬT] Thêm tham số listener vào hàm bind
+        // Thêm tham số listener vào hàm bind
         public void bind(final Card card, Context context, final OnCardClickListener listener) {
             // 1. Tieu de va Checkbox
             tvCardTitle.setText(card.getTitle());
             cbComplete.setChecked(card.isCompleted());
 
-            // ✨ [MỚI] Bắt sự kiện click vào Tiêu đề thẻ (tvTieuDeThe)
+            // Bắt sự kiện click vào Tiêu đề thẻ (tvTieuDeThe)
             // Nếu muốn bấm vào cả cái thẻ thì đổi thành itemView.setOnClickListener
             tvCardTitle.setOnClickListener(v -> {
                 if (listener != null) {
