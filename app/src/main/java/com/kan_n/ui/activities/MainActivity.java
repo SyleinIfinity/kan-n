@@ -111,10 +111,14 @@ public class MainActivity extends AppCompatActivity {
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
 
             } else if (destId == R.id.TrangBaoMatQuyenRiengTuFragment) {
-                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
-                binding.navView.setVisibility(View.GONE); // ẨN NavView
-                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
-            } else {
+                binding.toolbar.getRoot().setVisibility(View.GONE); //
+                binding.navView.setVisibility(View.VISIBLE); // ẨN NavView
+
+            } else if (destId == R.id.taoBangMoiChonPhongFragment){
+                binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
+            }
+
+            else {
                 // Đây là các fragment "con" khác (nếu có)
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
