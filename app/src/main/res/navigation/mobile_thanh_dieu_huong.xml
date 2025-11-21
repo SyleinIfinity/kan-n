@@ -29,7 +29,9 @@
         <action
             android:id="@+id/action_BangSpaceFragment_to_MenuBangFragment"
             app:destination="@id/MenuBangFragment" />
-
+        <action
+            android:id="@+id/action_BangSpaceFragment_to_CardSpaceFragment"
+            app:destination="@id/CardSpaceFragment" />
         <argument
             android:name="boardId"
             app:argType="string" />
@@ -40,6 +42,12 @@
 
 
     </fragment>
+
+    <fragment
+        android:id="@+id/CardSpaceFragment"
+        android:name="com.kan_n.ui.fragments.card_space.CardSpaceFragment"
+        android:label="@string/title_HoatDong"
+        tools:layout="@layout/fragment_card_space" />
 
     <fragment
         android:id="@+id/MenuBangFragment"

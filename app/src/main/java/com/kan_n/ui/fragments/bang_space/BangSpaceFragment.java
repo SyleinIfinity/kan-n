@@ -86,6 +86,8 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         binding.ivMenuOptions.setOnClickListener(v -> {
             navController.navigate(R.id.action_BangSpaceFragment_to_MenuBangFragment);
         });
+
+
     }
 
     private void setupToolbar() {
@@ -97,7 +99,24 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
     private void setupRecyclerView() {
         // ✨ BƯỚC 4: Cập nhật constructor của Adapter, truyền "this" làm listener
-        listModelAdapter = new ListModelAdapter(getContext(), viewModel, this);
+        // Cập nhật lại dòng khởi tạo Adapter
+        listModelAdapter = new ListModelAdapter(getContext(), viewModel, this, new ListModelAdapter.OnItemCardClickListener() {
+            @Override
+            public void onCardClick(com.kan_n.data.models.Card card) {
+                // --- XỬ LÝ CHUYỂN TRANG KHI CLICK VÀO THẺ ---
+                Bundle bundle = new Bundle();
+                bundle.putString("cardId", card.getUid());
+                bundle.putString("cardTitle", card.getTitle());
+                bundle.putString("boardId", boardId);
+
+                try {
+                    navController.navigate(R.id.action_BangSpaceFragment_to_CardSpaceFragment, bundle);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(getContext(), "Lỗi điều hướng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
         binding.rvLists.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         binding.rvLists.setAdapter(listModelAdapter);
 
