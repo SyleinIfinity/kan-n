@@ -44,4 +44,5 @@ public interface BoardRepository {
     void deleteBoard(String boardId, GeneralCallback callback);
     void addMemberToBoard(String boardId, String userId, GeneralCallback callback);
     void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback);
+
 }
