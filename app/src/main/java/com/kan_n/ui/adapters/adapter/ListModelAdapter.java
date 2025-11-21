@@ -1,5 +1,4 @@
-// Đặt tại: src/main/java/com/kan_n/ui/adapters/adapter/ListModelAdapter.java (CẬP NHẬT)
-
+// File: app/src/main/java/com/kan_n/ui/adapters/adapter/ListModelAdapter.java
 package com.kan_n.ui.adapters.adapter;
 
 import android.content.Context;
@@ -7,11 +6,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText; // ✨ Thêm
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast; // ✨ Thêm
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,7 +21,7 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.kan_n.R;
-import com.kan_n.data.interfaces.CardRepository; // ✨ Thêm
+import com.kan_n.data.interfaces.CardRepository;
 import com.kan_n.data.models.Card;
 import com.kan_n.data.models.ListModel;
 import com.kan_n.ui.fragments.bang_space.BangSpaceViewModel;
@@ -39,21 +38,31 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private static final int VIEW_TYPE_LIST = 0;
     private static final int VIEW_TYPE_ADD = 1;
 
+    // Listener cũ (Thêm danh sách)
     private final OnAddListClickListener addListClickListener;
+
+    // ✨ [MỚI] Listener mới (Click vào thẻ) - Đây là cái mà setupRecyclerView đang tìm
+    private final OnItemCardClickListener cardClickListener;
 
     public interface OnAddListClickListener {
         void onAddListClick();
     }
 
-    public ListModelAdapter(Context context, BangSpaceViewModel viewModel, OnAddListClickListener listener) {
-        this.context = context;
-        this.viewModel = viewModel;
-        this.addListClickListener = listener;
+    // ✨ [MỚI] Interface này chưa có trong code cũ của bạn -> Cần thêm vào
+    public interface OnItemCardClickListener {
+        void onCardClick(Card card);
     }
 
-    // (Các hàm getItemCount, getItemViewType, onCreateViewHolder, onBindViewHolder, onViewRecycled, ...
-    // ... addList, updateList, removeList, getLastItemPosition ...
-    // ... giữ nguyên như trong câu trả lời trước của tôi)
+    // ✨ [CẬP NHẬT] Constructor nhận 4 tham số (Thêm cardListener vào cuối)
+    public ListModelAdapter(Context context, BangSpaceViewModel viewModel,
+                            OnAddListClickListener addListener,
+                            OnItemCardClickListener cardListener) {
+        this.context = context;
+        this.viewModel = viewModel;
+        this.addListClickListener = addListener;
+        this.cardClickListener = cardListener; // Gán biến
+    }
+
     @Override
     public int getItemCount() {
         return listModelList.size() + 1;
@@ -96,6 +105,7 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
+    // --- Các hàm quản lý dữ liệu list ---
     private int getInsertPosition(ListModel list) {
         for (int i = 0; i < listModelList.size(); i++) {
             if (listModelList.get(i).getPosition() > list.getPosition()) {
@@ -132,46 +142,47 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     public double getLastItemPosition() {
-        if (listModelList.isEmpty()) {
-            return 0;
-        }
+        if (listModelList.isEmpty()) return 0;
         return listModelList.get(listModelList.size() - 1).getPosition();
     }
 
-
-    // --- ViewHolder 1: Cho Danh sách (ĐÃ CẬP NHẬT) ---
+    // --- ViewHolder 1: Cho Danh sách ---
     public class ListModelViewHolder extends RecyclerView.ViewHolder {
         TextView tvListTitle;
         RecyclerView rvCards;
-        // LinearLayout layoutAddCard; // <-- ✨ ĐÃ BỊ XÓA (vì đã xóa khỏi layout)
         ImageView ivMenuDanhSach;
 
         private CardAdapter cardAdapter;
         private ChildEventListener cardListener;
         private String currentListId;
 
-
         public ListModelViewHolder(@NonNull View itemView) {
             super(itemView);
             tvListTitle = itemView.findViewById(R.id.tvTieuDeDanhSach);
             rvCards = itemView.findViewById(R.id.rvDanhSachThe);
-            // layoutAddCard = itemView.findViewById(R.id.layoutThemThe); // <-- ✨ XÓA DÒNG NÀY
             ivMenuDanhSach = itemView.findViewById(R.id.ivMenuDanhSach);
 
-            // ✨ BƯỚC 1 (TRONG VIEW HOLDER): Tạo listener cho "Add Card"
+            // 1. Listener mở Dialog Thêm thẻ
             CardAdapter.OnAddCardClickListener addCardListener = new CardAdapter.OnAddCardClickListener() {
                 @Override
                 public void onAddCardClick() {
-                    // 'currentListId' sẽ được cập nhật trong hàm bind()
-                    if (currentListId != null) {
-                        // Gọi hàm hiển thị dialog
-                        showAddCardDialog(currentListId);
+                    if (currentListId != null) showAddCardDialog(currentListId);
+                }
+            };
+
+            // ✨ 2. Listener Click thẻ (Quan trọng: Truyền tin ra Fragment)
+            CardAdapter.OnCardClickListener itemClickListener = new CardAdapter.OnCardClickListener() {
+                @Override
+                public void onCardClick(Card card) {
+                    if (cardClickListener != null) {
+                        cardClickListener.onCardClick(card);
                     }
                 }
             };
 
-            // ✨ BƯỚC 2 (TRONG VIEW HOLDER): Cài đặt CardAdapter với listener mới
-            cardAdapter = new CardAdapter(context, addCardListener);
+            // ✨ 3. Khởi tạo CardAdapter với cả 2 listener
+            cardAdapter = new CardAdapter(context, addCardListener, itemClickListener);
+
             rvCards.setLayoutManager(new LinearLayoutManager(context));
             rvCards.setAdapter(cardAdapter);
         }
@@ -181,7 +192,6 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             tvListTitle.setText(listModel.getTitle());
 
             cardListener = new ChildEventListener() {
-                // (Tất cả logic onChildAdded...onCancelled giữ nguyên)
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     Card card = snapshot.getValue(Card.class);
@@ -218,44 +228,25 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
         }
 
-        // ✨ BƯỚC 3 (TRONG VIEW HOLDER): Thêm hàm hiển thị Dialog "Thêm thẻ"
-        /**
-         * Hiển thị dialog để nhập tiêu đề thẻ mới.
-         * Hàm này được gọi bởi listener 'addCardListener'
-         */
         private void showAddCardDialog(String listId) {
-            // Cần Context (từ adapter) và ViewModel (từ adapter)
-            if (context == null || viewModel == null) {
-                Log.e("ListModelAdapter", "Context or ViewModel is null in showAddCardDialog");
-                return;
-            }
+            if (context == null || viewModel == null) return;
 
-            // Dùng MaterialAlertDialogBuilder
             com.google.android.material.dialog.MaterialAlertDialogBuilder builder =
                     new com.google.android.material.dialog.MaterialAlertDialogBuilder(context);
             builder.setTitle("Thêm thẻ mới");
 
-            // Inflate layout dialog_input_text.xml
             final View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_text, null);
             final EditText input = dialogView.findViewById(R.id.et_input_title);
             input.setHint("Nhập tiêu đề thẻ");
             builder.setView(dialogView);
 
-            // Set up buttons
             builder.setPositiveButton("Thêm", (dialog, which) -> {
                 String title = input.getText().toString().trim();
                 if (!title.isEmpty()) {
-
-                    // Tính position cho thẻ mới
-                    // (Chúng ta đã thêm hàm này vào CardAdapter)
                     double newPosition = cardAdapter.getLastItemPosition() + 1000.0;
-
-                    // Gọi ViewModel để tạo thẻ
                     viewModel.createNewCard(listId, title, newPosition, new CardRepository.GeneralCallback() {
                         @Override
-                        public void onSuccess() {
-                            // Không cần làm gì, ChildEventListener sẽ tự động cập nhật
-                        }
+                        public void onSuccess() { }
                         @Override
                         public void onError(String message) {
                             Toast.makeText(context, "Lỗi tạo thẻ: " + message, Toast.LENGTH_SHORT).show();
@@ -266,12 +257,11 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 }
             });
             builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
-
             builder.show();
         }
     }
 
-    // --- ViewHolder 2: Cho Nút "Thêm Danh sách" (Giữ nguyên) ---
+    // --- ViewHolder 2: Cho Nút "Thêm Danh sách" ---
     public static class AddListViewHolder extends RecyclerView.ViewHolder {
         LinearLayout layoutThemDanhSach;
 
