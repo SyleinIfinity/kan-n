@@ -98,7 +98,7 @@ public class DangNhapFragment extends Fragment {
             if (getActivity() != null) {
                 getActivity().finish();
             }
-        }, 300); // 300ms là đủ an toàn.
+        }, 300); // 300ms là đủ an toàn
     }
 
     @Override
