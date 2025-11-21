@@ -79,7 +79,6 @@ public class AuthViewModel extends AndroidViewModel {
         }
         return email.split("@")[0];
     }
-
     // --- HÀNH ĐỘNG ĐĂNG NHẬP (Đã cập nhật) ---
     public void login(String email, String password) {
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {

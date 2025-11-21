@@ -44,7 +44,7 @@ public class MenuBangFragment extends Fragment {
     }
 
     private void setupToolbar() {
-        
+
     }
 
     @Override
