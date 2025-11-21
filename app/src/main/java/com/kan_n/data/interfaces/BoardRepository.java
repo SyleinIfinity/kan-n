@@ -40,9 +40,9 @@ public interface BoardRepository {
      */
     void createBoard(String workspaceId, String name, String visibility, Background background, GeneralCallback callback); // <--- CẬP NHẬT
 
-//    void updateBoard(String boardId, Map<String, Object> updates, GeneralCallback callback);
-//    void deleteBoard(String boardId, GeneralCallback callback);
-//    void addMemberToBoard(String boardId, String userId, GeneralCallback callback);
-//    void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback);
-    //Test
+    void updateBoard(String boardId, Map<String, Object> updates, GeneralCallback callback);
+    void deleteBoard(String boardId, GeneralCallback callback);
+    void addMemberToBoard(String boardId, String userId, GeneralCallback callback);
+    void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback);
+
 }
