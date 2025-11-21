@@ -91,12 +91,7 @@ public class DangNhapFragment extends Fragment {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
 
-        // 2. Sử dụng Handler để trì hoãn việc hủy Activity
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (getActivity() != null) {
-                getActivity().finish();
-            }
-        }, 300); // 300ms là đủ an toàn.
+
     }
 
     @Override
