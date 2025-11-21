@@ -22,9 +22,9 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
 
     private List<Workspace> workspaceList;
     private final Context context;
-    private final BoardAdapter.OnBoardClickListener boardClickListener; // ✨ 1. Them bien listener
+    private final BoardAdapter.OnBoardClickListener boardClickListener;
 
-    // ✨ 2. Cap nhat constructor
+    // Cap nhat constructor
     public WorkspaceAdapter(Context context, List<Workspace> workspaceList, BoardAdapter.OnBoardClickListener boardClickListener) {
         this.context = context;
         this.workspaceList = workspaceList;
@@ -35,7 +35,7 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
     @Override
     public WorkspaceViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_workspace, parent, false);
-        // ✨ 3. Truyen listener vao ViewHolder khi tao
+        // Truyen listener vao ViewHolder khi tao
         return new WorkspaceViewHolder(view, context, boardClickListener);
     }
 
@@ -47,7 +47,7 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         holder.tvWorkspaceName.setText(workspace.getName());
         List<Board> boardsInThisWorkspace = workspace.getBoards();
 
-        // ✨ 4. Cap nhat du lieu cho adapter con (da duoc khoi tao trong ViewHolder)
+        // Cap nhat du lieu cho adapter con (da duoc khoi tao trong ViewHolder)
         holder.updateBoards(boardsInThisWorkspace);
     }
 
@@ -61,7 +61,6 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         notifyDataSetChanged();
     }
 
-    // ✨ 5. Sua lai ViewHolder (RAT QUAN TRONG)
     public static class WorkspaceViewHolder extends RecyclerView.ViewHolder {
         TextView tvWorkspaceName;
         RecyclerView rvBoards;

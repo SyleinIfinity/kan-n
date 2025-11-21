@@ -26,8 +26,6 @@ import com.kan_n.data.interfaces.ListRepository;
 import com.kan_n.data.models.ListModel;
 import com.kan_n.databinding.FragmentBangSpaceBinding;
 import com.kan_n.ui.adapters.adapter.ListModelAdapter;
-
-// ✨ BƯỚC 1: Implement interface mới
 public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAddListClickListener {
 
     private FragmentBangSpaceBinding binding;
@@ -39,7 +37,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     private String boardId;
     private String boardTitle;
 
-    // ✨ BƯỚC 2: Xóa biến observer
     // private RecyclerView.AdapterDataObserver adapterObserver;
 
     @Override
@@ -72,7 +69,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
         navController = NavHostFragment.findNavController(this);
 
-        // ✨ BƯỚC 3: Xóa các lệnh gọi hàm observer
+        // Xóa các lệnh gọi hàm observer
         // setupEmptyStateObserver(); // <-- XÓA
         // binding.btnAddListPlaceholder.setOnClickListener(...); // <-- XÓA
 
@@ -98,7 +95,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     }
 
     private void setupRecyclerView() {
-        // ✨ BƯỚC 4: Cập nhật constructor của Adapter, truyền "this" làm listener
+        // Cập nhật constructor của Adapter, truyền "this" làm listener
         // Cập nhật lại dòng khởi tạo Adapter
         listModelAdapter = new ListModelAdapter(getContext(), viewModel, this, new ListModelAdapter.OnItemCardClickListener() {
             @Override
@@ -119,20 +116,10 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         });
         binding.rvLists.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         binding.rvLists.setAdapter(listModelAdapter);
-
-        // ✨ BƯỚC 5: Xóa đăng ký observer
-        // listModelAdapter.registerAdapterDataObserver(adapterObserver); // <-- XÓA
-        // checkEmptyState(); // <-- XÓA
     }
 
-    // ✨ BƯỚC 6: Xóa các hàm setupEmptyStateObserver() và checkEmptyState()
-    /*
-    private void setupEmptyStateObserver() { ... } // <-- XÓA HÀM NÀY
-    private void checkEmptyState() { ... } // <-- XÓA HÀM NÀY
-    */
 
     /**
-     * ✨ BƯỚC 7: Triển khai phương thức interface
      * Đây là hàm được gọi khi nhấn vào nút "Thêm danh sách" bên trong RecyclerView
      */
     @Override
@@ -215,10 +202,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // ✨ BƯỚC 8: Xóa hủy đăng ký observer
-        // if (listModelAdapter != null && adapterObserver != null) {
-        //     listModelAdapter.unregisterAdapterDataObserver(adapterObserver); // <-- XÓA
-        // }
         binding = null;
     }
 }

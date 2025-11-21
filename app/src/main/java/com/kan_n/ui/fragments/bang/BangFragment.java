@@ -22,7 +22,6 @@ import com.kan_n.ui.adapters.adapter.WorkspaceAdapter;
 
 import java.util.ArrayList;
 
-// ✨ 1. Implement interface
 public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickListener {
 
     private FragmentBangBinding binding;
@@ -57,21 +56,19 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                 workspaceAdapter.updateData(workspaces);
             }
         });
-
-        // ✨ 1. THAY THẾ loadWorkspaces() BẰNG
         // Hàm này sẽ tự động gọi loadWorkspaces() lần đầu
         // và mỗi khi có thay đổi trên Firebase.
         bangViewModel.startListeningForChanges();
     }
 
     private void setupRecyclerView() {
-        // ✨ 2. Truyen "this" (vi fragment nay da implement interface)
+        // Truyen "this" (vi fragment nay da implement interface)
         workspaceAdapter = new WorkspaceAdapter(getContext(), new ArrayList<>(), this);
         rvWorkspaces.setLayoutManager(new LinearLayoutManager(getContext()));
         rvWorkspaces.setAdapter(workspaceAdapter);
     }
 
-    // ✨ 3. Implement phuong thuc cua interface
+    // Implement phuong thuc cua interface
     @Override
     public void onBoardClick(Board board) {
         if (navController != null && board != null) {

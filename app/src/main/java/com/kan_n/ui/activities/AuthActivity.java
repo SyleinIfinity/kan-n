@@ -11,8 +11,6 @@ public class AuthActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // ✨ --- LOGIC ROUTING MỚI --- ✨
         // Kiểm tra xem user đã đăng nhập từ phiên trước chưa
         if (FirebaseUtils.isLoggedIn()) {
             // Nếu ĐÃ đăng nhập, đi thẳng tới MainActivity

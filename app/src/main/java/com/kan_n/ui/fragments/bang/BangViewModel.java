@@ -24,8 +24,6 @@ public class BangViewModel extends ViewModel {
     private final BoardRepository boardRepository;
     private final MutableLiveData<List<Workspace>> workspacesLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
-
-    // ✨ 1. Thêm các biến để lắng nghe
     private DatabaseReference membershipsRef;
     private ValueEventListener membershipListener;
     private String currentUserId;
@@ -34,7 +32,7 @@ public class BangViewModel extends ViewModel {
         this.boardRepository = new BoardRepositoryImpl();
         this.currentUserId = FirebaseUtils.getCurrentUserId(); // Lấy UID 1 lần
         if (this.currentUserId != null) {
-            // ✨ 2. Khởi tạo tham chiếu
+            // Khởi tạo tham chiếu
             this.membershipsRef = FirebaseUtils.getRootRef().child("memberships");
         }
         // Xóa loadWorkspaces(); ở đây
@@ -49,7 +47,6 @@ public class BangViewModel extends ViewModel {
     }
 
     /**
-     * ✨ 3. TẠO HÀM BẮT ĐẦU LẮNG NGHE
      * Fragment sẽ gọi hàm này trong onViewCreated.
      */
     public void startListeningForChanges() {
@@ -74,7 +71,7 @@ public class BangViewModel extends ViewModel {
                 }
             };
 
-            // ✨ 4. Gắn listener vào query (dùng addValueEventListener)
+            // Gắn listener vào query (dùng addValueEventListener)
             // Lắng nghe TẤT CẢ memberships CỦA USER NÀY
             membershipsRef.orderByChild("userId").equalTo(currentUserId)
                     .addValueEventListener(membershipListener);
@@ -108,7 +105,7 @@ public class BangViewModel extends ViewModel {
     }
 
     /**
-     * ✨ 5. Dọn dẹp listener khi ViewModel bị hủy
+     * Dọn dẹp listener khi ViewModel bị hủy
      */
     @Override
     protected void onCleared() {

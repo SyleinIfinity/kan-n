@@ -20,8 +20,6 @@ public class Card {
     private long createdAt;
     private boolean archived;
     private Map<String, Boolean> tagIds = new HashMap<>();
-
-    // --- ✨ BỔ SUNG CÁC TRƯỜNG MỚI ---
     private boolean isCompleted; // Cho ic_tron_v1
     private String coverImageUrl;  // Cho ảnh bìa (background)
     private int attachmentCount;   // Cho ic_dinhkem
@@ -38,11 +36,9 @@ public class Card {
         this.position = position;
         this.createdBy = createdBy;
         this.createdAt = System.currentTimeMillis();
-        // Giá trị mặc định cho các trường cũ
         this.description = "";
         this.dueDate = 0;
         this.archived = false;
-        // Giá trị mặc định cho các trường mới
         this.isCompleted = false;
         this.coverImageUrl = null;
         this.attachmentCount = 0;
@@ -77,9 +73,6 @@ public class Card {
     public void setArchived(boolean archived) { this.archived = archived; }
     public Map<String, Boolean> getTagIds() { return tagIds; }
     public void setTagIds(Map<String, Boolean> tagIds) { this.tagIds = tagIds; }
-
-    // --- ✨ BỔ SUNG GETTER/SETTER CHO CÁC TRƯỜNG MỚI ---
-
     public boolean isCompleted() { return isCompleted; }
     public void setCompleted(boolean completed) { isCompleted = completed; }
 
@@ -108,8 +101,6 @@ public class Card {
         result.put("createdAt", createdAt);
         result.put("archived", archived);
         result.put("tagIds", tagIds);
-
-        // ✨ BỔ SUNG CÁC TRƯỜNG MỚI VÀO MAP
         result.put("isCompleted", isCompleted);
         result.put("coverImageUrl", coverImageUrl);
         result.put("attachmentCount", attachmentCount);

@@ -25,7 +25,7 @@ public class AuthRepositoryImpl implements AuthRepository {
 
     public AuthRepositoryImpl() {
         this.mAuth = FirebaseUtils.getAuthInstance();
-        // ✨ 3. Khởi tạo mRootRef
+        // Khởi tạo mRootRef
         this.mRootRef = FirebaseUtils.getRootRef();
     }
 
@@ -125,7 +125,7 @@ public class AuthRepositoryImpl implements AuthRepository {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
 
-                        // ✨ KIỂM TRA KÍCH HOẠT
+                        // KIỂM TRA KÍCH HOẠT
                         if (!task.getResult().getUser().isEmailVerified()) {
                             callback.onError("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email.");
                             mAuth.signOut(); // Đăng xuất user ra

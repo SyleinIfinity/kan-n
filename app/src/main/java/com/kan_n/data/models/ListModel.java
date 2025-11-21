@@ -22,13 +22,11 @@ public class ListModel {
     public ListModel() {
         // Constructor trống
     }
-
-    // ✨ Constructor đã cập nhật
     public ListModel(String boardId, String title, double position, String createdBy) {
         this.boardId = boardId;
         this.title = title;
         this.position = position;
-        this.createdBy = createdBy; // ✨ ĐÃ BỔ SUNG
+        this.createdBy = createdBy;
         this.isClosed = false;
         this.createdAt = System.currentTimeMillis();
     }
@@ -83,8 +81,6 @@ public class ListModel {
     public void setCreatedAt(long createdAt) {
         this.createdAt = createdAt;
     }
-
-    // ✨ Getter/Setter cho createdBy
     public String getCreatedBy() {
         return createdBy;
     }
@@ -101,7 +97,7 @@ public class ListModel {
         result.put("position", position);
         result.put("isClosed", isClosed);
         result.put("createdAt", createdAt);
-        result.put("createdBy", createdBy); // ✨ ĐÃ BỔ SUNG
+        result.put("createdBy", createdBy);
         return result;
     }
 }

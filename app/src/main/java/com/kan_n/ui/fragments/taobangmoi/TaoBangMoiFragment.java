@@ -31,8 +31,6 @@ public class TaoBangMoiFragment extends Fragment {
     private FragmentTaobangMoiBinding binding;
     private TaoBangMoiViewModel viewModel;
     private NavController navController;
-
-    // ✨ Adapter cho Spinner Workspace
     private ArrayAdapter<Workspace> workspaceAdapter;
 
     @Override
@@ -143,7 +141,7 @@ public class TaoBangMoiFragment extends Fragment {
         // Lắng nghe phông nền (từ trước)
         viewModel.getSelectedBackground().observe(getViewLifecycleOwner(), this::updateBackgroundPreview);
 
-        // ✨ Lắng nghe danh sách Workspace
+        // Lắng nghe danh sách Workspace
         viewModel.getWorkspaces().observe(getViewLifecycleOwner(), workspaces -> {
             if (workspaces != null) {
                 workspaceAdapter.clear();
@@ -159,7 +157,7 @@ public class TaoBangMoiFragment extends Fragment {
             }
         });
 
-        // ✨ Lắng nghe trạng thái TẠO BẢNG
+        // Lắng nghe trạng thái TẠO BẢNG
         viewModel.getCreateStatus().observe(getViewLifecycleOwner(), status -> {
             if (status == null) return;
             switch (status) {
