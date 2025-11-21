@@ -50,9 +50,10 @@ public class DangNhapFragment extends Fragment {
 
         // Nút Đăng nhập
         binding.nutDangNhap.setOnClickListener(v -> {
-            String email = binding.nhapGmail.getText().toString().trim();
-            String password = binding.nhapMatKhau.getText().toString().trim();
-            viewModel.login(email, password);
+//            String email = binding.nhapGmail.getText().toString().trim();
+//            String password = binding.nhapMatKhau.getText().toString().trim();
+//            viewModel.login(email, password);
+            goToMainActivityRobust();
         });
 
         navController = NavHostFragment.findNavController(this);
@@ -85,11 +86,6 @@ public class DangNhapFragment extends Fragment {
      */
     private void goToMainActivityRobust() {
         if (getActivity() == null) return;
-
-        // 1. Khởi chạy MainActivity (sử dụng cờ CLEAR_TASK để xóa AuthActivity khỏi stack)
-        Intent intent = new Intent(getActivity(), MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
 
         // 2. Sử dụng Handler để trì hoãn việc hủy Activity
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
