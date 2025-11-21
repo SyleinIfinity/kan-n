@@ -178,7 +178,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         builder.show();
     }
 
-    // (Hàm listenForLists giữ nguyên)
     private void listenForLists(String boardId) {
         viewModel.listenForLists(boardId, new ChildEventListener() {
             @Override
