@@ -23,14 +23,12 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
 
     private List<Board> boardList;
     private final Context context;
-    private final OnBoardClickListener boardClickListener; // ✨ 1. Them bien listener
+    private final OnBoardClickListener boardClickListener;
 
-    // ✨ 2. Dinh nghia Interface
     public interface OnBoardClickListener {
         void onBoardClick(Board board);
     }
 
-    // ✨ 3. Cap nhat constructor
     public BoardAdapter(Context context, List<Board> boardList, OnBoardClickListener listener) {
         this.context = context;
         this.boardList = boardList;
@@ -94,7 +92,7 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
             holder.viewScrim.setBackgroundColor(defaultColor);
         }
 
-        // ✨ 4. Gan su kien click vao toan bo item
+        // Gan su kien click vao toan bo item
         holder.itemView.setOnClickListener(v -> {
             if (boardClickListener != null) {
                 boardClickListener.onBoardClick(board);

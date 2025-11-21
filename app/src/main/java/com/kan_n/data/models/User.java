@@ -14,15 +14,13 @@ public class User {
     private String displayName;
     private String email;
     private String avatarUrl;
-    private String phone; // ✨ 1. BỔ SUNG TRƯỜNG SDT
+    private String phone;
     private long createdAt;
     private boolean isActive;
 
     public User() {
         // Constructor trống
     }
-
-    // ✨ 2. CẬP NHẬT CONSTRUCTOR
     public User(String username, String displayName, String email, String avatarUrl, String phone) {
         this.username = username;
         this.displayName = displayName;
@@ -50,8 +48,6 @@ public class User {
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
-
-    // ✨ 3. BỔ SUNG GETTER/SETTER CHO PHONE
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 

@@ -59,7 +59,7 @@ public class ListRepositoryImpl implements ListRepository {
     @Override
     public void getListsForBoard(String boardId, ChildEventListener listener) {
         // Truy vấn các danh sách thuộc boardId này,
-        // sắp xếp theo "position" (neu ban co truong position)
+        // sắp xếp theo "position"
         // Neu khong co truong position, Firebase se sap xep theo Key
         Query listsQuery = listsRef.orderByChild("boardId").equalTo(boardId);
 

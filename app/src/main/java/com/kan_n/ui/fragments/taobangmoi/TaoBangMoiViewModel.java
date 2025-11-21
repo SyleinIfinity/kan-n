@@ -29,12 +29,8 @@ public class TaoBangMoiViewModel extends ViewModel {
     private final MutableLiveData<Background> _selectedBackground = new MutableLiveData<>();
     public LiveData<Background> getSelectedBackground() { return _selectedBackground; }
     private boolean hasDataLoaded = false;
-
-    // --- ✨ Bổ sung: Workspaces ---
     private final MutableLiveData<List<Workspace>> _workspaces = new MutableLiveData<>();
     public LiveData<List<Workspace>> getWorkspaces() { return _workspaces; }
-
-    // --- ✨ Bổ sung: Trạng thái tạo bảng ---
     public enum CreateBoardStatus { IDLE, LOADING, SUCCESS, ERROR }
     private final MutableLiveData<CreateBoardStatus> _createStatus = new MutableLiveData<>(CreateBoardStatus.IDLE);
     public LiveData<CreateBoardStatus> getCreateStatus() { return _createStatus; }
@@ -46,7 +42,7 @@ public class TaoBangMoiViewModel extends ViewModel {
 
     public TaoBangMoiViewModel() {
         this.backgroundRepository = new BackgroundRepositoryImpl();
-        this.boardRepository = new BoardRepositoryImpl(); // ✨ Khởi tạo
+        this.boardRepository = new BoardRepositoryImpl();
         // Đặt phông nền mặc định
         _selectedBackground.setValue(new Background("color", "#0079BF"));
     }

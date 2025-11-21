@@ -48,7 +48,7 @@ public class TaoBangMoiChonPhongAnhFragment extends Fragment implements Backgrou
         setupRecyclerView();
         observeViewModel();
 
-        // ✨ Yêu cầu ViewModel lọc và cung cấp danh sách "image"
+        // ViewModel lọc và cung cấp danh sách "image"
         viewModel.filterBackgrounds("image");
 
         binding.ivBack.setOnClickListener(v -> navController.popBackStack());
