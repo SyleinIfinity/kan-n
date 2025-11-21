@@ -16,8 +16,6 @@ public class Workspace {
     private String description;
     private long createdAt;
     private String createdBy; // (Đã bổ sung ở bước trước)
-
-    // ✨ 2. TRƯỜNG NÀY ĐỂ GỘP DỮ LIỆU (KHÔNG LƯU LÊN FIREBASE)
     private List<Board> boards;
 
     public Workspace() {
@@ -73,8 +71,6 @@ public class Workspace {
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
     }
-
-    // --- ✨ 3. CÁC PHƯƠNG THỨC BẮT BUỘC CHO BOARDS ---
 
     /**
      * Dùng @Exclude để Firebase không cố gắng đọc/lưu trường này.

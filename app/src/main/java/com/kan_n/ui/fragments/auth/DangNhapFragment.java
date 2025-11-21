@@ -69,7 +69,7 @@ public class DangNhapFragment extends Fragment {
         // 1. Đăng nhập thành công
         viewModel.loginSuccess.observe(getViewLifecycleOwner(), user -> {
             Toast.makeText(getContext(), "Đăng nhập thành công! Chào " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-            // ✨ Gọi hàm chuyển màn hình robust
+            // Gọi hàm chuyển màn hình robust
             goToMainActivityRobust();
         });
 

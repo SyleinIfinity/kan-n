@@ -91,16 +91,35 @@ public class MainActivity extends AppCompatActivity {
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_huy); // Đặt icon 'X'
 
             } else if (destId == R.id.bangSpaceFragment) {
-                // === ✨ PHẦN SỬA LỖI CỦA BẠN ===
                 // Đây là fragment BangSpace (có toolbar riêng)
                 binding.toolbar.getRoot().setVisibility(View.GONE); // ẨN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
 
+            } else if (destId == R.id.TrangCaiDatFragment) {
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
+
+            } else if (destId == R.id.infoUserFragment) {
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
+
+            } else if (destId == R.id.TrangLichSuDangNhapFragment) {
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
+
+            } else if (destId == R.id.TrangBaoMatQuyenRiengTuFragment) {
+                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
             } else {
                 // Đây là các fragment "con" khác (nếu có)
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(null); // Dùng icon "mũi tên quay lại"
+
             }
         });
 

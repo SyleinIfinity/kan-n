@@ -84,7 +84,6 @@ public class BackgroundAdapter extends RecyclerView.Adapter<BackgroundAdapter.Ba
                 }
             } else if ("image".equalsIgnoreCase(background.getType()) && background.getValue() != null) {
 
-                // ✨ 2. Sửa lỗi tại đây
                 // Bọc mã màu bằng ColorDrawable
                 Glide.with(context)
                         .load(background.getValue())

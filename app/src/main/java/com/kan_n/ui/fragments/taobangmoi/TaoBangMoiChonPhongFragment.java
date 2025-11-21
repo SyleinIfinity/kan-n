@@ -34,12 +34,12 @@ public class TaoBangMoiChonPhongFragment extends Fragment {
         // Nút quay lại
         binding.ivBack.setOnClickListener(v -> navController.popBackStack());
 
-        // ✨ Sự kiện click 1: Chuyển sang màn hình chọn MÀU SẮC
+        // Chuyển sang màn hình chọn MÀU SẮC
         binding.cardColors.setOnClickListener(v -> {
             navController.navigate(R.id.action_chonPhongFragment_to_chonMauFragment);
         });
 
-        // ✨ Sự kiện click 2: Chuyển sang màn hình chọn ẢNH
+        // Chuyển sang màn hình chọn ẢNH
         binding.cardImage.setOnClickListener(v -> {
             navController.navigate(R.id.action_chonPhongFragment_to_chonAnhFragment);
         });

@@ -18,15 +18,12 @@ public class Board {
     private String createdBy;
     private long createdAt;
     private boolean isArchived;
-
-    // ✨ 1. BỔ SUNG TRƯỜNG MỚI
     private Background background;
 
     public Board() {
         // Constructor trống
     }
 
-    // ✨ 2. CẬP NHẬT CONSTRUCTOR (thêm background)
     public Board(String workspaceId, String name, String description, String visibility, String createdBy, Background background) {
         this.workspaceId = workspaceId;
         this.name = name;
@@ -37,8 +34,6 @@ public class Board {
         this.isArchived = false;
         this.background = background; // <--- Cập nhật
     }
-
-    // --- Getters and Setters (Giữ nguyên các getter/setter cũ) ---
 
     @Exclude
     public String getUid() {
@@ -105,7 +100,6 @@ public class Board {
         isArchived = archived;
     }
 
-    // ✨ 3. BỔ SUNG GETTER/SETTER CHO BACKGROUND
     public Background getBackground() {
         return background;
     }
@@ -124,7 +118,7 @@ public class Board {
         result.put("createdBy", createdBy);
         result.put("createdAt", createdAt);
         result.put("isArchived", isArchived);
-        result.put("background", background); // ✨ 4. BỔ SUNG VÀO HÀM TOMAP
+        result.put("background", background);
         return result;
     }
 }

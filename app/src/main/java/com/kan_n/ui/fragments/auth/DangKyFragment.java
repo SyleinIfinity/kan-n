@@ -54,7 +54,7 @@ public class DangKyFragment extends Fragment {
             String confirmPassword = binding.nhapXacNhanMatKhau.getText().toString().trim();
 
             // (Hiển thị loading...)
-            // ✨ Gọi hàm register mới (đã có 'phone')
+            // Gọi hàm register mới (đã có 'phone')
             viewModel.register(displayName, phone, email, password, confirmPassword);
         });
 
@@ -67,7 +67,7 @@ public class DangKyFragment extends Fragment {
         viewModel.registerSuccess.observe(getViewLifecycleOwner(), successMessage -> {
             // (Ẩn loading...)
 
-            // ✨ THAY ĐỔI HÀNH VI
+            // THAY ĐỔI HÀNH VI
             Toast.makeText(getContext(), "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.", Toast.LENGTH_LONG).show();
 
             // Điều hướng về trang đăng nhập
