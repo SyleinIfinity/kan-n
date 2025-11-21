@@ -87,6 +87,12 @@ public class DangNhapFragment extends Fragment {
     private void goToMainActivityRobust() {
         if (getActivity() == null) return;
 
+        // 1. Khởi chạy MainActivity (sử dụng cờ CLEAR_TASK để xóa AuthActivity khỏi stack)
+        Intent intent = new Intent(getActivity(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+
+
         // 2. Sử dụng Handler để trì hoãn việc hủy Activity
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (getActivity() != null) {
