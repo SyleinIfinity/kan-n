@@ -69,9 +69,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
         navController = NavHostFragment.findNavController(this);
 
-        // Xóa các lệnh gọi hàm observer
-        // setupEmptyStateObserver(); // <-- XÓA
-        // binding.btnAddListPlaceholder.setOnClickListener(...); // <-- XÓA
 
         if (boardId != null) {
             listenForLists(boardId);
@@ -95,8 +92,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     }
 
     private void setupRecyclerView() {
-        // Cập nhật constructor của Adapter, truyền "this" làm listener
-        // Cập nhật lại dòng khởi tạo Adapter
+        // truyền "this" làm listener
         listModelAdapter = new ListModelAdapter(getContext(), viewModel, this, new ListModelAdapter.OnItemCardClickListener() {
             @Override
             public void onCardClick(com.kan_n.data.models.Card card) {
@@ -128,7 +124,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     }
 
     /**
-     * Hàm này giữ nguyên, nhưng giờ nó được gọi bởi onAddListClick
+     * được gọi bởi onAddListClick
      */
     private void showAddListDialog() {
         if (getContext() == null) return;
@@ -149,7 +145,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                 viewModel.createNewList(boardId, title, newPosition, new ListRepository.GeneralCallback() {
                     @Override
                     public void onSuccess() {
-                        // Không cần làm gì, ChildEventListener sẽ tự động cập nhật
                     }
                     @Override
                     public void onError(String message) {

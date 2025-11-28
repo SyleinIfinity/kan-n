@@ -102,7 +102,7 @@ public class TaoBangMoiViewModel extends ViewModel {
         });
     }
 
-    // --- ✨ Bổ sung: Logic Tạo Bảng ---
+    // --- Logic Tạo Bảng ---
     public void createBoard(String boardName, String workspaceId, String visibility, Background background) {
         // 1. Kiểm tra đầu vào
         if (boardName == null || boardName.trim().isEmpty()) {
