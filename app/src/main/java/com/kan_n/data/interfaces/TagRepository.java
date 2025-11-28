@@ -20,7 +20,7 @@ public interface TagRepository {
         void onError(String message);
     }
 
-    // === ĐỊNH NGHĨA HÀNH ĐỘNG (Đã chuẩn hóa) ===
+    // === ĐỊNH NGHĨA HÀNH ĐỘNG ===
 
     /**
      * Lấy tất cả các Nhãn (tag) mà người dùng hiện tại đã tạo.
@@ -34,7 +34,7 @@ public interface TagRepository {
     void createTag(Tag tag, GeneralCallback callback);
 
     /**
-     * Cập nhật một Nhãn (ví dụ: đổi màu, đổi tên).
+     * Cập nhật một Nhãn
      */
     void updateTag(String tagId, Map<String, Object> updates, GeneralCallback callback);
 

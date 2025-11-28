@@ -14,13 +14,13 @@ public class ListModel {
     private String uid;
     private String boardId;
     private String title;
-    private double position; // Dùng double để dễ dàng sắp xếp lại
+    private double position;
     private boolean isClosed;
     private long createdAt;
-    private String createdBy; // ✨ ĐÃ BỔ SUNG
+    private String createdBy;
 
     public ListModel() {
-        // Constructor trống
+
     }
     public ListModel(String boardId, String title, double position, String createdBy) {
         this.boardId = boardId;

@@ -21,7 +21,7 @@ public class TagRepositoryImpl implements TagRepository {
     private final DatabaseReference mRootRef;
     private final DatabaseReference mTagsRef;
     private final DatabaseReference mCardsRef;
-    private final DatabaseReference mTagCardsRef; // Tham chiếu đến node mapping
+    private final DatabaseReference mTagCardsRef;
 
     public TagRepositoryImpl() {
         this.mRootRef = FirebaseUtils.getRootRef();
@@ -98,12 +98,6 @@ public class TagRepositoryImpl implements TagRepository {
         });
     }
 
-    /**
-     * Gắn một Nhãn vào một Thẻ.
-     * Cập nhật đồng thời 2 nơi:
-     * 1. /cards/{cardId}/tagIds/{tagId} = true
-     * 2. /tagCards/{tagId}/{cardId} = true
-     */
     @Override
     public void addTagToCard(String cardId, String tagId, GeneralCallback callback) {
         Map<String, Object> updates = new HashMap<>();
@@ -119,12 +113,7 @@ public class TagRepositoryImpl implements TagRepository {
         });
     }
 
-    /**
-     * Gỡ một Nhãn khỏi một Thẻ.
-     * Cập nhật đồng thời 2 nơi (xóa = set giá trị null).
-     * 1. /cards/{cardId}/tagIds/{tagId} = null
-     * 2. /tagCards/{tagId}/{cardId} = null
-     */
+
     @Override
     public void removeTagFromCard(String cardId, String tagId, GeneralCallback callback) {
         Map<String, Object> updates = new HashMap<>();
@@ -140,15 +129,10 @@ public class TagRepositoryImpl implements TagRepository {
         });
     }
 
-    /**
-     * Xóa một Nhãn (cascade delete).
-     * CẢNH BÁO: Đây là hành động nặng, chạy trên client có thể rủi ro.
-     * Nên được thực hiện bằng Cloud Function.
-     */
     @Override
     public void deleteTag(String tagId, GeneralCallback callback) {
 
-        // Bước 1: Lấy danh sách các thẻ đang dùng tag này từ /tagCards/
+        // Lấy danh sách các thẻ đang dùng tag này
         mTagCardsRef.child(tagId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -171,7 +155,7 @@ public class TagRepositoryImpl implements TagRepository {
                     }
                 }
 
-                // Bước 2: Thực hiện xóa đồng thời
+                // Thực hiện xóa đồng thời
                 mRootRef.updateChildren(updates).addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         callback.onSuccess();
