@@ -116,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
 
             } else if (destId == R.id.taoBangMoiChonPhongFragment){
                 binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
+            } else if (destId == R.id.taoBangMoiChonPhongAnhFragment){
+                binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
+            } else if (destId == R.id.taoBangMoiChonPhongMauFragment){
+                binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
             }
 
             else {
