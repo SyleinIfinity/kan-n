@@ -44,6 +44,7 @@
                 android:layout_height="32dp"
                 android:contentDescription="Quay lại"
                 android:src="@drawable/ic_quaylai_v1"
+                app:tint="#000000"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
