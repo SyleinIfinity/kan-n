@@ -50,10 +50,9 @@ public class DangNhapFragment extends Fragment {
 
         // Nút Đăng nhập
         binding.nutDangNhap.setOnClickListener(v -> {
-//            String email = binding.nhapGmail.getText().toString().trim();
-//            String password = binding.nhapMatKhau.getText().toString().trim();
-//            viewModel.login(email, password);
-            goToMainActivityRobust();
+            String email = binding.nhapGmail.getText().toString().trim();
+            String password = binding.nhapMatKhau.getText().toString().trim();
+            viewModel.login(email, password);
         });
 
         navController = NavHostFragment.findNavController(this);
@@ -70,7 +69,7 @@ public class DangNhapFragment extends Fragment {
         // 1. Đăng nhập thành công
         viewModel.loginSuccess.observe(getViewLifecycleOwner(), user -> {
             Toast.makeText(getContext(), "Đăng nhập thành công! Chào " + user.getDisplayName(), Toast.LENGTH_SHORT).show();
-            // Gọi hàm chuyển màn hình robust
+            // ✨ Gọi hàm chuyển màn hình robust
             goToMainActivityRobust();
         });
 
@@ -92,13 +91,12 @@ public class DangNhapFragment extends Fragment {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
 
-
         // 2. Sử dụng Handler để trì hoãn việc hủy Activity
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (getActivity() != null) {
                 getActivity().finish();
             }
-        }, 300); // 300ms là đủ an toàn
+        }, 300); // 300ms là đủ an toàn.
     }
 
     @Override
