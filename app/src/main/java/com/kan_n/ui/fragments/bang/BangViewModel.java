@@ -35,7 +35,6 @@ public class BangViewModel extends ViewModel {
             // Khởi tạo tham chiếu
             this.membershipsRef = FirebaseUtils.getRootRef().child("memberships");
         }
-        // Xóa loadWorkspaces(); ở đây
     }
 
     public LiveData<List<Workspace>> getWorkspaces() {
@@ -55,13 +54,12 @@ public class BangViewModel extends ViewModel {
             return;
         }
 
-        // Chỉ tạo listener 1 lần duy nhất
         if (membershipListener == null) {
             membershipListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     // Bất cứ khi nào memberships của user thay đổi (thêm/xóa)
-                    // HÃY TẢI LẠI TOÀN BỘ DANH SÁCH BẢNG
+                    // TẢI LẠI TOÀN BỘ DANH SÁCH BẢNG
                     loadWorkspaces();
                 }
 
@@ -72,7 +70,7 @@ public class BangViewModel extends ViewModel {
             };
 
             // Gắn listener vào query (dùng addValueEventListener)
-            // Lắng nghe TẤT CẢ memberships CỦA USER NÀY
+            // Lắng nghe TẤT CẢ memberships CỦA USER
             membershipsRef.orderByChild("userId").equalTo(currentUserId)
                     .addValueEventListener(membershipListener);
         }
@@ -81,7 +79,6 @@ public class BangViewModel extends ViewModel {
 
     /**
      * Phương thức tải dữ liệu thật từ Firebase.
-     * (Hàm này giờ sẽ được gọi bởi listener ở trên)
      */
     public void loadWorkspaces() {
         if (currentUserId == null) {
