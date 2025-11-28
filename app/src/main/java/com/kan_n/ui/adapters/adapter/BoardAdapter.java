@@ -32,7 +32,7 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
     public BoardAdapter(Context context, List<Board> boardList, OnBoardClickListener listener) {
         this.context = context;
         this.boardList = boardList;
-        this.boardClickListener = listener; // Gan listener
+        this.boardClickListener = listener; // Gắn listener
     }
 
     @NonNull
@@ -50,8 +50,7 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
         // 1. Đặt tiêu đề cho Bảng
         holder.tvBoardTitle.setText(board.getName());
 
-        // 2. Xử lý logic hiển thị sao (yêu thích)
-        // (Logic cua ban)
+        // 2. Xử lý logic hiển thị sao
         if (board.getVisibility() != null &&
                 (board.getVisibility().equalsIgnoreCase("public") || board.getVisibility().equalsIgnoreCase("workspace"))) {
             holder.ivBoardStarred.setImageResource(R.drawable.ic_clicked_star);
@@ -92,7 +91,7 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
             holder.viewScrim.setBackgroundColor(defaultColor);
         }
 
-        // Gan su kien click vao toan bo item
+        // Gắn sự kiện click
         holder.itemView.setOnClickListener(v -> {
             if (boardClickListener != null) {
                 boardClickListener.onBoardClick(board);

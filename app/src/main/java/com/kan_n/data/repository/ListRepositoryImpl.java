@@ -21,7 +21,7 @@ public class ListRepositoryImpl implements ListRepository {
 
     private final DatabaseReference mRootRef;
     private final DatabaseReference mListsRef;
-    private final DatabaseReference mCardsRef; // Cần tham chiếu Cards để xóa
+    private final DatabaseReference mCardsRef;
 
     private final DatabaseReference listsRef = FirebaseUtils.getDatabaseInstance().getReference("lists");
 
@@ -58,12 +58,11 @@ public class ListRepositoryImpl implements ListRepository {
 
     @Override
     public void getListsForBoard(String boardId, ChildEventListener listener) {
-        // Truy vấn các danh sách thuộc boardId này,
-        // sắp xếp theo "position"
-        // Neu khong co truong position, Firebase se sap xep theo Key
+        // Lấy các danh sách thuộc boardId này,
+        // Sắp xếp theo "position"
         Query listsQuery = listsRef.orderByChild("boardId").equalTo(boardId);
 
-        // Gắn ChildEventListener vào truy vấn
+        // Gắn ChildEventListener
         listsQuery.addChildEventListener(listener);
     }
 
@@ -78,13 +77,10 @@ public class ListRepositoryImpl implements ListRepository {
         });
     }
 
-    /**
-     * Xóa một danh sách (cột) và tất cả các thẻ bên trong nó.
-     */
     @Override
     public void deleteList(String listId, GeneralCallback callback) {
 
-        // Bước 1: Tìm tất cả thẻ thuộc về danh sách này
+        // Tìm tất cả thẻ thuộc về danh sách này
         mCardsRef.orderByChild("listId").equalTo(listId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -98,12 +94,10 @@ public class ListRepositoryImpl implements ListRepository {
                 if (snapshot.exists()) {
                     for (DataSnapshot cardSnap : snapshot.getChildren()) {
                         updates.put("/cards/" + cardSnap.getKey(), null);
-                        // (Lưu ý: Logic này chưa xóa 'tagCards' mapping,
-                        //  cần xử lý bằng Cloud Function hoặc 1 vòng lặp nữa)
                     }
                 }
 
-                // Bước 2: Thực hiện xóa đồng thời
+                // Thực hiện xóa đồng thời
                 mRootRef.updateChildren(updates).addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         callback.onSuccess();

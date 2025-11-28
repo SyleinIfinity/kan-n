@@ -14,7 +14,7 @@ public interface CardRepository {
         void onError(String message);
     }
 
-    // Callback trả về 1 Card (ví dụ khi tạo mới)
+    // Callback trả về 1 Card
     public interface CardCallback {
         void onSuccess(Card card);
         void onError(String message);
@@ -41,7 +41,7 @@ public interface CardRepository {
     void setCardCompleted(String cardId, boolean isCompleted, GeneralCallback callback);
 
     /**
-     * Cập nhật một trường bất kỳ của thẻ (ví dụ: coverImageUrl).
+     * Cập nhật một trường bất kỳ của thẻ
      */
     void updateCardField(String cardId, String fieldName, Object value, GeneralCallback callback);
 

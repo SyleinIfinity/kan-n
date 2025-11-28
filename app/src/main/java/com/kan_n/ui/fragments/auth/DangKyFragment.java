@@ -53,28 +53,24 @@ public class DangKyFragment extends Fragment {
             String password = binding.nhapMatKhau.getText().toString().trim();
             String confirmPassword = binding.nhapXacNhanMatKhau.getText().toString().trim();
 
-            // (Hiển thị loading...)
-            // Gọi hàm register mới (đã có 'phone')
+
             viewModel.register(displayName, phone, email, password, confirmPassword);
         });
 
-        // Lắng nghe kết quả đăng ký
         observeViewModel();
     }
 
     private void observeViewModel() {
         // 1. Đăng ký thành công
         viewModel.registerSuccess.observe(getViewLifecycleOwner(), successMessage -> {
-            // (Ẩn loading...)
 
-            // THAY ĐỔI HÀNH VI
             Toast.makeText(getContext(), "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.", Toast.LENGTH_LONG).show();
 
             // Điều hướng về trang đăng nhập
             navController.popBackStack();
         });
 
-        // 2. Đăng ký thất bại (giữ nguyên)
+        // 2. Đăng ký thất bại
         viewModel.registerError.observe(getViewLifecycleOwner(), errorMessage -> {
             // (Ẩn loading...)
             Toast.makeText(getContext(), "Lỗi: " + errorMessage, Toast.LENGTH_LONG).show();

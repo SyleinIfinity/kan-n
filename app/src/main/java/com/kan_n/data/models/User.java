@@ -64,7 +64,7 @@ public class User {
         result.put("displayName", displayName);
         result.put("email", email);
         result.put("avatarUrl", avatarUrl);
-        result.put("phone", phone); // ✨ 4. BỔ SUNG VÀO MAP
+        result.put("phone", phone);
         result.put("createdAt", createdAt);
         result.put("isActive", isActive);
         return result;

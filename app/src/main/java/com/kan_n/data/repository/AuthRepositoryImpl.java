@@ -36,32 +36,31 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public void createUser(String username, String passwordPlain, String displayName, String email, String avatarUrl, String phone, GeneralCallback callback) {
 
-        // Bước 1: Tạo user bằng email và password trên FirebaseAuth
+        // Tạo user bằng email và password trên FirebaseAuth
         mAuth.createUserWithEmailAndPassword(email, passwordPlain)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         String uid = task.getResult().getUser().getUid();
 
-                        // Bước 2: Gửi email kích hoạt (vẫn giữ nguyên)
+                        // Gửi email kích hoạt
                         task.getResult().getUser().sendEmailVerification()
                                 .addOnCompleteListener(verificationTask -> {
                                     if (verificationTask.isSuccessful()) {
 
-                                        // Bước 3: Tạo tất cả các đối tượng
+                                        // Tạo các đối tượng
 
-                                        // 1. Tạo User
                                         User newUser = new User(username, displayName, email, avatarUrl, phone);
 
-                                        // 2. Tạo Workspace mặc định
+
                                         Workspace defaultWorkspace = new Workspace(
                                                 "Không gian cá nhân", // Tên Workspace
                                                 "Không gian làm việc đầu tiên của bạn", // Mô tả
                                                 uid // createdBy
                                         );
-                                        // Lấy key mới cho workspace
+
                                         String workspaceId = mRootRef.child("workspaces").push().getKey();
 
-                                        // 3. Tạo Board "Chào mừng" mặc định
+
                                         Background defaultBg = new Background("color", "#0079BF"); // Màu xanh Trello
                                         Board defaultBoard = new Board(
                                                 workspaceId,
@@ -74,7 +73,7 @@ public class AuthRepositoryImpl implements AuthRepository {
                                         // Lấy key mới cho board
                                         String boardId = mRootRef.child("boards").push().getKey();
 
-                                        // 4. Tạo Membership (liên kết User với Board)
+                                        // Tạo Membership (liên kết User với Board)
                                         Membership defaultMembership = new Membership(
                                                 boardId, // ID của bảng
                                                 uid, // ID của user
@@ -83,13 +82,13 @@ public class AuthRepositoryImpl implements AuthRepository {
                                         // Lấy key mới cho membership
                                         String membershipId = mRootRef.child("memberships").push().getKey();
 
-                                        // Kiểm tra null cho các key (phòng trường hợp lỗi)
+                                        // Kiểm tra null cho các key
                                         if (workspaceId == null || boardId == null || membershipId == null) {
                                             callback.onError("Không thể tạo ID cho dữ liệu ban đầu.");
                                             return;
                                         }
 
-                                        // Bước 4: Ghi tất cả vào DB bằng một lệnh updateChildren (an toàn)
+                                        // Ghi tất cả vào DB bằng một lệnh updateChildren (an toàn)
                                         Map<String, Object> updates = new HashMap<>();
                                         updates.put("/users/" + uid, newUser.toMap());
                                         updates.put("/workspaces/" + workspaceId, defaultWorkspace.toMap());
@@ -98,20 +97,17 @@ public class AuthRepositoryImpl implements AuthRepository {
 
                                         mRootRef.updateChildren(updates).addOnCompleteListener(dbTask -> {
                                             if (dbTask.isSuccessful()) {
-                                                callback.onSuccess(); // Hoàn tất!
+                                                callback.onSuccess();
                                             } else {
-                                                // Lỗi khi ghi DB
                                                 callback.onError(dbTask.getException().getMessage());
                                             }
                                         });
 
                                     } else {
-                                        // Gửi email thất bại
                                         callback.onError(verificationTask.getException().getMessage());
                                     }
                                 });
                     } else {
-                        // Tạo tài khoản Auth thất bại (ví dụ: email đã tồn tại)
                         callback.onError(task.getException().getMessage());
                     }
                 });
@@ -120,7 +116,7 @@ public class AuthRepositoryImpl implements AuthRepository {
     @Override
     public void login(String email, String passwordPlain, AuthCallback callback) {
 
-        // Bước 1: Đăng nhập bằng Firebase Auth
+        // Đăng nhập bằng Firebase Auth
         mAuth.signInWithEmailAndPassword(email, passwordPlain)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -132,10 +128,9 @@ public class AuthRepositoryImpl implements AuthRepository {
                             return;
                         }
 
-                        // Đăng nhập Auth thành công và đã kích hoạt
                         String uid = task.getResult().getUser().getUid();
 
-                        // Bước 2: Lấy thông tin chi tiết của User từ Realtime Database
+                        // Lấy thông tin chi tiết của User từ Realtime Database
                         mRootRef.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -143,12 +138,11 @@ public class AuthRepositoryImpl implements AuthRepository {
                                     User user = snapshot.getValue(User.class);
                                     if (user != null) {
                                         user.setUid(snapshot.getKey());
-                                        callback.onSuccess(user); // Trả về User model đầy đủ
+                                        callback.onSuccess(user);
                                     } else {
                                         callback.onError("Không thể đọc dữ liệu người dùng.");
                                     }
                                 } else {
-                                    // Hiếm khi xảy ra nếu đăng ký đúng: Auth có user nhưng DB không có
                                     callback.onError("Không tìm thấy dữ liệu người dùng trong DB.");
                                 }
                             }
@@ -160,7 +154,6 @@ public class AuthRepositoryImpl implements AuthRepository {
                         });
 
                     } else {
-                        // Đăng nhập Auth thất bại (sai email, sai mật khẩu, user không tồn tại)
                         callback.onError("Email hoặc mật khẩu không đúng.");
                     }
                 });

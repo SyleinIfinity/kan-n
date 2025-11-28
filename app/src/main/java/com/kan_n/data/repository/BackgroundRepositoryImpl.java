@@ -15,16 +15,12 @@ import java.util.List;
 
 public class BackgroundRepositoryImpl implements BackgroundRepository {
 
-    // Tham chiếu đến node "backgrounds"
     private final DatabaseReference mBackgroundsRef;
 
     public BackgroundRepositoryImpl() {
         this.mBackgroundsRef = FirebaseUtils.getRootRef().child("backgrounds");
     }
 
-    /**
-     * Lấy dữ liệu từ node `backgrounds`
-     */
     @Override
     public void getAllBackgrounds(BackgroundsCallback callback) {
         mBackgroundsRef.addListenerForSingleValueEvent(new ValueEventListener() {
