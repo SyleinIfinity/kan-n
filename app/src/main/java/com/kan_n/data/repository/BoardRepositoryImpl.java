@@ -25,8 +25,8 @@ public class BoardRepositoryImpl implements BoardRepository {
     private final DatabaseReference mRootRef;
     private final DatabaseReference mBoardsRef;
     private final DatabaseReference mMembershipsRef;
-    private final DatabaseReference mWorkspacesRef; // Cần tham chiếu đến Workspaces
-    // Bỏ mCurrentUserId vì chúng ta sẽ nhận userId qua phương thức
+    private final DatabaseReference mWorkspacesRef; // Tham chiếu đến Workspaces
+
 
     public BoardRepositoryImpl() {
         this.mRootRef = FirebaseUtils.getRootRef();
@@ -48,7 +48,7 @@ public class BoardRepositoryImpl implements BoardRepository {
             return;
         }
 
-        // 1. Lấy tất cả Memberships của user
+        // Lấy tất cả Memberships của user
         mMembershipsRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot membershipSnapshot) {
@@ -58,7 +58,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                 }
 
                 // Tạo một Map các boardId mà user có quyền
-                Map<String, String> userBoardIds = new HashMap<>(); // <BoardId, Role>
+                Map<String, String> userBoardIds = new HashMap<>();
                 for (DataSnapshot snap : membershipSnapshot.getChildren()) {
                     Membership membership = snap.getValue(Membership.class);
                     if (membership != null) {
@@ -66,7 +66,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                     }
                 }
 
-                // 2. Lấy TẤT CẢ các Bảng (boards)
+                // Lấy TẤT CẢ các Bảng (boards)
                 mBoardsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot boardsSnapshot) {
@@ -93,7 +93,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                             }
                         }
 
-                        // 3. Lấy TẤT CẢ các Workspace
+                        // Lấy TẤT CẢ các Workspace
                         mWorkspacesRef.addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot workspacesSnapshot) {
@@ -183,8 +183,6 @@ public class BoardRepositoryImpl implements BoardRepository {
             return;
         }
 
-        // [CẬP NHẬT] Sử dụng constructor mới với Background object
-        // Lưu ý: Trường description trong Board hiện tại chỉ được dùng để lưu mô tả
         Board newBoard = new Board(workspaceId, name, "", visibility, currentUserId, background);
 
         String membershipId = mMembershipsRef.push().getKey();
@@ -219,10 +217,7 @@ public class BoardRepositoryImpl implements BoardRepository {
         });
     }
 
-    /**
-     * Xóa Bảng VÀ các Membership liên quan.
-     * CẢNH BÁO: CHƯA XÓA Lists, Cards, Tags... của bảng này.
-     */
+
     @Override
     public void deleteBoard(String boardId, GeneralCallback callback) {
         mMembershipsRef.orderByChild("boardId").equalTo(boardId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -259,7 +254,6 @@ public class BoardRepositoryImpl implements BoardRepository {
 
     @Override
     public void addMemberToBoard(String boardId, String userId, GeneralCallback callback) {
-        // (Nên kiểm tra xem user có tồn tại không trước khi thêm)
 
         String membershipId = mMembershipsRef.push().getKey();
         if (membershipId == null) {

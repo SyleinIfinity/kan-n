@@ -50,15 +50,14 @@ public class NhapGmailFragment extends Fragment {
             navController.popBackStack(); // Sửa lại: Dùng NavController để quay lại
         });
 
-        // ✨ SỬA ĐỔI NÚT GỬI OTP
+        // SỬA ĐỔI NÚT GỬI OTP
         binding.nutGuiOtp.setOnClickListener(v -> {
             String email = binding.nhapGmail.getText().toString().trim();
-            // (Bạn có thể hiển thị ProgressBar ở đây)
             viewModel.sendPasswordResetLink(email);
         });
 
         // Lắng nghe kết quả
-        observeViewModel(); // Sửa: gọi hàm observeViewModel mới
+        observeViewModel();
     }
 
     private void observeViewModel() {
@@ -94,7 +93,7 @@ public class NhapGmailFragment extends Fragment {
             if (getActivity() != null) {
                 getActivity().finish();
             }
-        }, 300); // 300ms là đủ an toàn.
+        }, 300);
     }
 
     @Override

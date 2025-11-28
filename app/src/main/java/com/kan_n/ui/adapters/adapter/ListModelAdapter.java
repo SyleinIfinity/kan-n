@@ -38,29 +38,26 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private static final int VIEW_TYPE_LIST = 0;
     private static final int VIEW_TYPE_ADD = 1;
 
-    // Listener cũ (Thêm danh sách)
     private final OnAddListClickListener addListClickListener;
 
-    // Listener mới (Click vào thẻ) - Đây là cái mà setupRecyclerView đang tìm
     private final OnItemCardClickListener cardClickListener;
 
     public interface OnAddListClickListener {
         void onAddListClick();
     }
 
-    // Interface này chưa có trong code cũ của bạn -> Cần thêm vào
     public interface OnItemCardClickListener {
         void onCardClick(Card card);
     }
 
-    // Constructor nhận 4 tham số (Thêm cardListener vào cuối)
+    // Constructor
     public ListModelAdapter(Context context, BangSpaceViewModel viewModel,
                             OnAddListClickListener addListener,
                             OnItemCardClickListener cardListener) {
         this.context = context;
         this.viewModel = viewModel;
         this.addListClickListener = addListener;
-        this.cardClickListener = cardListener; // Gán biến
+        this.cardClickListener = cardListener;
     }
 
     @Override
@@ -170,7 +167,7 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 }
             };
 
-            // Listener Click thẻ (Quan trọng: Truyền tin ra Fragment)
+            // Listener Click thẻ
             CardAdapter.OnCardClickListener itemClickListener = new CardAdapter.OnCardClickListener() {
                 @Override
                 public void onCardClick(Card card) {
@@ -180,7 +177,6 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 }
             };
 
-            // Khởi tạo CardAdapter với cả 2 listener
             cardAdapter = new CardAdapter(context, addCardListener, itemClickListener);
 
             rvCards.setLayoutManager(new LinearLayoutManager(context));

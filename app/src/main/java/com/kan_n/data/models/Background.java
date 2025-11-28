@@ -5,7 +5,7 @@ import com.google.firebase.database.IgnoreExtraProperties;
 @IgnoreExtraProperties
 public class Background {
     private String type; // "color" hoặc "image"
-    private String value; // Mã màu (#RRGGBB) hoặc URL ảnh
+    private String value; // Mã màu hoặc URL ảnh
 
     // Constructor trống, getter, setter
     public Background() {}
