@@ -15,11 +15,11 @@ public class Workspace {
     private String name;
     private String description;
     private long createdAt;
-    private String createdBy; // (Đã bổ sung ở bước trước)
+    private String createdBy;
     private List<Board> boards;
 
     public Workspace() {
-        // Constructor trống
+
     }
 
     public Workspace(String name, String description, String createdBy) {
@@ -82,7 +82,7 @@ public class Workspace {
     }
 
     /**
-     * Đây là phương thức bạn đang thiếu, dùng để gán danh sách Bảng
+     * Đây là phương thức dùng để gán danh sách Bảng
      * vào Workspace trong file BoardRepositoryImpl.
      */
     @Exclude

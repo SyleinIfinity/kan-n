@@ -49,8 +49,7 @@ public class AuthViewModel extends AndroidViewModel {
             return;
         }
 
-        // Lấy instance FirebaseAuth (bạn có thể lấy từ repo hoặc FirebaseUtils)
-        // Giả sử authRepository có hàm getAuthInstance()
+        // Lấy instance FirebaseAuth
         authRepository.getAuthInstance().sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -68,9 +67,7 @@ public class AuthViewModel extends AndroidViewModel {
     }
 
     /**
-     * Tách email thành username (ví dụ: "user@gmail.com" -> "user")
-     * (Vẫn cần thiết vì model User của bạn có trường 'username'
-     * nhưng màn hình đăng ký không có)
+     * Tách email thành username
      */
     private String deriveUsernameFromEmail(String email) {
         if (email == null || !email.contains("@")) {
@@ -78,7 +75,7 @@ public class AuthViewModel extends AndroidViewModel {
         }
         return email.split("@")[0];
     }
-    // --- HÀNH ĐỘNG ĐĂNG NHẬP (Đã cập nhật) ---
+    // --- HÀNH ĐỘNG ĐĂNG NHẬP ---
     public void login(String email, String password) {
         if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
             _loginError.setValue("Vui lòng nhập email và mật khẩu.");
@@ -94,7 +91,6 @@ public class AuthViewModel extends AndroidViewModel {
         authRepository.login(email, password, new AuthRepository.AuthCallback() {
             @Override
             public void onSuccess(User user) {
-                // SỬA LỖI: Dùng setValue() để cập nhật LiveData ngay lập tức
                 _loginSuccess.setValue(user);
             }
 
@@ -105,7 +101,7 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
-    // --- HÀNH ĐỘNG ĐĂNG KÝ (Giữ nguyên) ---
+    // --- HÀNH ĐỘNG ĐĂNG KÝ ---
     public void register(String displayName, String phone, String email, String password, String confirmPassword) {
         // 1. Kiểm tra nhập đầy đủ
         if (TextUtils.isEmpty(displayName) || TextUtils.isEmpty(phone) ||
@@ -115,7 +111,7 @@ public class AuthViewModel extends AndroidViewModel {
             return;
         }
 
-        // 2. Kiểm tra định dạng Email (Giữ nguyên)
+        // 2. Kiểm tra định dạng Email
         if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _registerError.setValue("Email không hợp lệ.");
             return;
@@ -127,26 +123,26 @@ public class AuthViewModel extends AndroidViewModel {
             return;
         }
 
-        // 4. Kiểm tra mật khẩu nhập lại (Giữ nguyên)
+        // 4. Kiểm tra mật khẩu nhập lại
         if (!password.equals(confirmPassword)) {
             _registerError.setValue("Mật khẩu xác nhận không khớp.");
             return;
         }
 
-        // 5. Kiểm tra độ dài mật khẩu (Giữ nguyên)
+        // 5. Kiểm tra độ dài mật khẩu
         if (password.length() < 6) {
             _registerError.setValue("Mật khẩu phải có ít nhất 6 ký tự.");
             return;
         }
 
-        // 6. Lấy username (Giữ nguyên)
+        // 6. Lấy username
         String username = deriveUsernameFromEmail(email);
         if (username == null) {
             _registerError.setValue("Email không hợp lệ (không thể tạo username).");
             return;
         }
 
-        // 7. Gọi hàm createUser (Giữ nguyên)
+        // 7. Gọi hàm createUser
         authRepository.createUser(username, password, displayName, email, "", phone, new AuthRepository.GeneralCallback() {
             @Override
             public void onSuccess() {

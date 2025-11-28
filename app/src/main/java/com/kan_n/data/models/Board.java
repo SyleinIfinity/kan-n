@@ -32,7 +32,7 @@ public class Board {
         this.createdBy = createdBy;
         this.createdAt = System.currentTimeMillis();
         this.isArchived = false;
-        this.background = background; // <--- Cập nhật
+        this.background = background;
     }
 
     @Exclude

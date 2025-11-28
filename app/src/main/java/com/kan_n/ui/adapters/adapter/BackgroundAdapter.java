@@ -19,7 +19,6 @@ import java.util.List;
 
 public class BackgroundAdapter extends RecyclerView.Adapter<BackgroundAdapter.BackgroundViewHolder> {
 
-    // (Giữ nguyên các biến và interface)
     private final Context context;
     private List<Background> backgroundList;
     private final OnBackgroundClickListener listener;
@@ -28,7 +27,6 @@ public class BackgroundAdapter extends RecyclerView.Adapter<BackgroundAdapter.Ba
         void onBackgroundClick(Background background);
     }
 
-    // (Giữ nguyên Constructor, onCreateViewHolder, getItemCount, updateData)
 
     public BackgroundAdapter(Context context, List<Background> backgroundList, OnBackgroundClickListener listener) {
         this.context = context;
@@ -60,7 +58,7 @@ public class BackgroundAdapter extends RecyclerView.Adapter<BackgroundAdapter.Ba
         holder.bind(background, listener);
     }
 
-    // --- ViewHolder (Nơi sửa lỗi) ---
+    // --- ViewHolder ---
     public static class BackgroundViewHolder extends RecyclerView.ViewHolder {
 
         ImageView ivBackgroundPreview;
@@ -77,7 +75,6 @@ public class BackgroundAdapter extends RecyclerView.Adapter<BackgroundAdapter.Ba
 
             if ("color".equalsIgnoreCase(background.getType()) && background.getValue() != null) {
                 try {
-                    // Dòng này vẫn ĐÚNG
                     ivBackgroundPreview.setBackgroundColor(Color.parseColor(background.getValue()));
                 } catch (IllegalArgumentException e) {
                     ivBackgroundPreview.setBackgroundColor(Color.LTGRAY);
@@ -88,8 +85,8 @@ public class BackgroundAdapter extends RecyclerView.Adapter<BackgroundAdapter.Ba
                 Glide.with(context)
                         .load(background.getValue())
                         .centerCrop()
-                        .placeholder(new ColorDrawable(Color.LTGRAY)) // Sửa
-                        .error(new ColorDrawable(Color.GRAY))       // Sửa
+                        .placeholder(new ColorDrawable(Color.LTGRAY))
+                        .error(new ColorDrawable(Color.GRAY))
                         .into(ivBackgroundPreview);
             } else {
                 ivBackgroundPreview.setBackgroundColor(Color.LTGRAY);

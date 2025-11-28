@@ -15,7 +15,7 @@ public class Tag {
     private long createdAt;
 
     public Tag() {
-        // Constructor trống
+
     }
 
     public Tag(String name, String color, String createdBy) {
