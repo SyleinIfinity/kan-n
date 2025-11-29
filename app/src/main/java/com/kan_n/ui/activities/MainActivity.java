@@ -37,7 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            // Chỉ set padding cho Trái, Trên, Phải.
+            // Đặt Bottom = 0 để BottomNavigationView tự xử lý phần đệm dưới.
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
@@ -63,16 +65,16 @@ public class MainActivity extends AppCompatActivity {
         // 5. Tìm TextView tùy chỉnh (toolbar_title)
         TextView toolbarTitle = findViewById(R.id.toolbar_title);
 
-        // 6. [ĐÃ SỬA] Cập nhật tiêu đề, Ẩn/Hiện Toolbar chính, và NavView.
+        // 6. Cập nhật tiêu đề, Ẩn/Hiện Toolbar chính, và NavView.
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
 
-            // --- Phần 1: Cập nhật tiêu đề (giữ nguyên) ---
+            // --- Phần 1: Cập nhật tiêu đề ---
             CharSequence label = destination.getLabel();
             if (toolbarTitle != null && label != null) {
                 toolbarTitle.setText(label);
             }
 
-            // --- Phần 2: [SỬA ĐỔI] Ẩn/hiện Toolbar chính, NavView và đổi Icon ---
+            // --- Phần 2: Ẩn/hiện Toolbar chính, NavView và đổi Icon ---
             int destId = destination.getId();
 
             if (destId == R.id.thanhDieuHuong_Bang ||
@@ -96,27 +98,46 @@ public class MainActivity extends AppCompatActivity {
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
 
             } else if (destId == R.id.TrangCaiDatFragment) {
+                // Đây là fragment TrangCaiDat
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
 
             } else if (destId == R.id.infoUserFragment) {
+                // Đây là fragment ìnforUser
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
 
             } else if (destId == R.id.TrangLichSuDangNhapFragment) {
+                // Đây là fragment TrangLichSuDangNhap
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
 
             } else if (destId == R.id.TrangBaoMatQuyenRiengTuFragment) {
-                binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
+                // Đây là fragment TrangBmvqrt
+                binding.toolbar.getRoot().setVisibility(View.GONE); //
+                binding.navView.setVisibility(View.VISIBLE); // ẨN NavView
+
+            } else if (destId == R.id.taoBangMoiChonPhongFragment){
+                // Đây là fragment Trang ChonPhongBang
+                binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
+            } else if (destId == R.id.taoBangMoiChonPhongAnhFragment){
+                // Đây là fragment Trang ChonPhongAnh
+                binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
+            } else if (destId == R.id.taoBangMoiChonPhongMauFragment){
+                // Đây là fragment Trang ChonPhongMau
+                binding.toolbar.getRoot().setVisibility(View.GONE); // HIỆN Toolbar chính
+            }else if (destId == R.id.TrangHoTro_v1Fragment){
+                // Đây là fragment Trang HoTro
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
+
             }
+
             else {
-                // Đây là các fragment "con" khác (nếu có)
+                // Đây là các fragment khác
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(null); // Dùng icon "mũi tên quay lại"

@@ -24,11 +24,11 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<Card> cardList = new ArrayList<>();
     private Context context;
 
-    // Hằng số cho kiểu xem (GIỮ NGUYÊN)
+    // Hằng số cho kiểu xem
     private static final int VIEW_TYPE_CARD = 0;
     private static final int VIEW_TYPE_ADD_CARD = 1;
 
-    // 1. Listener cho nút "Thêm thẻ" (GIỮ NGUYÊN)
+    // 1. Listener cho nút "Thêm thẻ"
     private final OnAddCardClickListener addCardClickListener;
 
     // Listener cho việc Click vào thẻ để xem chi tiết
@@ -43,14 +43,12 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         void onCardClick(Card card);
     }
 
-    // Constructor nhận thêm cardClickListener
     public CardAdapter(Context context, OnAddCardClickListener addListener, OnCardClickListener cardListener) {
         this.context = context;
         this.addCardClickListener = addListener;
-        this.cardClickListener = cardListener; // Gán biến mới
+        this.cardClickListener = cardListener;
     }
 
-    // (Các hàm override cũ GIỮ NGUYÊN)
     @Override
     public int getItemViewType(int position) {
         return (position == cardList.size()) ? VIEW_TYPE_ADD_CARD : VIEW_TYPE_CARD;
@@ -77,20 +75,17 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder.getItemViewType() == VIEW_TYPE_CARD) {
-            // CardViewHolder
             Card card = cardList.get(position);
             if (card == null) return;
 
-            // Truyền thêm listener vào hàm bind
             ((CardViewHolder) holder).bind(card, context, cardClickListener);
 
         } else {
-            // AddCardViewHolder (GIỮ NGUYÊN)
             ((AddCardViewHolder) holder).bind(addCardClickListener);
         }
     }
 
-    // --- CÁC PHƯƠNG THỨC QUẢN LÝ DỮ LIỆU (GIỮ NGUYÊN TOÀN BỘ) ---
+    // --- CÁC PHƯƠNG THỨC QUẢN LÝ DỮ LIỆU ---
     private int getInsertPosition(Card card) {
         for (int i = 0; i < cardList.size(); i++) {
             if (cardList.get(i).getPosition() > card.getPosition()) {
@@ -166,15 +161,14 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvCardTitle.setText(card.getTitle());
             cbComplete.setChecked(card.isCompleted());
 
-            // Bắt sự kiện click vào Tiêu đề thẻ (tvTieuDeThe)
-            // Nếu muốn bấm vào cả cái thẻ thì đổi thành itemView.setOnClickListener
+            // Bắt sự kiện click vào Tiêu đề thẻ
             tvCardTitle.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onCardClick(card);
                 }
             });
 
-            // (Các phần bind ảnh bìa, tag, checklist... GIỮ NGUYÊN)
+            // (Các phần bind ảnh bìa, tag, checklist...)
             String coverUrl = card.getCoverImageUrl();
             if (coverUrl != null && !coverUrl.isEmpty()) {
                 ivCoverImage.setVisibility(View.VISIBLE);
@@ -211,7 +205,7 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    // --- ViewHolder 2: Cho Nút "Thêm Thẻ" (GIỮ NGUYÊN) ---
+    // --- ViewHolder 2: Cho Nút "Thêm Thẻ" ---
     public static class AddCardViewHolder extends RecyclerView.ViewHolder {
         LinearLayout layoutThemThe;
 

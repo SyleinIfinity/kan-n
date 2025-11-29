@@ -15,7 +15,7 @@ public class Membership {
     private long joinedAt;
 
     public Membership() {
-        // Constructor trống
+
     }
 
     public Membership(String boardId, String userId, String role) {

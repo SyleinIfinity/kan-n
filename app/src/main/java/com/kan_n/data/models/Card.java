@@ -16,7 +16,7 @@ public class Card {
     private String description;
     private double position;
     private long dueDate;
-    private String createdBy; // (Đã có - theo yêu cầu)
+    private String createdBy;
     private long createdAt;
     private boolean archived;
     private Map<String, Boolean> tagIds = new HashMap<>();
@@ -46,7 +46,7 @@ public class Card {
         this.checklistCompleted = 0;
     }
 
-    // --- Getters and Setters (Giữ nguyên các getter/setter cũ) ---
+    // --- Getters and Setters ---
 
     @Exclude
     public String getUid() { return uid; }
@@ -58,7 +58,6 @@ public class Card {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    // (Giữ nguyên các getter/setter cũ khác...)
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public double getPosition() { return position; }

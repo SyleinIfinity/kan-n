@@ -16,36 +16,32 @@ import java.util.Map; // <-- Thêm import
 
 public class CardRepositoryImpl implements CardRepository {
 
-    // Tham chiếu đến node "cards"
     private final DatabaseReference cardsRef = FirebaseUtils.getDatabaseInstance().getReference("cards");
 
     @Override
     public void getCardsForList(String listId, ChildEventListener listener) {
-        // Truy vấn các thẻ thuộc listId này,
-        // sắp xếp theo "position"
+        // Các thẻ thuộc listId này,
+        // Sắp xếp theo "position"
         Query cardsQuery = cardsRef.orderByChild("listId").equalTo(listId).orderByChild("position"); // <-- Sắp xếp theo position
 
-        // Gắn ChildEventListener vào truy vấn
+        // Gắn ChildEventListener
         cardsQuery.addChildEventListener(listener);
     }
-
-    // --- CÁC PHƯƠNG THỨC CÒN THIẾU ---
 
     @Override
     public void createCard(String listId, String title, double position, GeneralCallback callback) {
         String currentUserId = FirebaseUtils.getCurrentUserId();
         if (currentUserId == null) {
-            callback.onError("Nguoi dung chua dang nhap.");
+            callback.onError("Người dùng chưa đăng nhập.");
             return;
         }
 
         String cardId = cardsRef.push().getKey();
         if (cardId == null) {
-            callback.onError("Khong the tao ID cho the.");
+            callback.onError("Không thể tạo Id cho thẻ.");
             return;
         }
 
-        // Su dung model Card de tao the moi
         Card newCard = new Card(listId, title, position, currentUserId);
 
         cardsRef.child(cardId).setValue(newCard.toMap()).addOnCompleteListener(task -> {
@@ -86,7 +82,6 @@ public class CardRepositoryImpl implements CardRepository {
 
     @Override
     public void deleteCard(String cardId, GeneralCallback callback) {
-        // TODO: Can xu ly xoa ca tagCards mapping neu can
         cardsRef.child(cardId).removeValue().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 callback.onSuccess();

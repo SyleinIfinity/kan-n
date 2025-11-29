@@ -42,8 +42,6 @@ public class BangSpaceViewModel extends ViewModel {
     public void listenForLists(String boardId, ChildEventListener listener) {
         this.listsListener = listener;
 
-        // === [SỬA LỖI] ===
-        // Chỉ lọc theo boardId. Viec sap xep se do Adapter dam nhiem.
         this.listsQuery = listsRef.orderByChild("boardId").equalTo(boardId);
 
         this.listsQuery.addChildEventListener(listener);
@@ -54,8 +52,6 @@ public class BangSpaceViewModel extends ViewModel {
      */
     public void listenForCards(String listId, ChildEventListener listener) {
 
-        // === [SỬA LỖI] ===
-        // Chỉ lọc theo listId. Viec sap xep se do Adapter dam nhiem.
         Query cardQuery = cardsRef.orderByChild("listId").equalTo(listId);
 
         cardQueries.put(listId, cardQuery);
