@@ -114,7 +114,8 @@ public class MainActivity extends AppCompatActivity {
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
-            } else {
+            }
+            else {
                 // Đây là các fragment "con" khác (nếu có)
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
                 binding.navView.setVisibility(View.GONE); // ẨN NavView

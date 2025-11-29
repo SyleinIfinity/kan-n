@@ -53,6 +53,7 @@ public class DangNhapFragment extends Fragment {
             String email = binding.nhapGmail.getText().toString().trim();
             String password = binding.nhapMatKhau.getText().toString().trim();
             viewModel.login(email, password);
+
         });
 
         navController = NavHostFragment.findNavController(this);

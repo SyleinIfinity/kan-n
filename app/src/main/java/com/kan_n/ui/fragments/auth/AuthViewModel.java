@@ -105,7 +105,7 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
-    // --- HÀNH ĐỘNG ĐĂNG KÝ (Giữ nguyên) ---
+    // --- HÀNH ĐỘNG ĐĂNG KÝ  ---
     public void register(String displayName, String phone, String email, String password, String confirmPassword) {
         // 1. Kiểm tra nhập đầy đủ
         if (TextUtils.isEmpty(displayName) || TextUtils.isEmpty(phone) ||
