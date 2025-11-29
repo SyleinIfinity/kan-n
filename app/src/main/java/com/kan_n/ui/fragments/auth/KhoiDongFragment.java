@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +33,9 @@ public class KhoiDongFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        TextView textTitle = binding.textTitle.findViewById(R.id.textTitle);
+        Animation animation = AnimationUtils.loadAnimation(getContext(), R.anim.blink);
+        textTitle.startAnimation(animation);
         // Lấy NavController
         navController = NavHostFragment.findNavController(this);
 
