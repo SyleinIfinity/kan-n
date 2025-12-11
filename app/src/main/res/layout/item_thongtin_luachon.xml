@@ -6,9 +6,8 @@
     android:orientation="horizontal"
     android:padding="12dp"
     android:layout_marginVertical="4dp"
-
     android:gravity="center_vertical"
-    android:background="#FFC4C4">
+    android:background="#CCF2FB">
 
     <ImageView
         android:id="@+id/iconMenu"

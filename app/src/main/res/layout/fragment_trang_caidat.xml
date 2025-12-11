@@ -17,7 +17,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:padding="16dp"
-            android:background="@android:color/white" />
+            android:background="#99DCF3" />
 
         <!-- Mô thiệt lập hệ thống -->
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_mothietlaphethong"/>
@@ -30,7 +30,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:padding="16dp"
-            android:background="@android:color/white" />
+            android:background="#99DCF3" />
 
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_chonchude"/>
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_phongcach"/>
@@ -42,7 +42,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:padding="16dp"
-            android:background="@android:color/white" />
+            android:background="#99DCF3" />
 
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_hoso"/>
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_ngonngu"/>
@@ -56,7 +56,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:padding="16dp"
-            android:background="@android:color/white" />
+            android:background="#99DCF3" />
 
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_baomatvaquyenriengtu"/>
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_kiemtralichsudangnhap"/>
@@ -68,7 +68,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:padding="16dp"
-            android:background="@android:color/white" />
+            android:background="#99DCF3" />
 
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_xoataikhoan"/>
         <include layout="@layout/item_trang_caidat" android:id="@+id/item_dangxuat"/>

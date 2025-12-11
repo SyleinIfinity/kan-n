@@ -13,6 +13,7 @@
         android:clipToPadding="false"
         android:paddingTop="8dp"
         android:paddingBottom="80dp"
+        android:background="#E6FAFE"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -26,6 +27,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="Tạo bảng mới"
+        android:backgroundTint="#66C5EB"
 
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
