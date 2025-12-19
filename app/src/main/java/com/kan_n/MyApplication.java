@@ -1,6 +1,8 @@
 package com.kan_n;
 
 import android.app.Application;
+import android.content.Context;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.FirebaseDatabase;
@@ -26,5 +28,16 @@ public class MyApplication extends Application {
             FirebaseApp app = FirebaseApp.initializeApp(this, options);
             FirebaseDatabase.getInstance(app).setPersistenceEnabled(true);
         }
+    }
+
+    // Lưu ID Workspace hiện tại
+    public static void saveCurrentWorkspaceId(Context context, String wsId) {
+        context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                .edit().putString("current_ws_id", wsId).apply();
+    }
+
+    public static String getCurrentWorkspaceId(Context context) {
+        return context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                .getString("current_ws_id", "ws_1_id"); // Mặc định là ws_1_id như file JSON
     }
 }

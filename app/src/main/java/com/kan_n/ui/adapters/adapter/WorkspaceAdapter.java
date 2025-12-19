@@ -1,6 +1,7 @@
 package com.kan_n.ui.adapters.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,12 +24,26 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
     private List<Workspace> workspaceList;
     private final Context context;
     private final BoardAdapter.OnBoardClickListener boardClickListener;
+    private OnWorkspaceClickListener workspaceListener; // Listener mới
+    private String activeWorkspaceId; // ID không gian đang mở
 
-    // Constructor
-    public WorkspaceAdapter(Context context, List<Workspace> workspaceList, BoardAdapter.OnBoardClickListener boardClickListener) {
+    public interface OnWorkspaceClickListener {
+        void onWorkspaceClick(Workspace workspace);
+        void onWorkspaceOptions(Workspace workspace, View view);
+    }
+
+    public WorkspaceAdapter(Context context, List<Workspace> workspaceList,
+                            BoardAdapter.OnBoardClickListener boardClickListener,
+                            OnWorkspaceClickListener workspaceListener) {
         this.context = context;
         this.workspaceList = workspaceList;
         this.boardClickListener = boardClickListener;
+        this.workspaceListener = workspaceListener;
+    }
+
+    public void setActiveWorkspaceId(String id) {
+        this.activeWorkspaceId = id;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -43,17 +58,31 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         Workspace workspace = workspaceList.get(position);
         if (workspace == null) return;
 
-        holder.tvWorkspaceName.setText(workspace.getName());
-        List<Board> boardsInThisWorkspace = workspace.getBoards();
+        // Hiển thị trạng thái "Đang mở"
+        String displayName = workspace.getName();
+        if (workspace.getUid() != null && workspace.getUid().equals(activeWorkspaceId)) {
+            displayName += " (Đang mở)";
+            holder.tvWorkspaceName.setTextColor(Color.BLUE);
+        } else {
+            holder.tvWorkspaceName.setTextColor(Color.BLACK);
+        }
 
-        // Cap nhat du lieu cho adapter con (da duoc khoi tao trong ViewHolder)
-        holder.updateBoards(boardsInThisWorkspace);
+        holder.tvWorkspaceName.setText(displayName);
+
+        // Click để đổi không gian
+        holder.tvWorkspaceName.setOnClickListener(v -> workspaceListener.onWorkspaceClick(workspace));
+
+        // Nhấn giữ hoặc nhấn nút tùy chọn (nếu có) để Sửa/Xóa
+        holder.tvWorkspaceName.setOnLongClickListener(v -> {
+            workspaceListener.onWorkspaceOptions(workspace, v);
+            return true;
+        });
+
+        holder.updateBoards(workspace.getBoards());
     }
 
     @Override
-    public int getItemCount() {
-        return workspaceList != null ? workspaceList.size() : 0;
-    }
+    public int getItemCount() { return workspaceList != null ? workspaceList.size() : 0; }
 
     public void updateData(List<Workspace> newWorkspaceList) {
         this.workspaceList = newWorkspaceList;
@@ -64,24 +93,18 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         TextView tvWorkspaceName;
         RecyclerView rvBoards;
         BoardAdapter boardAdapter;
-        Context context;
 
         public WorkspaceViewHolder(@NonNull View itemView, Context context, BoardAdapter.OnBoardClickListener boardClickListener) {
             super(itemView);
-            this.context = context;
             tvWorkspaceName = itemView.findViewById(R.id.tv_workspace_name);
             rvBoards = itemView.findViewById(R.id.rv_boards);
-
             boardAdapter = new BoardAdapter(context, new ArrayList<>(), boardClickListener);
-            rvBoards.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+            rvBoards.setLayoutManager(new LinearLayoutManager(context));
             rvBoards.setAdapter(boardAdapter);
         }
 
-
         public void updateBoards(List<Board> boards) {
-            if (boardAdapter != null) {
-                boardAdapter.updateData(boards);
-            }
+            if (boardAdapter != null) boardAdapter.updateData(boards);
         }
     }
 }

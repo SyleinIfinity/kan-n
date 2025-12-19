@@ -72,6 +72,9 @@
         <action
             android:id="@+id/action_thanhDieuHuong_ThongTin_to_TrangCaiDatFragment"
             app:destination="@id/TrangCaiDatFragment" />
+        <action
+            android:id="@+id/action_thanhDieuHuong_ThongTin_to_workspaceListFragment"
+            app:destination="@id/TrangCaiDatFragment" />
     </fragment>
 
     <fragment
