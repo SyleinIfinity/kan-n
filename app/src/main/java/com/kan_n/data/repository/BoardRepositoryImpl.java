@@ -2,6 +2,8 @@
 
 package com.kan_n.data.repository;
 
+import android.util.Pair;
+
 import androidx.annotation.NonNull;
 
 import com.google.firebase.database.DataSnapshot;
@@ -12,6 +14,7 @@ import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.models.Background;
 import com.kan_n.data.models.Board;
 import com.kan_n.data.models.Membership;
+import com.kan_n.data.models.User;
 import com.kan_n.data.models.Workspace;
 import com.kan_n.utils.FirebaseUtils;
 
@@ -19,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BoardRepositoryImpl implements BoardRepository {
 
@@ -309,4 +313,61 @@ public class BoardRepositoryImpl implements BoardRepository {
             }
         });
     }
+    @Override
+    public void getBoardMembers(String boardId, BoardMembersCallback callback) {
+        mMembershipsRef.orderByChild("boardId").equalTo(boardId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists()) {
+                            callback.onSuccess(new ArrayList<>());
+                            return;
+                        }
+
+                        List<Pair<User, String>> members = new ArrayList<>();
+                        AtomicInteger counter = new AtomicInteger(0);
+                        long totalMembers = snapshot.getChildrenCount();
+
+                        for (DataSnapshot memSnap : snapshot.getChildren()) {
+                            Membership mem = memSnap.getValue(Membership.class);
+                            if (mem != null && mem.getUserId() != null) {
+                                String role = mem.getRole(); // Lấy Role
+
+                                mRootRef.child("users").child(mem.getUserId())
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot userSnap) {
+                                                User user = userSnap.getValue(User.class);
+                                                if (user != null) {
+                                                    user.setUid(userSnap.getKey());
+                                                    // Thêm cả User và Role vào list
+                                                    members.add(new Pair<>(user, role));
+                                                }
+                                                if (counter.incrementAndGet() == totalMembers) {
+                                                    callback.onSuccess(members);
+                                                }
+                                            }
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
+                                                if (counter.incrementAndGet() == totalMembers) {
+                                                    callback.onSuccess(members);
+                                                }
+                                            }
+                                        });
+                            } else {
+                                if (counter.incrementAndGet() == totalMembers) {
+                                    callback.onSuccess(members);
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        callback.onError(error.getMessage());
+                    }
+                });
+    }
+
+
 }
