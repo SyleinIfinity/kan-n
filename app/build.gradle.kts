@@ -47,6 +47,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.recyclerview)
     implementation(libs.fragment)
+    implementation(libs.lifecycle.viewmodel)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

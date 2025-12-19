@@ -65,6 +65,36 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_title_loimoi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:text="Lời mời tham gia"
+                android:textSize="16sp"
+                android:textColor="#D32F2F"
+                android:textStyle="bold"
+                android:background="#FFEBEE"
+                android:visibility="gone"
+                tools:visibility="visible"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rcv_invitations"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                tools:visibility="visible"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+            <View
+                android:id="@+id/view_divider_loimoi"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:visibility="gone"/>
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
