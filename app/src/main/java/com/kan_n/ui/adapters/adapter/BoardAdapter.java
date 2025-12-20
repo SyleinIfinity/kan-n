@@ -24,6 +24,14 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
     private List<Board> boardList;
     private final Context context;
     private final OnBoardClickListener boardClickListener;
+    private OnBoardLongClickListener longClickListener;
+    public interface OnBoardLongClickListener {
+        void onBoardLongClick(View view, Board board);
+    }
+
+    public void setOnBoardLongClickListener(OnBoardLongClickListener listener) {
+        this.longClickListener = listener;
+    }
 
     public interface OnBoardClickListener {
         void onBoardClick(Board board);
@@ -96,6 +104,14 @@ public class BoardAdapter extends RecyclerView.Adapter<BoardAdapter.BoardViewHol
             if (boardClickListener != null) {
                 boardClickListener.onBoardClick(board);
             }
+        });
+
+        // Thêm sự kiện ấn giữ
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onBoardLongClick(v, board);
+            }
+            return true;
         });
     }
 

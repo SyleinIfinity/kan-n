@@ -52,43 +52,28 @@ public class BoardRepositoryImpl implements BoardRepository {
             return;
         }
 
-        // Lấy tất cả Memberships của user
+        // 1. Lấy tất cả Memberships của user để biết user tham gia những bảng nào
         mMembershipsRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot membershipSnapshot) {
-                if (!membershipSnapshot.exists()) {
-                    callback.onSuccess(new ArrayList<>()); // User không có trong bảng nào
-                    return;
-                }
-
-                // Tạo một Map các boardId mà user có quyền
                 Map<String, String> userBoardIds = new HashMap<>();
                 for (DataSnapshot snap : membershipSnapshot.getChildren()) {
                     Membership membership = snap.getValue(Membership.class);
-                    if (membership != null) {
-                        userBoardIds.put(membership.getBoardId(), membership.getRole());
-                    }
+                    if (membership != null) userBoardIds.put(membership.getBoardId(), membership.getRole());
                 }
 
-                // Lấy TẤT CẢ các Bảng (boards)
+                // 2. Lấy TẤT CẢ các Bảng để phân loại theo Workspace
                 mBoardsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot boardsSnapshot) {
-                        if (!boardsSnapshot.exists()) {
-                            callback.onSuccess(new ArrayList<>()); // Không có bảng nào tồn tại
-                            return;
-                        }
-
-                        // Lọc các bảng mà user có quyền và nhóm chúng theo workspaceId
                         Map<String, List<Board>> boardsByWorkspace = new HashMap<>();
                         for (DataSnapshot snap : boardsSnapshot.getChildren()) {
                             String boardId = snap.getKey();
                             if (userBoardIds.containsKey(boardId)) {
                                 Board board = snap.getValue(Board.class);
                                 if (board != null) {
-                                    board.setUid(boardId); // Gán UID cho model
+                                    board.setUid(boardId);
                                     String wsId = board.getWorkspaceId();
-
                                     if (!boardsByWorkspace.containsKey(wsId)) {
                                         boardsByWorkspace.put(wsId, new ArrayList<>());
                                     }
@@ -97,50 +82,40 @@ public class BoardRepositoryImpl implements BoardRepository {
                             }
                         }
 
-                        // Lấy TẤT CẢ các Workspace
+                        // 3. Lấy tất cả Workspace và lọc:
+                        // THÊM: Nếu user là người tạo (createdBy) HOẶC Workspace có bảng user tham gia
                         mWorkspacesRef.addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot workspacesSnapshot) {
-                                if (!workspacesSnapshot.exists()) {
-                                    callback.onSuccess(new ArrayList<>()); // Không có workspace
-                                    return;
-                                }
-
-                                // Gắn các list board đã lọc vào workspace tương ứng
                                 List<Workspace> finalWorkspaces = new ArrayList<>();
                                 for (DataSnapshot snap : workspacesSnapshot.getChildren()) {
-                                    String wsId = snap.getKey();
-                                    if (boardsByWorkspace.containsKey(wsId)) {
-                                        Workspace workspace = snap.getValue(Workspace.class);
-                                        if (workspace != null) {
+                                    Workspace workspace = snap.getValue(Workspace.class);
+                                    if (workspace != null) {
+                                        String wsId = snap.getKey();
+                                        // Kiểm tra điều kiện hiển thị
+                                        boolean isOwner = userId.equals(workspace.getCreatedBy());
+                                        boolean hasMemberBoards = boardsByWorkspace.containsKey(wsId);
+
+                                        if (isOwner || hasMemberBoards) {
                                             workspace.setUid(wsId);
-                                            // Gắn danh sách board vào model
-                                            workspace.setBoards(boardsByWorkspace.get(wsId));
+                                            List<Board> boards = boardsByWorkspace.get(wsId);
+                                            if (boards == null) {
+                                                boards = new ArrayList<>();
+                                            }
+                                            workspace.setBoards(boards);
                                             finalWorkspaces.add(workspace);
                                         }
                                     }
                                 }
                                 callback.onSuccess(finalWorkspaces);
                             }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {
-                                callback.onError(error.getMessage());
-                            }
+                            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
                         });
                     }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        callback.onError(error.getMessage());
-                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
                 });
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                callback.onError(error.getMessage());
-            }
+            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
         });
     }
 
@@ -224,34 +199,21 @@ public class BoardRepositoryImpl implements BoardRepository {
 
     @Override
     public void deleteBoard(String boardId, GeneralCallback callback) {
-        mMembershipsRef.orderByChild("boardId").equalTo(boardId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Map<String, Object> updates = new HashMap<>();
-
-                // Đánh dấu xóa bảng
-                updates.put("/boards/" + boardId, null);
-
-                // Đánh dấu xóa các membership
-                if (snapshot.exists()) {
-                    for (DataSnapshot memSnap : snapshot.getChildren()) {
-                        updates.put("/memberships/" + memSnap.getKey(), null);
-                    }
-                }
-
-                // Thực hiện xóa đồng thời
-                mRootRef.updateChildren(updates).addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        callback.onSuccess();
-                    } else {
-                        callback.onError(task.getException().getMessage());
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                callback.onError(error.getMessage());
+        // Xóa node Bảng
+        mBoardsRef.child(boardId).removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // Lưu ý: Cần xóa thêm Membership liên quan đến bảng này để dọn dẹp data
+                mMembershipsRef.orderByChild("boardId").equalTo(boardId)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                for (DataSnapshot ds : snapshot.getChildren()) ds.getRef().removeValue();
+                                callback.onSuccess();
+                            }
+                            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onSuccess(); }
+                        });
+            } else {
+                callback.onError(task.getException().getMessage());
             }
         });
     }
@@ -369,5 +331,104 @@ public class BoardRepositoryImpl implements BoardRepository {
                 });
     }
 
+    @Override
+    public void createWorkspace(String name, String description, GeneralCallback callback) {
+        String userId = FirebaseUtils.getCurrentUserId();
+        if (userId == null) {
+            callback.onError("Người dùng chưa đăng nhập.");
+            return;
+        }
 
+        String wsId = mWorkspacesRef.push().getKey();
+        if (wsId == null) return;
+
+        Workspace workspace = new Workspace(name, description, userId);
+
+        mWorkspacesRef.child(wsId).setValue(workspace.toMap()).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                callback.onSuccess();
+            } else {
+                callback.onError(task.getException().getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void updateWorkspace(String workspaceId, String newName, GeneralCallback callback) {
+        mWorkspacesRef.child(workspaceId).child("name").setValue(newName)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) callback.onSuccess();
+                    else callback.onError(task.getException().getMessage());
+                });
+    }
+
+    @Override
+    public void deleteWorkspace(String workspaceId, GeneralCallback callback) {
+        // Lưu ý: Logic thực tế nên xóa cả các Board bên trong, ở đây ta xóa node Workspace trước
+        mWorkspacesRef.child(workspaceId).removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) callback.onSuccess();
+            else callback.onError(task.getException().getMessage());
+        });
+    }
+
+    @Override
+    public void getActiveWorkspaceWithBoards(String userId, String workspaceId, WorkspacesWithBoardsCallback callback) {
+        // 1. Lấy thông tin chi tiết của Workspace cụ thể từ node /workspaces
+        mWorkspacesRef.child(workspaceId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Workspace workspace = snapshot.getValue(Workspace.class);
+                if (workspace == null) {
+                    callback.onError("Không tìm thấy Không gian làm việc.");
+                    return;
+                }
+                workspace.setUid(snapshot.getKey());
+
+                // 2. Lấy danh sách Board mà user này có quyền tham gia
+                mMembershipsRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot membershipSnapshot) {
+                        List<String> userBoardIds = new ArrayList<>();
+                        for (DataSnapshot ds : membershipSnapshot.getChildren()) {
+                            Membership m = ds.getValue(Membership.class);
+                            if (m != null) userBoardIds.add(m.getBoardId());
+                        }
+
+                        // 3. Lọc các Board thuộc Workspace này
+                        mBoardsRef.orderByChild("workspaceId").equalTo(workspaceId).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot boardsSnapshot) {
+                                List<Board> boards = new ArrayList<>();
+                                for (DataSnapshot bs : boardsSnapshot.getChildren()) {
+                                    if (userBoardIds.contains(bs.getKey())) {
+                                        Board b = bs.getValue(Board.class);
+                                        if (b != null) {
+                                            b.setUid(bs.getKey());
+                                            boards.add(b);
+                                        }
+                                    }
+                                }
+                                workspace.setBoards(boards);
+                                List<Workspace> result = new ArrayList<>();
+                                result.add(workspace); // Trả về danh sách chỉ có 1 phần tử
+                                callback.onSuccess(result);
+                            }
+                            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
+                        });
+                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
+                });
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
+        });
+    }
+
+    @Override
+    public void updateBoard(String boardId, String newName, GeneralCallback callback) {
+        mBoardsRef.child(boardId).child("title").setValue(newName)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) callback.onSuccess();
+                    else callback.onError(task.getException().getMessage());
+                });
+    }
 }

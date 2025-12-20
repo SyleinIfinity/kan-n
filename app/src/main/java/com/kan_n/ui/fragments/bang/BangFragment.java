@@ -1,5 +1,7 @@
 package com.kan_n.ui.fragments.bang;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -80,6 +82,25 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
             // Thuc hien dieu huong, dung action ID tu nav graph
             navController.navigate(R.id.action_bangFragment_to_bangSpaceFragment, args);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
+        String selectedId = prefs.getString("active_ws_id", "ws_1_id");
+
+        bangViewModel.setActiveWsId(selectedId);
+        bangViewModel.loadWorkspaces();
+    }
+
+    private void refreshData() {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
+        String activeWsId = prefs.getString("active_ws_id", "ws_1_id");
+
+        bangViewModel.setActiveWsId(activeWsId);
+
+        bangViewModel.loadWorkspaces();
     }
 
     @Override
