@@ -134,8 +134,12 @@ public class MainActivity extends AppCompatActivity {
                 binding.navView.setVisibility(View.GONE); // ẨN NavView
                 binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
 
+            }else if (destId == R.id.workspaceListFragment) {
+                // Đây là fragment Trang HoTro
+                binding.navView.setVisibility(View.GONE); // ẨN NavView
+                binding.toolbar.getRoot().setVisibility(View.GONE);
+                binding.toolbar.getRoot().setNavigationIcon(R.drawable.ic_quaylai_v1);
             }
-
             else {
                 // Đây là các fragment khác
                 binding.toolbar.getRoot().setVisibility(View.VISIBLE); // HIỆN Toolbar chính
