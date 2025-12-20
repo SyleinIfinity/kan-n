@@ -78,8 +78,12 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
 
+        // Trong phương thức onViewCreated
         binding.ivMenuOptions.setOnClickListener(v -> {
-            navController.navigate(R.id.action_BangSpaceFragment_to_MenuBangFragment);
+            // [FIX] Tạo Bundle để truyền boardId sang MenuBangFragment
+            Bundle bundle = new Bundle();
+            bundle.putString("boardId", boardId); // boardId đã có sẵn trong BangSpaceFragment
+            navController.navigate(R.id.action_BangSpaceFragment_to_MenuBangFragment, bundle);
         });
 
 

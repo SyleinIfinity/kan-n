@@ -20,7 +20,7 @@ public class TaoBangMoiViewModel extends ViewModel {
 
     // Repositories
     private final BackgroundRepository backgroundRepository;
-    private final BoardRepository boardRepository; // ✨ Bổ sung
+    private final BoardRepository boardRepository;
 
     // --- Backgrounds (Đã có từ trước) ---
     private List<Background> allBackgrounds = new ArrayList<>();
@@ -81,7 +81,7 @@ public class TaoBangMoiViewModel extends ViewModel {
         _createStatus.setValue(CreateBoardStatus.IDLE);
     }
 
-    // --- ✨ Bổ sung: Logic Workspaces ---
+    // --- Logic Workspaces ---
     public void loadWorkspaces() {
         String currentUserId = FirebaseUtils.getCurrentUserId();
         if (currentUserId == null) {

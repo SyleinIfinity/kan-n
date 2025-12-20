@@ -130,6 +130,7 @@
                     tools:listitem="@layout/item_menu_bang_thanhvien"/>
 
                 <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnInviteMember"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Mời"

@@ -87,8 +87,6 @@ public class InfoUserFragment extends Fragment {
                             binding.imgAvatar.setImageResource(R.drawable.ic_nguoi_dung);
                         }
 
-                        // Lưu ý: Các trường Ngaysinh và Gioitinh hiện không có trong model User
-                        // nên sẽ giữ giá trị mặc định từ layout XML.
                     }
                 } else {
                     // Xử lý lỗi tải dữ liệu
