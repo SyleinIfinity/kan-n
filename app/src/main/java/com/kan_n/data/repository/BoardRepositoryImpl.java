@@ -196,28 +196,6 @@ public class BoardRepositoryImpl implements BoardRepository {
         });
     }
 
-
-    @Override
-    public void deleteBoard(String boardId, GeneralCallback callback) {
-        // Xóa node Bảng
-        mBoardsRef.child(boardId).removeValue().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                // Lưu ý: Cần xóa thêm Membership liên quan đến bảng này để dọn dẹp data
-                mMembershipsRef.orderByChild("boardId").equalTo(boardId)
-                        .addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                for (DataSnapshot ds : snapshot.getChildren()) ds.getRef().removeValue();
-                                callback.onSuccess();
-                            }
-                            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onSuccess(); }
-                        });
-            } else {
-                callback.onError(task.getException().getMessage());
-            }
-        });
-    }
-
     @Override
     public void addMemberToBoard(String boardId, String userId, GeneralCallback callback) {
 
@@ -425,10 +403,32 @@ public class BoardRepositoryImpl implements BoardRepository {
 
     @Override
     public void updateBoard(String boardId, String newName, GeneralCallback callback) {
-        mBoardsRef.child(boardId).child("title").setValue(newName)
+        // Chỉ cập nhật trường "title" của Board
+        mBoardsRef.child(boardId).child("name").setValue(newName)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) callback.onSuccess();
                     else callback.onError(task.getException().getMessage());
                 });
+    }
+
+    @Override
+    public void deleteBoard(String boardId, GeneralCallback callback) {
+        // 1. Xóa node Board
+        mBoardsRef.child(boardId).removeValue().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // 2. Quan trọng: Xóa luôn các Membership liên quan để tránh rác dữ liệu
+                mMembershipsRef.orderByChild("boardId").equalTo(boardId)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                for (DataSnapshot ds : snapshot.getChildren()) {
+                                    ds.getRef().removeValue();
+                                }
+                                callback.onSuccess();
+                            }
+                            @Override public void onCancelled(@NonNull DatabaseError error) { callback.onSuccess(); }
+                        });
+            } else callback.onError(task.getException().getMessage());
+        });
     }
 }

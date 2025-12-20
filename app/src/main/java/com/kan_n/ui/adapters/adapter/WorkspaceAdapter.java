@@ -29,6 +29,11 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
     private boolean isManageMode = false;
     private String activeWorkspaceId = "";
     private OnWorkspaceActionListener manageListener;
+    private BoardAdapter.OnBoardLongClickListener boardLongClickListener;
+
+    public void setOnBoardLongClickListener(BoardAdapter.OnBoardLongClickListener listener) {
+        this.boardLongClickListener = listener;
+    }
 
     // Interface cho chế độ quản lý
     public interface OnWorkspaceActionListener {
@@ -70,20 +75,32 @@ public class WorkspaceAdapter extends RecyclerView.Adapter<WorkspaceAdapter.Work
         holder.tvWorkspaceName.setText(workspace.getName());
 
         if (isManageMode) {
-            // Chế độ quản lý: Xử lý trạng thái Active và các nút Sửa/Xóa
+            // Chế độ quản lý (WorkspaceListFragment):
+            // CHỈ xử lý trạng thái Active và các nút Sửa/Xóa, KHÔNG gọi boardAdapter
             boolean isActive = workspace.getUid().equals(activeWorkspaceId);
             if (holder.ivActiveStatus != null) {
                 holder.ivActiveStatus.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
             }
 
-            holder.itemView.setOnClickListener(v -> manageListener.onSelect(workspace));
-            if (holder.btnEdit != null) holder.btnEdit.setOnClickListener(v -> manageListener.onEdit(workspace));
-            if (holder.btnDelete != null) holder.btnDelete.setOnClickListener(v -> manageListener.onDelete(workspace));
+            holder.itemView.setOnClickListener(v -> {
+                if (manageListener != null) manageListener.onSelect(workspace);
+            });
+
+            if (holder.btnEdit != null) {
+                holder.btnEdit.setOnClickListener(v -> manageListener.onEdit(workspace));
+            }
+
+            if (holder.btnDelete != null) {
+                holder.btnDelete.setOnClickListener(v -> manageListener.onDelete(workspace));
+            }
 
         } else {
-            // Chế độ hiển thị: Giữ nguyên logic cũ cho Board list
-            List<Board> boardsInThisWorkspace = workspace.getBoards();
-            holder.updateBoards(boardsInThisWorkspace);
+            // Chế độ hiển thị (BangFragment): Xử lý danh sách Board bên trong
+            if (holder.boardAdapter != null) {
+                holder.boardAdapter.setOnBoardLongClickListener(boardLongClickListener);
+                List<Board> boardsInThisWorkspace = workspace.getBoards();
+                holder.updateBoards(boardsInThisWorkspace);
+            }
         }
     }
 

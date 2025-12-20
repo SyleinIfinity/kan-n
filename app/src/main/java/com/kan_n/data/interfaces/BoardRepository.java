@@ -55,14 +55,15 @@ public interface BoardRepository {
     void createBoard(String workspaceId, String name, String visibility, Background background, GeneralCallback callback);
 
     void updateBoard(String boardId, Map<String, Object> updates, GeneralCallback callback);
-    void deleteBoard(String boardId, GeneralCallback callback);
     void addMemberToBoard(String boardId, String userId, GeneralCallback callback);
     void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback);
     void createWorkspace(String name, String description, GeneralCallback callback);
     void updateWorkspace(String workspaceId, String newName, GeneralCallback callback);
     void deleteWorkspace(String workspaceId, GeneralCallback callback);
     void getActiveWorkspaceWithBoards(String userId, String workspaceId, WorkspacesWithBoardsCallback callback);
+
     void updateBoard(String boardId, String newName, GeneralCallback callback);
+    void deleteBoard(String boardId, GeneralCallback callback);
 
 
 }
