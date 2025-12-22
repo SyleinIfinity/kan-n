@@ -121,7 +121,7 @@
     <fragment
         android:id="@+id/infoUserFragment"
         android:name="com.kan_n.ui.fragments.info_user.InfoUserFragment"
-        android:label="Chọn Ảnh"
+        android:label="Thông tin cá nhân"
         tools:layout="@layout/fragment_info_user" />
     <fragment
         android:id="@+id/TrangCaiDatFragment"
