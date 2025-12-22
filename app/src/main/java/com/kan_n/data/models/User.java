@@ -15,6 +15,8 @@ public class User {
     private String email;
     private String avatarUrl;
     private String phone;
+    private String gender;
+    private String birthDate;
     private long createdAt;
     private boolean isActive;
 
@@ -27,6 +29,8 @@ public class User {
         this.email = email;
         this.avatarUrl = avatarUrl;
         this.phone = phone; // Gán SDT
+        this.gender = "";
+        this.birthDate = "";
         this.createdAt = System.currentTimeMillis();
         this.isActive = true;
     }
@@ -53,7 +57,12 @@ public class User {
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
+    // Getter/Setter cho Ngày sinh
+    public String getBirthDate() { return birthDate; }
+    public void setBirthDate(String birthDate) { this.birthDate = birthDate; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
 
@@ -65,6 +74,8 @@ public class User {
         result.put("email", email);
         result.put("avatarUrl", avatarUrl);
         result.put("phone", phone);
+        result.put("gender", gender);
+        result.put("birthDate", birthDate);
         result.put("createdAt", createdAt);
         result.put("isActive", isActive);
         return result;

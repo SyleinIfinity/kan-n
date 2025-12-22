@@ -20,6 +20,22 @@
             android:layout_height="60dp"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <TextView
+            android:id="@+id/btn_huy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:padding="10dp"
+            android:text="Hủy"
+            android:textColor="#FF0000"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:elevation="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <androidx.cardview.widget.CardView
             android:id="@+id/card_content"
             android:layout_width="match_parent"
@@ -29,15 +45,15 @@
             app:cardBackgroundColor="#E3F2FD"
             app:cardCornerRadius="20dp"
             app:cardElevation="4dp"
-            app:layout_constraintTop_toBottomOf="@id/view_header_placeholder"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintTop_toBottomOf="@id/view_header_placeholder">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2dp"
-                android:background="#CCF2FB">
+                android:background="#CCF2FB"
+                android:paddingBottom="2dp">
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/img_avatar"
@@ -175,10 +191,11 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/shape_edittext_white"
-                    android:inputType="date"
+                    android:focusable="false"
+                    android:clickable="true"
                     android:paddingHorizontal="12dp"
                     android:singleLine="true"
-                    android:text="05/04/2005"
+                    android:text="Ngày sinh"
                     android:textColor="#000000"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -197,19 +214,14 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/edt_ngaysinh" />
 
-                <EditText
-                    android:id="@+id/edt_gioitinh"
+                <Spinner
+                    android:id="@+id/spinner_gioitinh"
                     android:layout_width="match_parent"
                     android:layout_height="45dp"
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/shape_edittext_white"
-                    android:paddingHorizontal="12dp"
-                    android:singleLine="true"
-                    android:text="Nam"
-                    android:textColor="#000000"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
+                    android:paddingHorizontal="8dp"
                     app:layout_constraintTop_toBottomOf="@id/label_gioitinh" />
 
                 <com.google.android.material.button.MaterialButton
@@ -225,13 +237,10 @@
                     app:backgroundTint="#66C5EB"
                     app:cornerRadius="8dp"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/edt_gioitinh"
-                    app:layout_constraintVertical_bias="1.0"
-                    tools:layout_editor_absoluteX="1dp" />
+                    app:layout_constraintTop_toBottomOf="@id/spinner_gioitinh"
+                    app:layout_constraintVertical_bias="1.0" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </androidx.core.widget.NestedScrollView>
