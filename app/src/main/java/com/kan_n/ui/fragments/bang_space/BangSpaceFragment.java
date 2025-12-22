@@ -107,9 +107,9 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     }
 
     private void setupRecyclerView() {
-        // [CẬP NHẬT] Khởi tạo Adapter với tham số LongClick mới
+        // Khởi tạo Adapter với 4 tham số listener đầy đủ
         listModelAdapter = new ListModelAdapter(getContext(), viewModel, this,
-                // 1. Click thường (vào chi tiết thẻ)
+                // 1. Click vào thẻ (Mở chi tiết thẻ - Code cũ của bạn)
                 new ListModelAdapter.OnItemCardClickListener() {
                     @Override
                     public void onCardClick(Card card) {
@@ -122,11 +122,18 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                         } catch (Exception e) { e.printStackTrace(); }
                     }
                 },
-                // [MỚI] 2. Long Click (Hiện menu tùy chọn)
+                // 2. Nhấn giữ thẻ (Hiện menu tùy chọn thẻ - Code cũ của bạn)
                 new ListModelAdapter.OnItemCardLongClickListener() {
                     @Override
                     public void onCardLongClick(Card card, View view) {
                         showCardOptionsDialog(card);
+                    }
+                },
+                // 3. [MỚI] Click vào menu danh sách (Dấu 3 chấm ở cột list)
+                new ListModelAdapter.OnListMenuClickListener() {
+                    @Override
+                    public void onListMenuClick(View view, ListModel listModel, int position) {
+                        showListOptionsDialog(listModel, position);
                     }
                 }
         );
@@ -134,6 +141,96 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         binding.rvLists.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         binding.rvLists.setAdapter(listModelAdapter);
     }
+
+    // --- CÁC HÀM XỬ LÝ LOGIC MENU LIST ---
+
+    // 1. Hiển thị Dialog tùy chọn
+    private void showListOptionsDialog(ListModel listModel, int position) {
+        if (getContext() == null) return;
+
+        String[] options = {"Đổi tên danh sách", "Di chuyển sang trái", "Di chuyển sang phải", "Xóa danh sách"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Tùy chọn: " + listModel.getTitle());
+        builder.setItems(options, (dialog, which) -> {
+            switch (which) {
+                case 0: // Đổi tên
+                    showRenameListDialog(listModel);
+                    break;
+                case 1: // Sang trái
+                    moveList(listModel, position, -1); // -1 là trái
+                    break;
+                case 2: // Sang phải
+                    moveList(listModel, position, 1);  // 1 là phải
+                    break;
+                case 3: // Xóa
+                    showDeleteListConfirmDialog(listModel);
+                    break;
+            }
+        });
+        builder.show();
+    }
+
+    // 2. Dialog Đổi tên danh sách
+    private void showRenameListDialog(ListModel listModel) {
+        if (getContext() == null) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Đổi tên danh sách");
+
+        final View customLayout = LayoutInflater.from(getContext()).inflate(R.layout.dialog_input_text, null);
+        EditText etInput = customLayout.findViewById(R.id.et_input_title);
+        etInput.setText(listModel.getTitle());
+        etInput.setSelection(listModel.getTitle().length());
+
+        builder.setView(customLayout);
+        builder.setPositiveButton("Cập nhật", (dialog, which) -> {
+            String newTitle = etInput.getText().toString().trim();
+            if (!newTitle.isEmpty()) {
+                viewModel.updateListTitle(listModel.getUid(), newTitle);
+                Toast.makeText(getContext(), "Đã cập nhật tên", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss());
+        builder.show();
+    }
+
+    // 3. Logic Di chuyển (Trái/Phải)
+    private void moveList(ListModel currentList, int currentPosition, int direction) {
+        List<ListModel> allLists = listModelAdapter.getCurrentList();
+        int targetIndex = currentPosition + direction;
+
+        // Kiểm tra biên (không thể sang trái nếu ở đầu, không thể sang phải nếu ở cuối)
+        if (targetIndex < 0 || targetIndex >= allLists.size()) {
+            Toast.makeText(getContext(), "Không thể di chuyển thêm nữa", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ListModel targetList = allLists.get(targetIndex);
+
+        // Logic đổi chỗ: Hoán đổi giá trị 'position' của 2 danh sách trong Database
+        // Firebase sẽ tự động trigger onChildChanged và sắp xếp lại UI
+        double pos1 = currentList.getPosition();
+        double pos2 = targetList.getPosition();
+
+        // Cập nhật lên Firebase
+        viewModel.updateListPosition(currentList.getUid(), pos2);
+        viewModel.updateListPosition(targetList.getUid(), pos1);
+    }
+
+    // 4. Dialog Xác nhận Xóa danh sách
+    private void showDeleteListConfirmDialog(ListModel listModel) {
+        if (getContext() == null) return;
+        new AlertDialog.Builder(getContext())
+                .setTitle("Xóa danh sách")
+                .setMessage("Bạn có chắc chắn muốn xóa danh sách \"" + listModel.getTitle() + "\" và toàn bộ thẻ bên trong không?")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    viewModel.deleteList(listModel.getUid());
+                    Toast.makeText(getContext(), "Đã xóa danh sách", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
 
     private void showCardOptionsDialog(Card card) {
         if (getContext() == null) return;

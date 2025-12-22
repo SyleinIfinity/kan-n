@@ -174,4 +174,24 @@ public class BangSpaceViewModel extends ViewModel {
         void onError(String message);
     }
 
+    // 5. Cập nhật tên danh sách
+    public void updateListTitle(String listId, String newTitle) {
+        listsRef.child(listId).child("title").setValue(newTitle);
+    }
+
+    // 6. Cập nhật vị trí danh sách (Dùng cho di chuyển trái/phải)
+    public void updateListPosition(String listId, double newPosition) {
+        listsRef.child(listId).child("position").setValue(newPosition);
+    }
+
+    // 7. Xóa danh sách
+    public void deleteList(String listId) {
+        // Lưu ý: Nên xóa cả các thẻ (cards) thuộc danh sách này nếu muốn sạch data
+        // Ở đây mình xóa danh sách trước theo yêu cầu
+        listsRef.child(listId).removeValue();
+
+        // (Tùy chọn) Xóa các thẻ con
+        // cardsRef.orderByChild("listId").equalTo(listId).addListenerForSingleValueEvent(... xóa ...);
+    }
+
 }
