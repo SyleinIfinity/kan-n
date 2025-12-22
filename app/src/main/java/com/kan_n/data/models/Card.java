@@ -25,6 +25,7 @@ public class Card {
     private int attachmentCount;   // Cho ic_dinhkem
     private int checklistTotal;    // Cho ic_checked (tổng số)
     private int checklistCompleted;// Cho ic_checked (đã hoàn thành)
+    private String labelColor;
 
     public Card() {
         // Constructor trống
@@ -87,6 +88,8 @@ public class Card {
     public int getChecklistCompleted() { return checklistCompleted; }
     public void setChecklistCompleted(int checklistCompleted) { this.checklistCompleted = checklistCompleted; }
 
+    public String getLabelColor() { return labelColor; }
+    public void setLabelColor(String labelColor) { this.labelColor = labelColor; }
 
     @Exclude
     public Map<String, Object> toMap() {
@@ -105,6 +108,7 @@ public class Card {
         result.put("attachmentCount", attachmentCount);
         result.put("checklistTotal", checklistTotal);
         result.put("checklistCompleted", checklistCompleted);
+        result.put("labelColor", labelColor);
         return result;
     }
 }

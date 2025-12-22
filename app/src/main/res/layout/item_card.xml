@@ -6,6 +6,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp">
 
@@ -94,11 +97,6 @@
                 android:padding="4dp"
                 android:src="@drawable/ic_menu_v1"
                 tools:ignore="TouchTargetSizeCheck" />
-
-<!--            <View-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_height="1dp"-->
-<!--                android:layout_weight="1" />-->
 
             <TextView
                 android:id="@+id/tvDinhKemThe"

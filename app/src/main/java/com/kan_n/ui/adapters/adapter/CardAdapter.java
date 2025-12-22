@@ -2,6 +2,7 @@
 package com.kan_n.ui.adapters.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -31,22 +33,29 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     // 1. Listener cho nút "Thêm thẻ"
     private final OnAddCardClickListener addCardClickListener;
 
-    // Listener cho việc Click vào thẻ để xem chi tiết
-    private final OnCardClickListener cardClickListener;
-
     public interface OnAddCardClickListener {
         void onAddCardClick();
     }
+
+    // Listener cho việc Click vào thẻ để xem chi tiết
+    private final OnCardClickListener cardClickListener;
 
     // Interface cho click vào thẻ
     public interface OnCardClickListener {
         void onCardClick(Card card);
     }
 
-    public CardAdapter(Context context, OnAddCardClickListener addListener, OnCardClickListener cardListener) {
+    private final OnCardLongClickListener cardLongClickListener;
+
+    public interface OnCardLongClickListener {
+        void onCardLongClick(Card card, View view);
+    }
+
+    public CardAdapter(Context context, OnAddCardClickListener addListener, OnCardClickListener cardListener, OnCardLongClickListener longClickListener) {
         this.context = context;
         this.addCardClickListener = addListener;
         this.cardClickListener = cardListener;
+        this.cardLongClickListener = longClickListener;
     }
 
     @Override
@@ -77,8 +86,8 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder.getItemViewType() == VIEW_TYPE_CARD) {
             Card card = cardList.get(position);
             if (card == null) return;
-
-            ((CardViewHolder) holder).bind(card, context, cardClickListener);
+            // [CẬP NHẬT] Truyền thêm longClickListener vào bind
+            ((CardViewHolder) holder).bind(card, context, cardClickListener, cardLongClickListener);
 
         } else {
             ((AddCardViewHolder) holder).bind(addCardClickListener);
@@ -144,6 +153,8 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         TextView tvAttachments;
         TextView tvChecklist;
 
+        ConstraintLayout layoutRoot;
+
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
             ivCoverImage = itemView.findViewById(R.id.ivAnhBiaThe);
@@ -153,22 +164,54 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             layoutFooter = itemView.findViewById(R.id.layoutChanThe);
             tvAttachments = itemView.findViewById(R.id.tvDinhKemThe);
             tvChecklist = itemView.findViewById(R.id.tvChecklistThe);
+            layoutRoot = (ConstraintLayout) itemView.findViewById(R.id.tvTieuDeThe).getParent();
         }
 
         // Thêm tham số listener vào hàm bind
-        public void bind(final Card card, Context context, final OnCardClickListener listener) {
-            // 1. Tieu de va Checkbox
+        public void bind(final Card card, Context context,
+                         final OnCardClickListener listener,
+                         final OnCardLongClickListener longListener) {
+
             tvCardTitle.setText(card.getTitle());
             cbComplete.setChecked(card.isCompleted());
 
-            // Bắt sự kiện click vào Tiêu đề thẻ
-            tvCardTitle.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onCardClick(card);
-                }
-            });
+            // --- XỬ LÝ CLICK ---
+            // Tạo một OnClickListener chung
+            View.OnClickListener commonClickListener = v -> {
+                if (listener != null) listener.onCardClick(card);
+            };
 
-            // (Các phần bind ảnh bìa, tag, checklist...)
+            // Gán click cho cả itemView và Title
+            itemView.setOnClickListener(commonClickListener);
+            tvCardTitle.setOnClickListener(commonClickListener);
+
+            // --- XỬ LÝ LONG CLICK (QUAN TRỌNG) ---
+            // Tạo một OnLongClickListener chung
+            View.OnLongClickListener commonLongListener = v -> {
+                if (longListener != null) {
+                    longListener.onCardLongClick(card, itemView);
+                    return true; // Trả về true để báo là sự kiện đã được xử lý
+                }
+                return false;
+            };
+
+            // [FIX LỖI] Gán Long Click cho cả itemView VÀ TextView Tiêu đề
+            itemView.setOnLongClickListener(commonLongListener);
+            tvCardTitle.setOnLongClickListener(commonLongListener);
+
+
+            // --- MÀU SẮC ---
+            if (card.getLabelColor() != null && !card.getLabelColor().isEmpty()) {
+                try {
+                    layoutRoot.setBackgroundColor(Color.parseColor(card.getLabelColor()));
+                } catch (IllegalArgumentException e) {
+                    layoutRoot.setBackgroundColor(Color.parseColor("#CCF2FB"));
+                }
+            } else {
+                layoutRoot.setBackgroundColor(Color.parseColor("#CCF2FB"));
+            }
+
+            // --- ẢNH BÌA ---
             String coverUrl = card.getCoverImageUrl();
             if (coverUrl != null && !coverUrl.isEmpty()) {
                 ivCoverImage.setVisibility(View.VISIBLE);
@@ -177,9 +220,9 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 ivCoverImage.setVisibility(View.GONE);
             }
 
-            boolean coNhan = card.getTagIds() != null && !card.getTagIds().isEmpty();
-            rvTags.setVisibility(coNhan ? View.VISIBLE : View.GONE);
+            rvTags.setVisibility(View.GONE);
 
+            // --- FOOTER INFO ---
             int attachmentCount = card.getAttachmentCount();
             if (attachmentCount > 0) {
                 tvAttachments.setVisibility(View.VISIBLE);
