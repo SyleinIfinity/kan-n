@@ -18,7 +18,7 @@
             android:id="@+id/toolbar_chon_anh"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            android:background="#0096DB"
             app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -69,6 +69,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
         app:spanCount="3"
-        tools:listitem="@layout/item_background_option" />
+        tools:listitem="@layout/item_background_option"
+        android:background="#E6FAFE"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

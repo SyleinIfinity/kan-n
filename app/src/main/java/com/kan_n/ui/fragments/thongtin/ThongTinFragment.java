@@ -50,6 +50,12 @@ public class ThongTinFragment extends Fragment {
         binding.itemCaidat.getRoot().setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_TrangCaiDatFragment);
         });
+
+        // Trong onViewCreated của ThongTinFragment.java
+        binding.itemKhonggianlamviec.getRoot().setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_workspaceListFragment);
+        });
+
         binding.txtUsername.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.action_thanhDieuHuong_ThongTin_to_infoUserFragment);
         });

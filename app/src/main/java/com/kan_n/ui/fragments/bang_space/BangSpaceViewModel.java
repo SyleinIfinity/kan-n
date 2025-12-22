@@ -1,17 +1,24 @@
 package com.kan_n.ui.fragments.bang_space;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.CardRepository;
 import com.kan_n.data.interfaces.ListRepository;
+import com.kan_n.data.models.Tag;
 import com.kan_n.data.repository.CardRepositoryImpl;
 import com.kan_n.data.repository.ListRepositoryImpl;
 import com.kan_n.utils.FirebaseUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class BangSpaceViewModel extends ViewModel {
@@ -22,6 +29,8 @@ public class BangSpaceViewModel extends ViewModel {
     // Database references
     private final DatabaseReference listsRef = FirebaseUtils.getDatabaseInstance().getReference("lists");
     private final DatabaseReference cardsRef = FirebaseUtils.getDatabaseInstance().getReference("cards");
+
+    private final DatabaseReference tagsRef = FirebaseUtils.getDatabaseInstance().getReference("tags");
 
     // Lưu trữ các Query và Listener để có thể gỡ khi Fragment bị hủy
     private Query listsQuery;
@@ -111,6 +120,58 @@ public class BangSpaceViewModel extends ViewModel {
         cardRepository.setCardCompleted(cardId, isCompleted, callback);
     }
 
-    // (Them cac phuong thuc action khac o day...)
+    // 1. Đổi tên Card
+    public void updateCardTitle(String cardId, String newTitle) {
+        cardsRef.child(cardId).child("title").setValue(newTitle);
+    }
+
+    // 2. Xóa Card
+    public void deleteCard(String cardId) {
+        cardsRef.child(cardId).removeValue();
+    }
+
+    // 3. Cập nhật Tag cho Card (1 Card 1 Tag)
+    public void updateCardTag(String cardId, Tag tag) {
+        // Lưu Tag ID vào map (như cấu trúc cũ)
+        Map<String, Object> updates = new HashMap<>();
+
+        // Xóa hết tag cũ, chỉ để lại 1 tag mới
+        Map<String, Boolean> newTags = new HashMap<>();
+        newTags.put(tag.getUid(), true);
+        updates.put("tagIds", newTags);
+
+        // [QUAN TRỌNG] Lưu màu của tag trực tiếp vào card để hiển thị nhanh
+        updates.put("labelColor", tag.getColor());
+
+        cardsRef.child(cardId).updateChildren(updates);
+    }
+
+    // 4. Lấy danh sách tất cả các Tag (để hiển thị dialog chọn)
+    public void loadAllTags(TagListCallback callback) {
+        tagsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<Tag> tags = new ArrayList<>();
+                for (DataSnapshot data : snapshot.getChildren()) {
+                    Tag tag = data.getValue(Tag.class);
+                    if (tag != null) {
+                        tag.setUid(data.getKey());
+                        tags.add(tag);
+                    }
+                }
+                callback.onTagsLoaded(tags);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                callback.onError(error.getMessage());
+            }
+        });
+    }
+
+    public interface TagListCallback {
+        void onTagsLoaded(List<Tag> tags);
+        void onError(String message);
+    }
 
 }

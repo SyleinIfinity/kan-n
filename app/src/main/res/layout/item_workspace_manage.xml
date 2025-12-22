@@ -1,0 +1,39 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:gravity="center_vertical"
+    android:background="#FFFFFF"
+    android:layout_marginBottom="2dp">
+
+    <ImageView
+        android:id="@+id/iv_active_status"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:src="@drawable/ic_tron_v1"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/tv_ws_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:textSize="16sp"
+        android:textColor="#000000"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/btn_edit_ws"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_menu_v1"
+        android:layout_marginEnd="16dp" />
+
+    <ImageView
+        android:id="@+id/btn_delete_ws"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_huy" />
+</LinearLayout>

@@ -34,30 +34,35 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private List<ListModel> listModelList = new ArrayList<>();
     private Context context;
     private BangSpaceViewModel viewModel;
-
     private static final int VIEW_TYPE_LIST = 0;
     private static final int VIEW_TYPE_ADD = 1;
 
     private final OnAddListClickListener addListClickListener;
-
-    private final OnItemCardClickListener cardClickListener;
-
     public interface OnAddListClickListener {
         void onAddListClick();
     }
 
+    private final OnItemCardClickListener cardClickListener;
     public interface OnItemCardClickListener {
         void onCardClick(Card card);
+    }
+
+    private final OnItemCardLongClickListener cardLongClickListener;
+
+    public interface OnItemCardLongClickListener {
+        void onCardLongClick(Card card, View view);
     }
 
     // Constructor
     public ListModelAdapter(Context context, BangSpaceViewModel viewModel,
                             OnAddListClickListener addListener,
-                            OnItemCardClickListener cardListener) {
+                            OnItemCardClickListener cardListener,
+                            OnItemCardLongClickListener longListener) {
         this.context = context;
         this.viewModel = viewModel;
         this.addListClickListener = addListener;
         this.cardClickListener = cardListener;
+        this.cardLongClickListener = longListener;
     }
 
     @Override
@@ -74,9 +79,9 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        if (viewType == VIEW_TYPE_LIST) {
+        if (viewType == 0) { // VIEW_TYPE_LIST
             View view = inflater.inflate(R.layout.item_listmodel, parent, false);
-            return new ListModelViewHolder(view);
+            return new ListModelViewHolder(view); // Class này cần sửa constructor bên dưới
         } else {
             View view = inflater.inflate(R.layout.item_add_list, parent, false);
             return new AddListViewHolder(view);
@@ -85,11 +90,13 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder.getItemViewType() == VIEW_TYPE_LIST) {
+        if (holder instanceof ListModelViewHolder) {
             ListModel listModel = listModelList.get(position);
-            if (listModel == null || listModel.getUid() == null) return;
-            ((ListModelViewHolder) holder).bind(listModel);
-        } else {
+            if (listModel != null) {
+                // [CẬP NHẬT] Gọi bind và truyền listener
+                ((ListModelViewHolder) holder).bind(listModel, cardLongClickListener);
+            }
+        } else if (holder instanceof AddListViewHolder) {
             ((AddListViewHolder) holder).bind(addListClickListener);
         }
     }
@@ -177,17 +184,55 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 }
             };
 
-            cardAdapter = new CardAdapter(context, addCardListener, itemClickListener);
+            CardAdapter.OnCardLongClickListener itemLongClickListener = new CardAdapter.OnCardLongClickListener() {
+                @Override
+                public void onCardLongClick(Card card, View view) {
+                    if (cardLongClickListener != null) {
+                        cardLongClickListener.onCardLongClick(card, view);
+                    }
+                }
+            };
+
+            cardAdapter = new CardAdapter(context, addCardListener, itemClickListener, itemLongClickListener);
 
             rvCards.setLayoutManager(new LinearLayoutManager(context));
             rvCards.setAdapter(cardAdapter);
         }
 
-        public void bind(ListModel listModel) {
-            currentListId = listModel.getUid();
+        public void bind(ListModel listModel, OnItemCardLongClickListener longListener) {
+            String currentListId = listModel.getUid();
             tvListTitle.setText(listModel.getTitle());
 
-            cardListener = new ChildEventListener() {
+            // Tạo Adapter cho Card bên trong List
+            cardAdapter = new CardAdapter(context,
+                    // 1. Add Listener
+                    new CardAdapter.OnAddCardClickListener() {
+                        @Override
+                        public void onAddCardClick() {
+                            showAddCardDialog(currentListId);
+                        }
+                    },
+                    // 2. Click Listener
+                    new CardAdapter.OnCardClickListener() {
+                        @Override
+                        public void onCardClick(Card card) {
+                            if (cardClickListener != null) cardClickListener.onCardClick(card);
+                        }
+                    },
+                    // [MỚI] 3. Long Click Listener
+                    new CardAdapter.OnCardLongClickListener() {
+                        @Override
+                        public void onCardLongClick(Card card, View view) {
+                            if (longListener != null) longListener.onCardLongClick(card, view);
+                        }
+                    }
+            );
+
+            rvCards.setLayoutManager(new LinearLayoutManager(context));
+            rvCards.setAdapter(cardAdapter);
+
+            // ... (Phần lắng nghe Firebase cardsRef giữ nguyên như cũ) ...
+            ChildEventListener cardListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     Card card = snapshot.getValue(Card.class);
@@ -211,9 +256,7 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 @Override
                 public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { }
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Log.e("ListModelAdapter", "Error listenForCards: " + error.getMessage());
-                }
+                public void onCancelled(@NonNull DatabaseError error) { }
             };
             viewModel.listenForCards(currentListId, cardListener);
         }

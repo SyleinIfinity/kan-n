@@ -43,26 +43,18 @@ public class DangNhapFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Nút quay lại
-        binding.nutQuayLai.setOnClickListener(v -> {
+        binding.nutQuayLai.setOnClickListener(v->{
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         });
-
-        // Nút Đăng nhập
-        binding.nutDangNhap.setOnClickListener(v -> {
+        binding.nutDangNhap.setOnClickListener(v->{
             String email = binding.nhapGmail.getText().toString().trim();
             String password = binding.nhapMatKhau.getText().toString().trim();
-            viewModel.login(email, password);
-
+            viewModel.login(email,password);
         });
-
         navController = NavHostFragment.findNavController(this);
-
-        binding.textQuenMatKhau.setOnClickListener(v -> {
+        binding.textQuenMatKhau.setOnClickListener(v->{
             navController.navigate(R.id.action_dangNhapFragment_to_nhapGmailFragment);
         });
-
-        // Lắng nghe kết quả đăng nhập
         observeViewModel();
     }
 

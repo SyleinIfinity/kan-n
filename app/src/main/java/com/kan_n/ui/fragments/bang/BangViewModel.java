@@ -28,6 +28,11 @@ public class BangViewModel extends ViewModel {
     private ValueEventListener membershipListener;
     private String currentUserId;
 
+    private String activeWsId; // Thêm biến để lưu ID đang hoạt động
+    public void setActiveWsId(String activeWsId) {
+        this.activeWsId = activeWsId;
+    }
+
     public BangViewModel() {
         this.boardRepository = new BoardRepositoryImpl();
         this.currentUserId = FirebaseUtils.getCurrentUserId(); // Lấy UID 1 lần
@@ -49,53 +54,36 @@ public class BangViewModel extends ViewModel {
      * Fragment sẽ gọi hàm này trong onViewCreated.
      */
     public void startListeningForChanges() {
-        if (currentUserId == null) {
-            errorLiveData.setValue("Người dùng chưa đăng nhập.");
-            return;
-        }
-
+        if (currentUserId == null) return;
         if (membershipListener == null) {
             membershipListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    // Bất cứ khi nào memberships của user thay đổi (thêm/xóa)
-                    // TẢI LẠI TOÀN BỘ DANH SÁCH BẢNG
+                    // Gọi loadWorkspaces() không tham số -> Không còn lỗi
                     loadWorkspaces();
                 }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    errorLiveData.postValue("Lỗi lắng nghe: " + error.getMessage());
-                }
+                @Override public void onCancelled(@NonNull DatabaseError error) {}
             };
-
-            // Gắn listener vào query (dùng addValueEventListener)
-            // Lắng nghe TẤT CẢ memberships CỦA USER
             membershipsRef.orderByChild("userId").equalTo(currentUserId)
                     .addValueEventListener(membershipListener);
         }
     }
 
-
-    /**
-     * Phương thức tải dữ liệu thật từ Firebase.
-     */
     public void loadWorkspaces() {
-        if (currentUserId == null) {
-            errorLiveData.setValue("Người dùng chưa đăng nhập.");
+        if (currentUserId == null || activeWsId == null) {
             workspacesLiveData.setValue(new ArrayList<>());
             return;
         }
 
-        boardRepository.getWorkspacesWithBoards(currentUserId, new BoardRepository.WorkspacesWithBoardsCallback() {
+        // Sử dụng hàm mới của Repository
+        boardRepository.getActiveWorkspaceWithBoards(currentUserId, activeWsId, new BoardRepository.WorkspacesWithBoardsCallback() {
             @Override
             public void onSuccess(List<Workspace> workspaces) {
                 workspacesLiveData.postValue(workspaces);
             }
-
             @Override
             public void onError(String message) {
-                errorLiveData.postValue("Lỗi tải dữ liệu: " + message);
+                errorLiveData.postValue(message);
                 workspacesLiveData.postValue(new ArrayList<>());
             }
         });
