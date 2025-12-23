@@ -12,8 +12,10 @@ import com.kan_n.data.repository.BackgroundRepositoryImpl;
 import com.kan_n.data.repository.BoardRepositoryImpl; // ✨ Bổ sung
 import com.kan_n.utils.FirebaseUtils; // ✨ Bổ sung
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList; // ✨ Bổ sung
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class TaoBangMoiViewModel extends ViewModel {
@@ -130,5 +132,10 @@ public class TaoBangMoiViewModel extends ViewModel {
                 _createStatus.postValue(CreateBoardStatus.ERROR);
             }
         });
+    }
+    public void updateBoardBackground(String boardId, Background background, BoardRepository.GeneralCallback callback) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("background", background); // Firebase sẽ tự động serialize đối tượng Background
+        boardRepository.updateBoard(boardId, updates, callback);
     }
 }

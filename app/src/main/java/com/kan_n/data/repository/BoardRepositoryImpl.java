@@ -165,7 +165,7 @@ public class BoardRepositoryImpl implements BoardRepository {
         Board newBoard = new Board(workspaceId, name, "", visibility, currentUserId, background);
 
         String membershipId = mMembershipsRef.push().getKey();
-        Membership ownerMembership = new Membership(boardId, currentUserId, "owner");
+        Membership ownerMembership = new Membership(boardId, currentUserId, "owner", "edit");
 
         if (membershipId == null) {
             callback.onError("Không thể tạo ID cho membership.");
@@ -204,8 +204,8 @@ public class BoardRepositoryImpl implements BoardRepository {
             callback.onError("Không thể tạo ID membership.");
             return;
         }
-
-        Membership newMember = new Membership(boardId, userId, "member");
+        // Mặc định là member và quyền view
+        Membership newMember = new Membership(boardId, userId, "member", "view");
         mMembershipsRef.child(membershipId).setValue(newMember.toMap()).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 callback.onSuccess();
@@ -214,6 +214,8 @@ public class BoardRepositoryImpl implements BoardRepository {
             }
         });
     }
+
+
 
     @Override
     public void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback) {
@@ -430,5 +432,39 @@ public class BoardRepositoryImpl implements BoardRepository {
                         });
             } else callback.onError(task.getException().getMessage());
         });
+    }
+
+    public void updateBoardBackground(String boardId, Background background, GeneralCallback callback) {
+        mBoardsRef.child(boardId).child("background").setValue(background)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) callback.onSuccess();
+                    else callback.onError(task.getException().getMessage());
+                });
+    }
+    @Override
+    public void updateMemberPermission(String boardId, String userId, String newPermission, GeneralCallback callback) {
+        // Tìm node membership tương ứng với boardId và userId
+        mMembershipsRef.orderByChild("boardId").equalTo(boardId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        boolean found = false;
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            Membership m = ds.getValue(Membership.class);
+                            if (m != null && m.getUserId().equals(userId)) {
+                                // Cập nhật trường permission
+                                ds.getRef().child("permission").setValue(newPermission)
+                                        .addOnCompleteListener(task -> {
+                                            if (task.isSuccessful()) callback.onSuccess();
+                                            else callback.onError(task.getException().getMessage());
+                                        });
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) callback.onError("Không tìm thấy thành viên.");
+                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
+                });
     }
 }

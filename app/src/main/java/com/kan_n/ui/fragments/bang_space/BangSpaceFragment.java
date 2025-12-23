@@ -28,10 +28,13 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.kan_n.R;
+import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.interfaces.ListRepository;
+import com.kan_n.data.models.Board;
 import com.kan_n.data.models.Card;
 import com.kan_n.data.models.ListModel;
 import com.kan_n.data.models.Tag;
+import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.databinding.FragmentBangSpaceBinding;
 import com.kan_n.ui.adapters.adapter.ListModelAdapter;
 import java.util.ArrayList;
@@ -48,6 +51,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
     private String boardId;
     private String boardTitle;
+    private final BoardRepository boardRepository = new BoardRepositoryImpl();
 
     // private RecyclerView.AdapterDataObserver adapterObserver;
 
@@ -84,6 +88,17 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
         if (boardId != null) {
             listenForLists(boardId);
+            viewModel.getBoardDetails(boardId, new BoardRepository.BoardCallback() {
+                @Override
+                public void onSuccess(Board board) {
+                    if (board.getBackground() != null && "color".equals(board.getBackground().getType())) {
+                        applyDynamicColors(board.getBackground().getValue());
+                    }
+                }
+                @Override
+                public void onError(String message) {}
+            });
+            listenForLists(boardId);
         } else {
             Toast.makeText(getContext(), "Lỗi: Không tìm thấy ID Bảng", Toast.LENGTH_LONG).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
@@ -98,6 +113,27 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         });
 
 
+    }
+
+    private void applyDynamicColors(String hexColor) {
+        try {
+            int baseColor = Color.parseColor(hexColor);
+
+            // 1. Màu Toolbar (Màu gốc)
+            binding.toolbarBangSpace.setBackgroundColor(baseColor);
+
+            // 2. Màu Status Bar (Đậm hơn màu gốc 20%)
+            if (getActivity() != null) {
+                getActivity().getWindow().setStatusBarColor(adjustColor(baseColor, 0.8f));
+            }
+
+            // 3. Màu nền Fragment (Rất nhạt)
+            int bgLightColor = lightenColor(baseColor);
+            binding.getRoot().setBackgroundColor(bgLightColor);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void setupToolbar() {
@@ -502,6 +538,45 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                 }
             }
         });
+    }
+
+    // Hàm làm sáng hoặc làm đậm màu sắc
+    private int adjustColor(int color, float factor) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+        hsv[2] *= factor; // Thay đổi giá trị độ sáng (Value)
+        return Color.HSVToColor(hsv);
+    }
+
+    // Hàm làm nhạt màu để làm nền
+    private int lightenColor(int color) {
+        float[] hsv = new float[3];
+        Color.colorToHSV(color, hsv);
+        hsv[1] *= 0.3f; // Giảm độ bão hòa xuống 30% để màu trông nhạt và dễ nhìn hơn
+        hsv[2] = 0.95f; // Tăng độ sáng lên cao
+        return Color.HSVToColor(hsv);
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Mỗi khi quay lại trang này, thực hiện reload thông tin bảng
+        if (boardId != null) {
+            viewModel.getBoardDetails(boardId, new BoardRepository.BoardCallback() {
+                @Override
+                public void onSuccess(Board board) {
+                    if (board != null) {
+                        // Cập nhật lại tiêu đề trên Toolbar bằng tên mới từ database
+                        boardTitle = board.getName();
+                        binding.tvBoardTitleToolbar.setText(boardTitle);
+                    }
+                }
+
+                @Override
+                public void onError(String message) {
+                    // Xử lý lỗi nếu cần
+                }
+            });
+        }
     }
 
 

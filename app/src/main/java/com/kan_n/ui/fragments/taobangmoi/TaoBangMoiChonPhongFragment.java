@@ -31,17 +31,19 @@ public class TaoBangMoiChonPhongFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         navController = NavHostFragment.findNavController(this);
 
-        // Nút quay lại
+        // Lấy gói dữ liệu từ màn hình trước (Menu hoặc Tạo mới)
+        Bundle args = getArguments();
+
         binding.ivBack.setOnClickListener(v -> navController.popBackStack());
 
-        // Chuyển sang màn hình chọn MÀU SẮC
         binding.cardColors.setOnClickListener(v -> {
-            navController.navigate(R.id.action_chonPhongFragment_to_chonMauFragment);
+            // TRUYỀN TIẾP ARGS VÀO ĐÂY
+            navController.navigate(R.id.action_chonPhongFragment_to_chonMauFragment, args);
         });
 
-        // Chuyển sang màn hình chọn ẢNH
         binding.cardImage.setOnClickListener(v -> {
-            navController.navigate(R.id.action_chonPhongFragment_to_chonAnhFragment);
+            // TRUYỀN TIẾP ARGS VÀO ĐÂY
+            navController.navigate(R.id.action_chonPhongFragment_to_chonAnhFragment, args);
         });
     }
 

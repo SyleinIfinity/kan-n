@@ -13,6 +13,7 @@ public class Membership {
     private String userId;
     private String role;
     private long joinedAt;
+    private String permission;
 
     public Membership() {
 
@@ -24,6 +25,14 @@ public class Membership {
         this.role = role;
         this.joinedAt = System.currentTimeMillis();
     }
+    public Membership(String boardId, String userId, String role, String permission) {
+        this.boardId = boardId;
+        this.userId = userId;
+        this.role = role;
+        this.joinedAt = System.currentTimeMillis();
+        this.permission = permission;
+    }
+
 
     // --- Getters and Setters ---
 
@@ -67,6 +76,8 @@ public class Membership {
     public void setJoinedAt(long joinedAt) {
         this.joinedAt = joinedAt;
     }
+    public String getPermission() { return permission; }
+    public void setPermission(String permission) { this.permission = permission; }
 
     @Exclude
     public Map<String, Object> toMap() {
@@ -75,6 +86,7 @@ public class Membership {
         result.put("userId", userId);
         result.put("role", role);
         result.put("joinedAt", joinedAt);
+        result.put("permission", permission);
         return result;
     }
 }

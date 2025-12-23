@@ -53,7 +53,11 @@
         android:id="@+id/MenuBangFragment"
         android:name="com.kan_n.ui.fragments.menu_bang.MenuBangFragment"
         android:label="@string/title_HoatDong"
-        tools:layout="@layout/fragment_menu_bang" />
+        tools:layout="@layout/fragment_menu_bang">
+        <action
+            android:id="@+id/action_MenuBangFragment_to_taoBangMoiChonPhongFragment"
+            app:destination="@id/taoBangMoiChonPhongFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/thanhDieuHuong_HoatDong"

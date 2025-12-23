@@ -8,11 +8,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.interfaces.CardRepository;
 import com.kan_n.data.interfaces.ListRepository;
 import com.kan_n.data.models.Card;
 import com.kan_n.data.models.ListModel;
 import com.kan_n.data.models.Tag;
+import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.data.repository.CardRepositoryImpl;
 import com.kan_n.data.repository.ListRepositoryImpl;
 import com.kan_n.utils.FirebaseUtils;
@@ -41,10 +43,16 @@ public class BangSpaceViewModel extends ViewModel {
     private ChildEventListener listsListener;
     private Map<String, Query> cardQueries = new HashMap<>();
     private Map<String, ChildEventListener> cardListeners = new HashMap<>();
+    private final BoardRepository boardRepository;
 
     public BangSpaceViewModel() {
         this.listRepository = new ListRepositoryImpl();
         this.cardRepository = new CardRepositoryImpl();
+        this.boardRepository = new BoardRepositoryImpl();
+    }
+
+    public void getBoardDetails(String boardId, BoardRepository.BoardCallback callback) {
+        boardRepository.getBoardDetails(boardId, callback);
     }
 
     // =========================================================================
