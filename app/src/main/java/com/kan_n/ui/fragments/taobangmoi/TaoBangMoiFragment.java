@@ -7,9 +7,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter; // ✨ Bổ sung
-import android.widget.TextView; // ✨ Bổ sung
-import android.widget.Toast; // ✨ Bổ sung
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,10 +21,8 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.bumptech.glide.Glide;
 import com.kan_n.R;
 import com.kan_n.data.models.Background;
-import com.kan_n.data.models.Workspace; // ✨ Bổ sung
+import com.kan_n.data.models.Workspace;
 import com.kan_n.databinding.FragmentTaobangMoiBinding;
-
-import java.util.List; // ✨ Bổ sung
 
 public class TaoBangMoiFragment extends Fragment {
 
@@ -32,6 +30,9 @@ public class TaoBangMoiFragment extends Fragment {
     private TaoBangMoiViewModel viewModel;
     private NavController navController;
     private ArrayAdapter<Workspace> workspaceAdapter;
+
+    // ✨ Biến tạm để lưu ID workspace người dùng chọn
+    private String currentSelectedWorkspaceId = "";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -51,28 +52,15 @@ public class TaoBangMoiFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         navController = NavHostFragment.findNavController(this);
-        viewModel.resetCreateStatus(); // Reset trạng thái khi vào màn hình
+        viewModel.resetCreateStatus();
 
-        // 1. Cài đặt Spinner Workspace
         setupWorkspaceSpinner();
-
-        // 2. Gắn listener (đã có từ trước)
         setupBackgroundClickListeners();
-
-        // 3. Gắn listener cho nút TẠO BẢNG
         setupCreateButton();
-
-        // 4. Lắng nghe (Observe) dữ liệu
         observeViewModel();
-
-        // 5. Yêu cầu ViewModel tải Workspaces
         viewModel.loadWorkspaces();
     }
 
-    /**
-     * Cài đặt Adapter tùy chỉnh cho Spinner Workspace.
-     * Cần tùy chỉnh để hiển thị tên (workspace.getName()) thay vì object hashcode.
-     */
     private void setupWorkspaceSpinner() {
         workspaceAdapter = new ArrayAdapter<Workspace>(getContext(), android.R.layout.simple_spinner_item) {
             @NonNull
@@ -81,7 +69,7 @@ public class TaoBangMoiFragment extends Fragment {
                 TextView label = (TextView) super.getView(position, convertView, parent);
                 Workspace workspace = getItem(position);
                 if (workspace != null) {
-                    label.setText(workspace.getName()); // Hiển thị tên
+                    label.setText(workspace.getName());
                 }
                 return label;
             }
@@ -91,7 +79,7 @@ public class TaoBangMoiFragment extends Fragment {
                 TextView label = (TextView) super.getDropDownView(position, convertView, parent);
                 Workspace workspace = getItem(position);
                 if (workspace != null) {
-                    label.setText(workspace.getName()); // Hiển thị tên trong danh sách dropdown
+                    label.setText(workspace.getName());
                 }
                 return label;
             }
@@ -100,9 +88,6 @@ public class TaoBangMoiFragment extends Fragment {
         binding.spinnerKhongGianLamViec.setAdapter(workspaceAdapter);
     }
 
-    /**
-     * Gắn sự kiện click cho ô chọn phông nền
-     */
     private void setupBackgroundClickListeners() {
         View.OnClickListener goToChonPhong = v -> {
             navController.navigate(R.id.action_taoBangMoiFragment_to_chonPhongFragment);
@@ -112,52 +97,54 @@ public class TaoBangMoiFragment extends Fragment {
         binding.viewColorIndicator.setOnClickListener(goToChonPhong);
     }
 
-    /**
-     * Gắn sự kiện click cho nút "Tạo bảng"
-     */
     private void setupCreateButton() {
         binding.btnTaoBang.setOnClickListener(v -> {
-            // 1. Lấy dữ liệu từ UI
             String boardName = binding.etTenBang.getText().toString();
             Workspace selectedWorkspace = (Workspace) binding.spinnerKhongGianLamViec.getSelectedItem();
             String selectedVisibilityString = binding.spinnerQuyenXem.getSelectedItem().toString();
-
-            // 2. Lấy dữ liệu đã chọn từ ViewModel
             Background selectedBackground = viewModel.getSelectedBackground().getValue();
 
-            // 3. Xử lý dữ liệu
             String visibility = mapVisibility(selectedVisibilityString);
             String workspaceId = (selectedWorkspace != null) ? selectedWorkspace.getUid() : null;
 
-            // 4. Gọi ViewModel
+            // ✨ Lưu lại ID workspace đã chọn để gửi về BangFragment khi thành công
+            if (workspaceId != null) {
+                this.currentSelectedWorkspaceId = workspaceId;
+            }
+
             viewModel.createBoard(boardName, workspaceId, visibility, selectedBackground);
         });
     }
 
-    /**
-     * Lắng nghe LiveData từ ViewModel
-     */
     private void observeViewModel() {
-        // Lắng nghe phông nền (từ trước)
         viewModel.getSelectedBackground().observe(getViewLifecycleOwner(), this::updateBackgroundPreview);
 
-        // Lắng nghe danh sách Workspace
         viewModel.getWorkspaces().observe(getViewLifecycleOwner(), workspaces -> {
             if (workspaces != null) {
                 workspaceAdapter.clear();
                 workspaceAdapter.addAll(workspaces);
                 workspaceAdapter.notifyDataSetChanged();
+
+                if (getArguments() != null) {
+                    String targetWsId = getArguments().getString("workspaceId");
+                    if (targetWsId != null && !targetWsId.isEmpty()) {
+                        for (int i = 0; i < workspaces.size(); i++) {
+                            if (workspaces.get(i).getUid().equals(targetWsId)) {
+                                binding.spinnerKhongGianLamViec.setSelection(i);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         });
 
-        // Lắng nghe Lỗi
         viewModel.getError().observe(getViewLifecycleOwner(), error -> {
             if (error != null && !error.isEmpty()) {
                 Toast.makeText(getContext(), "Lỗi: " + error, Toast.LENGTH_LONG).show();
             }
         });
 
-        // Lắng nghe trạng thái TẠO BẢNG
         viewModel.getCreateStatus().observe(getViewLifecycleOwner(), status -> {
             if (status == null) return;
             switch (status) {
@@ -167,12 +154,19 @@ public class TaoBangMoiFragment extends Fragment {
                     break;
                 case SUCCESS:
                     Toast.makeText(getContext(), "Tạo bảng thành công!", Toast.LENGTH_SHORT).show();
-                    navController.popBackStack(); // Quay lại màn hình BangFragment
+
+                    // ✨ [LOGIC MỚI] Gửi kết quả về BangFragment
+                    // Giống như callback onSuccess của Delete/Update: "Tôi đã làm xong, hãy reload đi"
+                    Bundle result = new Bundle();
+                    result.putBoolean("refresh_needed", true);
+                    result.putString("target_workspace_id", currentSelectedWorkspaceId);
+                    getParentFragmentManager().setFragmentResult("key_create_board", result);
+
+                    navController.popBackStack();
                     break;
                 case ERROR:
                     binding.btnTaoBang.setText("Tạo bảng");
                     binding.btnTaoBang.setEnabled(true);
-                    // (Toast lỗi đã được xử lý bởi observer _error)
                     break;
                 case IDLE:
                     binding.btnTaoBang.setText("Tạo bảng");
@@ -182,29 +176,15 @@ public class TaoBangMoiFragment extends Fragment {
         });
     }
 
-    /**
-     * Hàm tiện ích: Chuyển đổi chuỗi từ Spinner sang giá trị lưu trữ
-     * (Ví dụ: "Riêng tư (Chỉ thành viên)" -> "private")
-     */
     private String mapVisibility(String spinnerValue) {
-        // Lấy mảng gốc từ strings.xml
         String[] options = getResources().getStringArray(R.array.quyen_xem_options);
-
-        if (spinnerValue.equals(options[0])) { // "Riêng tư (Chỉ thành viên)"
-            return "private"; // (Giả sử bạn dùng "private", "workspace", "public")
-        } else if (spinnerValue.equals(options[1])) { // "Không gian làm việc (Mọi thành viên)"
-            return "workspace";
-        } else if (spinnerValue.equals(options[2])) { // "Công khai (Bất kỳ ai)"
-            return "public";
-        }
-        return "private"; // Mặc định
+        if (spinnerValue.equals(options[0])) return "private";
+        else if (spinnerValue.equals(options[1])) return "workspace";
+        else if (spinnerValue.equals(options[2])) return "public";
+        return "private";
     }
 
-    /**
-     * Cập nhật UI phông nền (từ trước)
-     */
     private void updateBackgroundPreview(Background background) {
-        // (Code này giữ nguyên như đã cung cấp ở lần trước)
         if (background == null || getContext() == null) return;
         binding.viewColorIndicator.setBackground(null);
         if ("color".equalsIgnoreCase(background.getType())) {
@@ -212,7 +192,7 @@ public class TaoBangMoiFragment extends Fragment {
                 int color = Color.parseColor(background.getValue());
                 binding.viewColorIndicator.setBackgroundColor(color);
                 binding.tvSelectedColor.setText(background.getValue().toUpperCase());
-            } catch (Exception e) { /*...*/}
+            } catch (Exception e) {}
         } else if ("image".equalsIgnoreCase(background.getType())) {
             binding.tvSelectedColor.setText("Ảnh");
             Glide.with(getContext())

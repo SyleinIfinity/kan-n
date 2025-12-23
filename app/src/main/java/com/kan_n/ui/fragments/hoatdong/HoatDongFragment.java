@@ -36,11 +36,8 @@ public class HoatDongFragment extends Fragment implements InvitationAdapter.OnIn
         super.onViewCreated(view, savedInstanceState);
 
         setupInvitationRecyclerView();
-        // setupHistoryRecyclerView(); // Hàm này để bạn setup 2 list lịch sử tuần/tháng sau này
-
         setupObservers();
 
-        // Sự kiện cho các nút Filter (tạm thời để trống hoặc Toast)
         binding.btnFilterAll.setOnClickListener(v -> Toast.makeText(getContext(), "Lọc tất cả", Toast.LENGTH_SHORT).show());
         binding.btnFilterUnread.setOnClickListener(v -> Toast.makeText(getContext(), "Lọc chưa đọc", Toast.LENGTH_SHORT).show());
     }
@@ -52,26 +49,26 @@ public class HoatDongFragment extends Fragment implements InvitationAdapter.OnIn
     }
 
     private void setupObservers() {
-        // 1. Quan sát danh sách lời mời
+        // 1. Quan sát danh sách lời mời (Realtime)
         hoatDongViewModel.getInvitations().observe(getViewLifecycleOwner(), invitations -> {
             if (invitations != null && !invitations.isEmpty()) {
-                // Có lời mời -> HIỆN phần lời mời
                 invitationAdapter.setData(invitations);
                 binding.tvTitleLoimoi.setVisibility(View.VISIBLE);
                 binding.rcvInvitations.setVisibility(View.VISIBLE);
                 binding.viewDividerLoimoi.setVisibility(View.VISIBLE);
             } else {
-                // Không có lời mời -> ẨN đi cho gọn
                 binding.tvTitleLoimoi.setVisibility(View.GONE);
                 binding.rcvInvitations.setVisibility(View.GONE);
                 binding.viewDividerLoimoi.setVisibility(View.GONE);
             }
         });
 
-        // 2. Quan sát thông báo
+        // 2. Quan sát thông báo và xử lý lỗi lặp lại
         hoatDongViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                // ✨ [SỬA LỖI] Xóa thông báo ngay sau khi hiện để không bị lặp lại lần sau
+                hoatDongViewModel.clearMessage();
             }
         });
     }
@@ -89,7 +86,7 @@ public class HoatDongFragment extends Fragment implements InvitationAdapter.OnIn
     @Override
     public void onResume() {
         super.onResume();
-        hoatDongViewModel.loadInvitations();
+        // Không cần gọi load thủ công nữa
     }
 
     @Override

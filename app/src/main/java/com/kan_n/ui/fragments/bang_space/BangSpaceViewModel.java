@@ -17,6 +17,8 @@ import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.data.repository.CardRepositoryImpl;
 import com.kan_n.data.repository.ListRepositoryImpl;
 import com.kan_n.utils.FirebaseUtils;
+import java.util.Collections;
+import java.util.Comparator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -200,6 +202,83 @@ public class BangSpaceViewModel extends ViewModel {
 
         // (Tùy chọn) Xóa các thẻ con
         // cardsRef.orderByChild("listId").equalTo(listId).addListenerForSingleValueEvent(... xóa ...);
+    }
+
+    //
+    // --- CÁC PHƯƠNG THỨC DI CHUYỂN THẺ (MOVE CARD) ---
+
+    // 1. Di chuyển sang danh sách khác
+    public void moveCardToNewList(String cardId, String newListId) {
+        cardsRef.child(cardId).child("listId").setValue(newListId);
+    }
+
+    // 2. Di chuyển Lên/Xuống trong cùng 1 danh sách
+    // 2. Di chuyển Lên/Xuống trong cùng 1 danh sách
+    public void moveCardVertically(String listId, String currentCardId, boolean isUp) {
+        // Lấy tất cả thẻ trong list đó ra để tính toán
+        Query query = cardsRef.orderByChild("listId").equalTo(listId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<com.kan_n.data.models.Card> cardsInList = new ArrayList<>();
+                for (DataSnapshot data : snapshot.getChildren()) {
+                    com.kan_n.data.models.Card c = data.getValue(com.kan_n.data.models.Card.class);
+                    if (c != null) {
+                        c.setUid(data.getKey());
+                        cardsInList.add(c);
+                    }
+                }
+
+                // [SỬA LỖI] Dùng Collections.sort thay vì cardsInList.sort để hỗ trợ API cũ
+                Collections.sort(cardsInList, new Comparator<com.kan_n.data.models.Card>() {
+                    @Override
+                    public int compare(com.kan_n.data.models.Card o1, com.kan_n.data.models.Card o2) {
+                        return Double.compare(o1.getPosition(), o2.getPosition());
+                    }
+                });
+
+                // Tìm vị trí (index) của thẻ hiện tại trong list
+                int currentIndex = -1;
+                for (int i = 0; i < cardsInList.size(); i++) {
+                    if (cardsInList.get(i).getUid().equals(currentCardId)) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+
+                if (currentIndex == -1) return; // Không tìm thấy thẻ
+
+                // Xử lý Logic Hoán đổi vị trí
+                if (isUp) {
+                    // Di chuyển LÊN (Swap với thẻ đứng trước: index - 1)
+                    if (currentIndex > 0) {
+                        com.kan_n.data.models.Card currentCard = cardsInList.get(currentIndex);
+                        com.kan_n.data.models.Card targetCard = cardsInList.get(currentIndex - 1); // Thẻ ở trên
+                        swapCardPositions(currentCard, targetCard);
+                    }
+                } else {
+                    // Di chuyển XUỐNG (Swap với thẻ đứng sau: index + 1)
+                    if (currentIndex < cardsInList.size() - 1) {
+                        com.kan_n.data.models.Card currentCard = cardsInList.get(currentIndex);
+                        com.kan_n.data.models.Card targetCard = cardsInList.get(currentIndex + 1); // Thẻ ở dưới
+                        swapCardPositions(currentCard, targetCard);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Handle error
+            }
+        });
+    }
+    // Hàm phụ trợ: Hoán đổi vị trí 2 thẻ trên Firebase
+    private void swapCardPositions(com.kan_n.data.models.Card card1, com.kan_n.data.models.Card card2) {
+        double pos1 = card1.getPosition();
+        double pos2 = card2.getPosition();
+
+        cardsRef.child(card1.getUid()).child("position").setValue(pos2);
+        cardsRef.child(card2.getUid()).child("position").setValue(pos1);
     }
 
 }

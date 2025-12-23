@@ -37,6 +37,7 @@ import com.kan_n.data.models.Tag;
 import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.databinding.FragmentBangSpaceBinding;
 import com.kan_n.ui.adapters.adapter.ListModelAdapter;
+import java.util.ArrayList;
 
 import java.util.List;
 
@@ -274,7 +275,8 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     private void showCardOptionsDialog(Card card) {
         if (getContext() == null) return;
 
-        String[] options = {"Đổi tên thẻ", "Gắn Tag (Nhãn màu)", "Xóa thẻ"};
+        // [CẬP NHẬT] Thêm tùy chọn "Di chuyển thẻ" vào vị trí số 2 (index 1)
+        String[] options = {"Đổi tên thẻ", "Di chuyển thẻ", "Gắn Tag (Nhãn màu)", "Xóa thẻ"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Tùy chọn thẻ: " + card.getTitle());
@@ -283,14 +285,85 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                 case 0: // Đổi tên
                     showRenameCardDialog(card);
                     break;
-                case 1: // Gắn Tag
+                case 1: // [MỚI] Di chuyển
+                    showMoveCardOptionsDialog(card);
+                    break;
+                case 2: // Gắn Tag
                     showTagSelectionDialog(card);
                     break;
-                case 2: // Xóa
+                case 3: // Xóa
                     showDeleteConfirmDialog(card);
                     break;
             }
         });
+        builder.show();
+    }
+
+    // --- CÁC HÀM DI CHUYỂN THẺ ---
+
+    // 1. Menu chọn loại di chuyển
+    private void showMoveCardOptionsDialog(Card card) {
+        if (getContext() == null) return;
+
+        String[] moveOptions = {"Di chuyển lên", "Di chuyển xuống", "Di chuyển sang danh sách khác"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Di chuyển: " + card.getTitle());
+        builder.setItems(moveOptions, (dialog, which) -> {
+            switch (which) {
+                case 0: // Lên
+                    viewModel.moveCardVertically(card.getListId(), card.getUid(), true);
+                    break;
+                case 1: // Xuống
+                    viewModel.moveCardVertically(card.getListId(), card.getUid(), false);
+                    break;
+                case 2: // Sang list khác
+                    showMoveToListDialog(card);
+                    break;
+            }
+        });
+        builder.show();
+    }
+
+    // 2. Dialog chọn danh sách đích (Khi chọn "Di chuyển sang danh sách khác")
+    private void showMoveToListDialog(Card card) {
+        if (getContext() == null || listModelAdapter == null) return;
+
+        // Lấy toàn bộ danh sách hiện có từ Adapter
+        List<ListModel> allLists = listModelAdapter.getCurrentList();
+        List<ListModel> targetLists = new ArrayList<>();
+        List<String> targetListTitles = new ArrayList<>();
+
+        // Lọc: Chỉ lấy các danh sách KHÁC danh sách hiện tại của thẻ
+        for (ListModel list : allLists) {
+            if (!list.getUid().equals(card.getListId())) {
+                targetLists.add(list);
+                targetListTitles.add(list.getTitle());
+            }
+        }
+
+        if (targetLists.isEmpty()) {
+            Toast.makeText(getContext(), "Không có danh sách nào khác để chuyển", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Hiển thị Dialog chọn danh sách
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Chọn danh sách chuyển đến");
+
+        // Chuyển List String thành mảng String cho Dialog
+        String[] titlesArray = targetListTitles.toArray(new String[0]);
+
+        builder.setItems(titlesArray, (dialog, which) -> {
+            ListModel selectedList = targetLists.get(which);
+
+            // Gọi ViewModel để cập nhật listId cho thẻ
+            viewModel.moveCardToNewList(card.getUid(), selectedList.getUid());
+
+            Toast.makeText(getContext(), "Đã chuyển sang: " + selectedList.getTitle(), Toast.LENGTH_SHORT).show();
+        });
+
+        builder.setNegativeButton("Hủy", null);
         builder.show();
     }
 

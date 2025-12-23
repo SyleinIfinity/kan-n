@@ -20,6 +20,8 @@ import com.kan_n.data.models.Card;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -110,18 +112,25 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         notifyItemInserted(position);
     }
 
+    // [CẬP NHẬT] Hàm này giúp thẻ tự nhảy vị trí ngay lập tức khi chọn Lên/Xuống
     public void updateCard(Card updatedCard) {
-        String cardId = updatedCard.getUid();
         for (int i = 0; i < cardList.size(); i++) {
-            if (cardList.get(i).getUid().equals(cardId)) {
-                boolean positionChanged = cardList.get(i).getPosition() != updatedCard.getPosition();
+            if (cardList.get(i).getUid().equals(updatedCard.getUid())) {
+                // 1. Cập nhật dữ liệu thẻ
                 cardList.set(i, updatedCard);
-                if (positionChanged) {
-                    notifyDataSetChanged();
-                } else {
-                    notifyItemChanged(i);
-                }
-                break;
+
+                // 2. [QUAN TRỌNG] Sắp xếp lại toàn bộ thẻ theo 'position' tăng dần
+                // Đoạn này giúp thẻ "nhảy" lên hoặc xuống ngay lập tức
+                Collections.sort(cardList, new Comparator<Card>() {
+                    @Override
+                    public int compare(Card o1, Card o2) {
+                        return Double.compare(o1.getPosition(), o2.getPosition());
+                    }
+                });
+
+                // 3. Làm mới toàn bộ danh sách để hiển thị đúng thứ tự
+                notifyDataSetChanged();
+                return;
             }
         }
     }

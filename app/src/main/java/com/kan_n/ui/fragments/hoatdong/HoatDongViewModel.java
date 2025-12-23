@@ -13,16 +13,16 @@ import java.util.List;
 public class HoatDongViewModel extends ViewModel {
 
     private final InvitationRepository invitationRepository;
-    private final MutableLiveData<List<Invitation>> mInvitations; // LiveData chứa danh sách lời mời
-    private final MutableLiveData<String> mMessage; // LiveData để hiển thị thông báo (Toast)
+    private final MutableLiveData<List<Invitation>> mInvitations;
+    private final MutableLiveData<String> mMessage;
 
     public HoatDongViewModel() {
         invitationRepository = new InvitationRepositoryImpl();
         mInvitations = new MutableLiveData<>();
         mMessage = new MutableLiveData<>();
 
-        // Tự động tải danh sách khi ViewModel được khởi tạo
-        loadInvitations();
+        // Tự động kích hoạt lắng nghe khi ViewModel được tạo
+        startListening();
     }
 
     public LiveData<List<Invitation>> getInvitations() {
@@ -33,8 +33,13 @@ public class HoatDongViewModel extends ViewModel {
         return mMessage;
     }
 
-    // Hàm tải danh sách lời mời từ Firebase
-    public void loadInvitations() {
+    // ✨ [MỚI] Hàm xóa thông báo để tránh hiển thị lặp lại
+    public void clearMessage() {
+        mMessage.setValue(null);
+    }
+
+    public void startListening() {
+        // Gọi hàm lắng nghe Realtime từ Repository
         invitationRepository.getMyInvitations(new InvitationRepository.GetInvitationsCallback() {
             @Override
             public void onSuccess(List<Invitation> invitations) {
@@ -48,13 +53,12 @@ public class HoatDongViewModel extends ViewModel {
         });
     }
 
-    // Hàm chấp nhận lời mời
     public void acceptInvite(Invitation invitation) {
         invitationRepository.acceptInvitation(invitation, new InvitationRepository.InviteCallback() {
             @Override
             public void onSuccess() {
                 mMessage.setValue("Đã tham gia bảng: " + invitation.getBoardName());
-                loadInvitations(); // Tải lại danh sách để cập nhật giao diện
+                // Không cần gọi load lại, Repository tự lo
             }
 
             @Override
@@ -64,13 +68,12 @@ public class HoatDongViewModel extends ViewModel {
         });
     }
 
-    // Hàm từ chối lời mời
     public void declineInvite(String invitationId) {
         invitationRepository.declineInvitation(invitationId, new InvitationRepository.InviteCallback() {
             @Override
             public void onSuccess() {
                 mMessage.setValue("Đã từ chối lời mời");
-                loadInvitations(); // Tải lại danh sách
+                // Không cần gọi load lại
             }
 
             @Override
@@ -78,5 +81,12 @@ public class HoatDongViewModel extends ViewModel {
                 mMessage.setValue("Lỗi khi từ chối: " + message);
             }
         });
+    }
+
+    // ✨ [QUAN TRỌNG] Hủy lắng nghe khi thoát màn hình để tránh rò rỉ bộ nhớ
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        invitationRepository.removeListener();
     }
 }

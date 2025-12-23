@@ -15,15 +15,14 @@ public interface InvitationRepository {
         void onError(String message);
     }
 
-    // Gửi lời mời
     void sendInvitation(String boardId, String boardName, String receiverEmail, String role, InviteCallback callback);
 
-    // Lấy danh sách lời mời của User hiện tại
+    // Hàm này sẽ chuyển sang chế độ lắng nghe liên tục
     void getMyInvitations(GetInvitationsCallback callback);
 
-    // Chấp nhận lời mời
     void acceptInvitation(Invitation invitation, InviteCallback callback);
-
-    // Từ chối lời mời (Xóa lời mời)
     void declineInvitation(String invitationId, InviteCallback callback);
+
+    // ✨ [MỚI] Thêm hàm này để hủy lắng nghe khi thoát màn hình
+    void removeListener();
 }
