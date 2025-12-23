@@ -56,28 +56,48 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         navController = NavHostFragment.findNavController(this);
         setupRecyclerView();
 
-        // 1. Quan sát danh sách Workspace để hiển thị
+        // --- QUAN SÁT DỮ LIỆU ---
         bangViewModel.getWorkspaces().observe(getViewLifecycleOwner(), workspaces -> {
             if (workspaces != null) {
                 workspaceAdapter.updateData(workspaces);
             }
         });
 
-        // ✨ [THÊM MỚI] Quan sát ID Workspace vừa tìm được (FIX BUG ĐĂNG KÝ MỚI & USER CŨ)
+        // Quan sát ID tìm được (từ logic SmartFix đã làm ở bước trước)
         bangViewModel.getFoundActiveWorkspaceId().observe(getViewLifecycleOwner(), newId -> {
             if (newId != null && !newId.isEmpty()) {
-                // Lưu ID đúng vào SharedPreferences ngay lập tức
-                SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
-                prefs.edit().putString("active_ws_id", newId).apply();
+                saveActiveWorkspaceId(newId);
             }
         });
 
-        // Xử lý nhấn giữ
+        // --- ✨ LẮNG NGHE KẾT QUẢ TỪ MÀN HÌNH TẠO BẢNG ---
+        // Đây là phần logic tương đương với callback onSuccess của Xóa/Sửa
+        getParentFragmentManager().setFragmentResultListener("key_create_board", getViewLifecycleOwner(), (requestKey, result) -> {
+            if (result.getBoolean("refresh_needed")) {
+                String targetWsId = result.getString("target_workspace_id");
+
+                // 1. Nếu có ID mới, lưu lại và cập nhật ViewModel
+                if (targetWsId != null && !targetWsId.isEmpty()) {
+                    saveActiveWorkspaceId(targetWsId);
+                    bangViewModel.setActiveWsId(targetWsId);
+                }
+
+                // 2. Load lại dữ liệu ngay lập tức
+                // Dùng loadDataSmart để đảm bảo an toàn, hoặc loadWorkspaces nếu ID đã chuẩn
+                bangViewModel.loadDataSmart();
+            }
+        });
+
+        // Xử lý sự kiện UI
         workspaceAdapter.setOnBoardLongClickListener(this::showBoardPopupMenu);
 
-        // Tạo bảng mới
         binding.btnTaoBangMoi.setOnClickListener(v -> {
-            navController.navigate(R.id.action_bangFragment_to_taoBangMoiFragment);
+            SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
+            String currentWsId = prefs.getString("active_ws_id", "");
+
+            Bundle args = new Bundle();
+            args.putString("workspaceId", currentWsId);
+            navController.navigate(R.id.action_bangFragment_to_taoBangMoiFragment, args);
         });
 
         bangViewModel.startListeningForChanges();
@@ -90,6 +110,12 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         rvWorkspaces.setAdapter(workspaceAdapter);
     }
 
+    // Hàm tiện ích để lưu ID vào SharedPreferences
+    private void saveActiveWorkspaceId(String id) {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
+        prefs.edit().putString("active_ws_id", id).apply();
+    }
+
     private void showBoardPopupMenu(View view, Board board) {
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
         popupMenu.getMenu().add(0, 1, 0, "Đổi tên bảng");
@@ -97,14 +123,9 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
 
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
-                case 1:
-                    showRenameBoardDialog(board);
-                    return true;
-                case 2:
-                    showDeleteBoardConfirm(board);
-                    return true;
-                default:
-                    return false;
+                case 1: showRenameBoardDialog(board); return true;
+                case 2: showDeleteBoardConfirm(board); return true;
+                default: return false;
             }
         });
         popupMenu.show();
@@ -124,11 +145,10 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                         boardRepository.updateBoard(board.getUid(), newName, new BoardRepository.GeneralCallback() {
                             @Override
                             public void onSuccess() {
-                                // ✨ [SỬA ĐỔI] Gọi loadDataSmart thay vì loadWorkspaces
+                                // Logic cũ của bạn: Thành công -> Load lại
                                 bangViewModel.loadDataSmart();
                                 Toast.makeText(getContext(), "Đã đổi tên bảng", Toast.LENGTH_SHORT).show();
                             }
-
                             @Override
                             public void onError(String message) {
                                 Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_SHORT).show();
@@ -148,11 +168,10 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                     boardRepository.deleteBoard(board.getUid(), new BoardRepository.GeneralCallback() {
                         @Override
                         public void onSuccess() {
-                            // ✨ [SỬA ĐỔI] Gọi loadDataSmart
+                            // Logic cũ của bạn: Thành công -> Load lại
                             bangViewModel.loadDataSmart();
                             Toast.makeText(getContext(), "Đã xóa bảng", Toast.LENGTH_SHORT).show();
                         }
-
                         @Override
                         public void onError(String message) {
                             Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_SHORT).show();
@@ -180,12 +199,11 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
     }
 
     private void refreshData() {
-        // Lấy ID Workspace đang hoạt động từ SharedPreferences
         SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
         String activeWsId = prefs.getString("active_ws_id", "ws_1_id");
-
         bangViewModel.setActiveWsId(activeWsId);
-        // ✨ [SỬA ĐỔI] Gọi hàm thông minh
+
+        // Sử dụng loadDataSmart như đã thống nhất ở vấn đề 1
         bangViewModel.loadDataSmart();
     }
 
