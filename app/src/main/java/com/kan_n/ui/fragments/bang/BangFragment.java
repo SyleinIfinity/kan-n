@@ -37,7 +37,7 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
     private WorkspaceAdapter workspaceAdapter;
     private RecyclerView rvWorkspaces;
     private NavController navController;
-    private BoardRepository boardRepository; // Thêm repository để xử lý data
+    private BoardRepository boardRepository;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,

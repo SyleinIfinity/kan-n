@@ -1,11 +1,13 @@
 package com.kan_n.ui.fragments.menu_bang;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Pair; // Import Pair để hứng dữ liệu User + Role
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -16,14 +18,20 @@ import androidx.lifecycle.ViewModelProvider; // Import ViewModelProvider
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager; // Import LayoutManager
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.kan_n.R;
+import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.interfaces.InvitationRepository;
+import com.kan_n.data.models.Board;
 import com.kan_n.data.models.User;
 import com.kan_n.data.repository.InvitationRepositoryImpl;
 import com.kan_n.databinding.FragmentMenuBangBinding;
 import com.kan_n.ui.adapters.adapter.MemberAdapter; // Import Adapter
+import com.kan_n.utils.FirebaseUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MenuBangFragment extends Fragment {
@@ -32,20 +40,20 @@ public class MenuBangFragment extends Fragment {
     private NavController navController;
     private MemberAdapter memberAdapter; // Adapter của bạn
     private String boardId;
+    private String boardTitle;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // [FIX] Nhận boardId từ Bundle
         if (getArguments() != null) {
             boardId = getArguments().getString("boardId");
+            boardTitle = getArguments().getString("boardTitle", "MENU BẢNG");
         }
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentMenuBangBinding.inflate(inflater, container, false);
-        // [FIX] Khởi tạo ViewModel
         viewModel = new ViewModelProvider(this).get(MenuBangViewModel.class);
         return binding.getRoot();
     }
@@ -54,32 +62,30 @@ public class MenuBangFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // [FIX QUAN TRỌNG] Khởi tạo NavController
         navController = NavHostFragment.findNavController(this);
 
-        // Setup RecyclerView (Gọi hàm setupRecyclerView để code gọn hơn)
+        // Cap nhat tieu de toolbar
+        binding.tvToolbarTitle.setText(boardTitle);
+
         setupRecyclerView();
 
-        // Load dữ liệu
+        // [FIX QUAN TRONG] Phai goi ham nay de thiet lap su kien cho nut 3 cham
+        setupOptionsMenu();
+
         if (boardId != null) {
             viewModel.loadMembers(boardId);
+            viewModel.fetchCurrentUserRole(boardId); // Lay role de phan quyen sau nay
         }
 
-        // Quan sát dữ liệu từ ViewModel
         viewModel.getMembersList().observe(getViewLifecycleOwner(), members -> {
-            if (members != null) {
+            if (members != null && memberAdapter != null) {
                 memberAdapter.setData(members);
             }
         });
 
         binding.btnInviteMember.setOnClickListener(v -> showInviteDialog());
 
-        // Sự kiện nút Back
-        binding.btnBack.setOnClickListener(v -> {
-            if (navController != null) {
-                navController.popBackStack();
-            }
-        });
+        binding.btnBack.setOnClickListener(v -> navController.popBackStack());
     }
 
     private void showInviteDialog() {
@@ -97,8 +103,7 @@ public class MenuBangFragment extends Fragment {
         builder.setPositiveButton("Gửi", (dialog, which) -> {
             String email = etEmail.getText().toString().trim();
             if (!email.isEmpty() && boardId != null) {
-                // Cần lấy boardName. Nếu chưa có, tạm thời truyền "" hoặc lấy từ ViewModel
-                String boardName = "Bảng công việc"; // [FIXME] Hãy lấy tên bảng thật từ Bundle
+                String boardName = "Bảng công việc";
                 viewModel.sendInvite(boardId, boardName, email, "member");
                 Toast.makeText(getContext(), "Đang gửi...", Toast.LENGTH_SHORT).show();
             }
@@ -107,9 +112,115 @@ public class MenuBangFragment extends Fragment {
         builder.show();
     }
 
+    private void setupOptionsMenu() {
+        binding.ivMenuOptions.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(getContext(), v);
+            popup.getMenu().add("Đổi tên bảng");
+            popup.getMenu().add("Đổi nền bảng");
+            popup.getMenu().add("Xóa bảng");
+            popup.getMenu().add("Quản lý thành viên");
+
+            popup.setOnMenuItemClickListener(item -> {
+                String title = item.getTitle().toString();
+                if (title.equals("Đổi tên bảng")) showRenameDialog();
+                else if (title.equals("Đổi nền bảng")) navigateToChangeBackground();
+                else if (title.equals("Xóa bảng")) showDeleteConfirm();
+                else if (title.equals("Quản lý thành viên")) showManageMembersDialog();
+                return true;
+            });
+            popup.show();
+        });
+    }
+    private void showRenameDialog() {
+        EditText etInput = new EditText(getContext());
+        etInput.setText("");
+        etInput.setSelection(etInput.getText().length());
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Đổi tên bảng")
+                .setView(etInput)
+                .setPositiveButton("Cập nhật", (dialog, which) -> {
+                    String newName = etInput.getText().toString().trim();
+                    if (!newName.isEmpty()) {
+                        viewModel.updateBoardName(boardId, newName, new BoardRepository.GeneralCallback() {
+                            @Override
+                            public void onSuccess() {
+
+                                viewModel.loadMembers(boardId);
+
+                                Toast.makeText(getContext(), "Đã cập nhật thành công", Toast.LENGTH_SHORT).show();
+                            }
+                            @Override public void onError(String message) {}
+                        });
+                    }
+                }).setNegativeButton("Hủy", null).show();
+    }
+    private void showDeleteConfirm() {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Xóa bảng")
+                .setMessage("Bạn có chắc chắn muốn xóa bảng '" + boardTitle + "'?")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    viewModel.deleteBoard(boardId, new BoardRepository.GeneralCallback() {
+                        @Override
+                        public void onSuccess() {
+                            navController.navigate(R.id.thanhDieuHuong_Bang);
+                        }
+                        @Override public void onError(String message) {}
+                    });
+                }).setNegativeButton("Hủy", null).show();
+    }
+
+    private void showManageMembersDialog() {
+        BottomSheetDialog bottomSheet = new BottomSheetDialog(requireContext());
+        View view = getLayoutInflater().inflate(R.layout.dialog_manage_members, null);
+        RecyclerView rv = view.findViewById(R.id.rv_members_list);
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        viewModel.getBoardMembers(boardId, new BoardRepository.BoardMembersCallback() {
+            @Override
+            public void onSuccess(List<Pair<User, String>> members) {
+                // Su dung constructor day du cua MemberAdapter
+                MemberAdapter adapter = new MemberAdapter(getContext(), members, (memberUser, role) -> {
+                    showMemberPermissionOptions(memberUser);
+                });
+                rv.setAdapter(adapter);
+            }
+            @Override public void onError(String msg) {}
+        });
+
+        bottomSheet.setContentView(view);
+        bottomSheet.show();
+    }
+    private void showMemberPermissionOptions(User targetUser) {
+        String[] options = {"Quyền Xem (View)", "Quyền Chỉnh sửa (Edit)"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Quyền hạn của " + targetUser.getUsername());
+
+        if ("owner".equals(viewModel.getCurrentUserRole())) {
+            builder.setItems(options, (dialog, which) -> {
+                String newPerm = (which == 0) ? "view" : "edit";
+                viewModel.updateMemberPermission(boardId, targetUser.getUid(), newPerm, new BoardRepository.GeneralCallback() {
+                    @Override public void onSuccess() {
+                        Toast.makeText(getContext(), "Đã cập nhật quyền", Toast.LENGTH_SHORT).show();
+                    }
+                    @Override public void onError(String msg) {}
+                });
+            });
+        } else {
+            builder.setMessage("Bạn không có quyền thay đổi phân quyền của thành viên này.");
+        }
+        builder.show();
+    }
+    private void navigateToChangeBackground() {
+        Bundle args = new Bundle();
+        args.putString("boardId", boardId);
+        args.putBoolean("isEditing", true);
+        navController.navigate(R.id.action_MenuBangFragment_to_taoBangMoiChonPhongFragment, args);
+    }
+
     private void setupRecyclerView() {
-        // Khởi tạo Adapter (bạn cần đảm bảo MemberAdapter đã được viết đúng)
-        memberAdapter = new MemberAdapter();
+        memberAdapter = new MemberAdapter(getContext(), new ArrayList<>(), (user, role) -> {
+        });
 
         binding.rcvMembers.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.rcvMembers.setAdapter(memberAdapter);

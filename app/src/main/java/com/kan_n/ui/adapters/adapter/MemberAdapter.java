@@ -1,6 +1,7 @@
 // File: com/kan_n/ui/adapters/adapter/MemberAdapter.java
 package com.kan_n.ui.adapters.adapter;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +17,21 @@ import android.util.Pair; // Dùng Pair để chứa User + Role
 
 public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberViewHolder> {
     private List<Pair<User, String>> mListMembers;
+    private Context mContext;
+    private OnMemberClickListener mListener;
 
-    // Sửa tên hàm setDate -> setData
+    // Interface để bắt sự kiện click
+    public interface OnMemberClickListener {
+        void onMemberClick(User user, String role);
+    }
+    public MemberAdapter(){}
+
+    public MemberAdapter(Context context, List<Pair<User, String>> list, OnMemberClickListener listener) {
+        this.mContext = context;
+        this.mListMembers = list;
+        this.mListener = listener;
+    }
+
     public void setData(List<Pair<User, String>> list) {
         this.mListMembers = list;
         notifyDataSetChanged();
@@ -39,7 +53,8 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberView
         if (user == null) return;
 
         // 1. Hiển thị Tên
-        holder.tvName.setText(user.getUsername()); // Hoặc user.getDisplayName()
+        holder.tvName.setText(user.getUsername()); //
+        holder.tvRole.setText("owner".equals(role) ? "Quản trị viên" : "Thành viên");
 
         // 2. Hiển thị Quyền (Convert từ tiếng Anh sang tiếng Việt nếu cần)
         if ("owner".equals(role)) {
@@ -48,17 +63,17 @@ public class MemberAdapter extends RecyclerView.Adapter<MemberAdapter.MemberView
             holder.tvRole.setText("Thành viên");
         }
 
-        // 3. Hiển thị Avatar (SỬA LỖI: dùng getAvatarUrl)
-        String avatarUrl = user.getAvatarUrl();
-        if (avatarUrl != null && !avatarUrl.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(avatarUrl)
-                    .placeholder(R.drawable.ic_nguoi_dung)
-                    .error(R.drawable.ic_nguoi_dung)
-                    .into(holder.imgAvatar);
-        } else {
-            holder.imgAvatar.setImageResource(R.drawable.ic_nguoi_dung);
-        }
+        String avatarUrl = user.getAvatarUrl(); //
+        Glide.with(mContext)
+                .load(avatarUrl != null && !avatarUrl.isEmpty() ? avatarUrl : R.drawable.ic_nguoi_dung)
+                .placeholder(R.drawable.ic_nguoi_dung)
+                .into(holder.imgAvatar);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (mListener != null) {
+                mListener.onMemberClick(user, role); // Trả về đối tượng User và Role
+            }
+        });
     }
 
     @Override

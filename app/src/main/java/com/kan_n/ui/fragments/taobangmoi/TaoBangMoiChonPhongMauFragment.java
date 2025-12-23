@@ -14,6 +14,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.kan_n.R;
+import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.models.Background;
 import com.kan_n.databinding.FragmentTaoBangmoiChonphongMauBinding;
 import com.kan_n.ui.adapters.adapter.BackgroundAdapter;
@@ -80,11 +81,32 @@ public class TaoBangMoiChonPhongMauFragment extends Fragment implements Backgrou
      */
     @Override
     public void onBackgroundClick(Background background) {
-        // Cập nhật phông nền đã chọn vào ViewModel chung
-        viewModel.selectBackground(background);
+        boolean isEditing = getArguments() != null && getArguments().getBoolean("isEditing", false);
+        String boardId = getArguments() != null ? getArguments().getString("boardId") : null;
 
-        // Quay về màn hình Tạo Bảng (pop 2 lần)
-        navController.popBackStack(R.id.taoBangMoiFragment, false);
+        if (isEditing && boardId != null) {
+            // TRƯỜNG HỢP: ĐỔI NỀN BẢNG HIỆN TẠI
+            viewModel.updateBoardBackground(boardId, background, new BoardRepository.GeneralCallback() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(getContext(), "Đã cập nhật nền bảng", Toast.LENGTH_SHORT).show();
+                    // Quay về Menu hoặc màn hình chi tiết bảng
+                    navController.popBackStack(R.id.MenuBangFragment, false);
+                }
+
+                @Override
+                public void onError(String message) {
+                    Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            // TRƯỜNG HỢP: TẠO BẢNG MỚI
+            viewModel.selectBackground(background);
+            // Kiểm tra xem có Fragment tạo bảng trong stack không để pop cho đúng
+            if (!navController.popBackStack(R.id.taoBangMoiFragment, false)) {
+                navController.popBackStack(); // Nếu không có thì chỉ lùi lại 1 bước
+            }
+        }
     }
 
     @Override

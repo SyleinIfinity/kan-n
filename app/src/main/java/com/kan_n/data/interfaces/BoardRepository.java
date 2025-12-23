@@ -64,6 +64,6 @@ public interface BoardRepository {
 
     void updateBoard(String boardId, String newName, GeneralCallback callback);
     void deleteBoard(String boardId, GeneralCallback callback);
-
+    void updateMemberPermission(String boardId, String userId, String newPermission, GeneralCallback callback);
 
 }
