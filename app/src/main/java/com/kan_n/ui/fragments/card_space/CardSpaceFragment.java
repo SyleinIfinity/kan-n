@@ -26,6 +26,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.kan_n.data.models.ListModel;
 import com.kan_n.databinding.FragmentCardSpaceBinding;
 import com.kan_n.data.models.Card;
 import com.kan_n.data.models.Tag;
@@ -49,6 +50,8 @@ public class CardSpaceFragment extends Fragment {
 
     private DatabaseReference mDatabase;
     private ValueEventListener mCardListener;
+
+    private boolean isCardInFirstList = false;
 
     @Nullable
     @Override
@@ -77,11 +80,68 @@ public class CardSpaceFragment extends Fragment {
             loadCardData();
         }
 
+        binding.btnCreateSelfTag.setVisibility(View.GONE);
+
+        if (mBoardId != null && mCardId != null) {
+            loadCardData(); // Code cũ
+            checkIfCardInFirstListAndSetupUI(); // [MỚI] Gọi hàm kiểm tra quyền
+        }
+
         // --- 3. Sự kiện ---
         binding.btnClose.setOnClickListener(v -> navController.popBackStack());
 
         // Nút Tạo/Sửa Tag
         binding.btnCreateSelfTag.setOnClickListener(v -> showAdvancedColorPickerDialog());
+    }
+
+    private void checkIfCardInFirstListAndSetupUI() {
+        // 1. Lấy thông tin thẻ để biết nó nằm ở list nào (listId)
+        mDatabase.child("cards").child(mCardId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot cardSnap) {
+                Card card = cardSnap.getValue(Card.class);
+                if (card == null) return;
+                String currentListId = card.getListId();
+
+                // 2. Lấy tất cả danh sách trong Bảng để tìm ra danh sách đầu tiên
+                mDatabase.child("lists").orderByChild("boardId").equalTo(mBoardId)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot listSnap) {
+                                ListModel firstList = null;
+                                double minPos = Double.MAX_VALUE;
+
+                                for (DataSnapshot ds : listSnap.getChildren()) {
+                                    ListModel list = ds.getValue(ListModel.class);
+                                    if (list != null) {
+                                        // Tìm list có position nhỏ nhất
+                                        if (list.getPosition() < minPos) {
+                                            minPos = list.getPosition();
+                                            firstList = list;
+                                            firstList.setUid(ds.getKey());
+                                        }
+                                    }
+                                }
+
+                                // 3. So sánh
+                                if (firstList != null && firstList.getUid().equals(currentListId)) {
+                                    // Đây là thẻ thuộc DS1 -> ĐƯỢC QUYỀN TẠO/SỬA TAG
+                                    isCardInFirstList = true;
+                                    binding.btnCreateSelfTag.setVisibility(View.VISIBLE);
+                                } else {
+                                    // Thẻ ở DS2, DS3... -> KHÔNG ĐƯỢC QUYỀN TẠO TAG
+                                    isCardInFirstList = false;
+                                    binding.btnCreateSelfTag.setVisibility(View.GONE);
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {}
+                        });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     /**
@@ -208,7 +268,7 @@ public class CardSpaceFragment extends Fragment {
         colorSeekBar.setProgress((int) hsvCurrent[0]); // Set vị trí thanh trượt theo Hue
 
         GradientDrawable rainbow = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[] {0xFFFF0000, 0xFFFF00FF, 0xFF0000FF, 0xFF00FFFF, 0xFF00FF00, 0xFFFFFF00, 0xFFFF0000});
+                new int[] {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000});
         rainbow.setCornerRadius(10);
         colorSeekBar.setBackground(rainbow);
         colorSeekBar.setProgressDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
@@ -263,18 +323,22 @@ public class CardSpaceFragment extends Fragment {
         String userId = (FirebaseAuth.getInstance().getCurrentUser() != null) ?
                 FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
 
+        DatabaseReference db = FirebaseDatabase.getInstance().getReference();
         Map<String, Object> updates = new HashMap<>();
         String tagIdToSave;
 
         if (currentSelfTagId != null) {
             // --- LOGIC SỬA (Update) ---
             tagIdToSave = currentSelfTagId;
-            // Chỉ update các trường cần thiết của Tag cũ
             updates.put("/tags/" + tagIdToSave + "/name", tagName);
             updates.put("/tags/" + tagIdToSave + "/color", colorCode);
+
+            // [MỚI - QUAN TRỌNG] Đồng bộ màu cho TẤT CẢ thẻ khác đang dùng Tag này
+            syncColorToSubscribers(tagIdToSave, colorCode);
+
         } else {
             // --- LOGIC TẠO MỚI (Create) ---
-            tagIdToSave = mDatabase.child("tags").push().getKey();
+            tagIdToSave = db.child("tags").push().getKey();
             Tag newTag = new Tag(tagName, colorCode, userId);
             newTag.setUid(tagIdToSave);
             Map<String, Object> tagMap = newTag.toMap();
@@ -282,13 +346,41 @@ public class CardSpaceFragment extends Fragment {
             updates.put("/tags/" + tagIdToSave, tagMap);
         }
 
-        // Luôn cập nhật lại Card để đồng bộ (đặc biệt là labelColor)
+        // Cập nhật chính thẻ này
         updates.put("/cards/" + mCardId + "/selfTagId", tagIdToSave);
         updates.put("/cards/" + mCardId + "/labelColor", colorCode);
 
-        mDatabase.updateChildren(updates).addOnSuccessListener(unused -> {
+        db.updateChildren(updates).addOnSuccessListener(unused -> {
             Toast.makeText(getContext(), currentSelfTagId != null ? "Đã cập nhật Tag!" : "Đã tạo Tag mới!", Toast.LENGTH_SHORT).show();
         }).addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void syncColorToSubscribers(String tagId, String newColor) {
+        DatabaseReference cardsRef = FirebaseDatabase.getInstance().getReference("cards");
+
+        // Tìm tất cả thẻ có assignedTagId == tagId
+        cardsRef.orderByChild("assignedTagId").equalTo(tagId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Map<String, Object> bulkUpdates = new HashMap<>();
+
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            String cardKey = ds.getKey();
+                            // Tạo path update cho từng thẻ
+                            bulkUpdates.put("/" + cardKey + "/labelColor", newColor);
+                        }
+
+                        if (!bulkUpdates.isEmpty()) {
+                            cardsRef.updateChildren(bulkUpdates);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Log lỗi nếu cần
+                    }
+                });
     }
 
     /**

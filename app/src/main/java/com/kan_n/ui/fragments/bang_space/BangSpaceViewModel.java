@@ -21,7 +21,6 @@ import com.kan_n.utils.FirebaseUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +31,7 @@ public class BangSpaceViewModel extends ViewModel {
 
     private final ListRepository listRepository;
     private final CardRepository cardRepository;
+    private final BoardRepository boardRepository;
 
     // Database references
     private final DatabaseReference listsRef = FirebaseUtils.getDatabaseInstance().getReference("lists");
@@ -43,7 +43,6 @@ public class BangSpaceViewModel extends ViewModel {
     private ChildEventListener listsListener;
     private Map<String, Query> cardQueries = new HashMap<>();
     private Map<String, ChildEventListener> cardListeners = new HashMap<>();
-    private final BoardRepository boardRepository;
 
     public BangSpaceViewModel() {
         this.listRepository = new ListRepositoryImpl();
@@ -96,8 +95,9 @@ public class BangSpaceViewModel extends ViewModel {
     }
 
     // =========================================================================
-    // PHẦN 2: CRUD CƠ BẢN (GIỮ NGUYÊN)
+    // PHẦN 2: CRUD CƠ BẢN & XỬ LÝ XÓA NÂNG CAO (CASCADING DELETE)
     // =========================================================================
+
     public void createNewList(String boardId, String title, double position, ListRepository.GeneralCallback callback) {
         listRepository.createList(boardId, title, position, callback);
     }
@@ -114,20 +114,78 @@ public class BangSpaceViewModel extends ViewModel {
         cardsRef.child(cardId).child("title").setValue(newTitle);
     }
 
-    public void deleteCard(String cardId) {
-        cardsRef.child(cardId).removeValue();
-    }
-
     public void updateListTitle(String listId, String newTitle) {
         listsRef.child(listId).child("title").setValue(newTitle);
     }
 
+    /**
+     * [MỚI] Helper: Xóa Tag khỏi hệ thống và gỡ liên kết khỏi tất cả các thẻ đang dùng nó
+     */
+    private void deleteTagAndUnlinkOthers(String tagId) {
+        if (tagId == null) return;
+
+        // 1. Xóa node Tag trong bảng 'tags'
+        tagsRef.child(tagId).removeValue();
+
+        // 2. Tìm tất cả các thẻ đang được gán (assigned) tag này
+        cardsRef.orderByChild("assignedTagId").equalTo(tagId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            String affectedCardId = ds.getKey();
+                            // Reset thẻ bị ảnh hưởng (Hủy assigned, khôi phục màu gốc)
+                            resetAssignedTagAndRestoreColor(affectedCardId);
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
+    }
+
+    /**
+     * [CẬP NHẬT] Xóa thẻ -> Xóa luôn Self Tag của nó -> Unlink các thẻ khác
+     */
+    public void deleteCard(String cardId) {
+        cardsRef.child(cardId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Card card = snapshot.getValue(Card.class);
+                if (card != null) {
+                    // Nếu thẻ này tạo ra Tag -> Xóa sạch Tag đó
+                    if (card.getSelfTagId() != null) {
+                        deleteTagAndUnlinkOthers(card.getSelfTagId());
+                    }
+                    // Sau đó mới xóa thẻ
+                    cardsRef.child(cardId).removeValue();
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    /**
+     * [CẬP NHẬT] Xóa danh sách -> Xóa từng thẻ con (để kích hoạt logic xóa Tag)
+     */
     public void deleteList(String listId) {
-        listsRef.child(listId).removeValue();
+        cardsRef.orderByChild("listId").equalTo(listId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    // Gọi hàm deleteCard ở trên để đảm bảo sạch rác
+                    deleteCard(ds.getKey());
+                }
+                // Sau khi dọn dẹp thẻ, xóa danh sách
+                listsRef.child(listId).removeValue();
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     // =========================================================================
-    // PHẦN 3: LOGIC ASSIGNED-TAG (GIAI ĐOẠN 2)
+    // PHẦN 3: LOGIC ASSIGNED-TAG (GIAI ĐOẠN 2 - GIỮ NGUYÊN)
     // =========================================================================
     public interface TagListCallback {
         void onTagsLoaded(List<Tag> tags);
@@ -140,31 +198,38 @@ public class BangSpaceViewModel extends ViewModel {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot listSnapshot) {
                         List<ListModel> allLists = new ArrayList<>();
-                        ListModel currentList = null;
+                        // 1. Lấy tất cả danh sách về
                         for (DataSnapshot ds : listSnapshot.getChildren()) {
                             ListModel list = ds.getValue(ListModel.class);
                             if (list != null) {
                                 list.setUid(ds.getKey());
                                 allLists.add(list);
-                                if (list.getUid().equals(currentListId)) currentList = list;
                             }
                         }
-                        if (currentList == null) {
-                            callback.onError("Không xác định được danh sách.");
+
+                        if (allLists.isEmpty()) {
+                            callback.onError("Bảng này chưa có danh sách nào.");
                             return;
                         }
-                        List<String> previousListIds = new ArrayList<>();
-                        for (ListModel list : allLists) {
-                            if (list.getPosition() < currentList.getPosition()) {
-                                previousListIds.add(list.getUid());
-                            }
-                        }
-                        if (previousListIds.isEmpty()) {
-                            callback.onError("Không có danh sách phía trước.");
-                            return;
-                        }
-                        findTagsInLists(previousListIds, callback);
+
+                        // 2. Sắp xếp danh sách theo vị trí (position) tăng dần
+                        // Đảm bảo phần tử số 0 luôn là DS đầu tiên (DS1)
+                        Collections.sort(allLists, (o1, o2) -> Double.compare(o1.getPosition(), o2.getPosition()));
+
+                        // --- [MỚI] LOGIC CHỈ LẤY TỪ DS1 ---
+                        ListModel firstList = allLists.get(0);
+
+                        // Kiểm tra: Nếu thẻ hiện tại đang nằm ở chính DS1 thì không cho tự mượn Tag của người khác trong cùng list (hoặc tùy logic bạn, nhưng thường là không cần thiết)
+                        // Tuy nhiên, yêu cầu của bạn là: "Khi chọn gắn tag thì chỉ có thể chọn các tag của ds1".
+
+                        List<String> targetListId = new ArrayList<>();
+                        targetListId.add(firstList.getUid());
+
+                        // Gọi hàm tìm thẻ trong DS1
+                        findTagsInLists(targetListId, callback);
+                        // ----------------------------------
                     }
+
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         callback.onError(error.getMessage());
@@ -224,51 +289,62 @@ public class BangSpaceViewModel extends ViewModel {
     public void assignTagToCard(String cardId, Tag tag) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("/assignedTagId", tag.getUid());
-        updates.put("/labelColor", tag.getColor());
+        // [THAY ĐỔI] Lưu vào assignedTagColor thay vì labelColor
+        updates.put("/assignedTagColor", tag.getColor());
+
         cardsRef.child(cardId).updateChildren(updates);
     }
 
     // =========================================================================
-    // PHẦN 4: LOGIC MOVEMENT & RESET TAG (GIAI ĐOẠN 3 - MỚI)
+    // PHẦN 4: LOGIC MOVEMENT & RESET TAG (GIAI ĐOẠN 3 - HOÀN THIỆN)
     // =========================================================================
 
     /**
-     * [CORE LOGIC GIAI ĐOẠN 3]
+     * [CORE LOGIC]
      * Hủy liên kết Assigned Tag và khôi phục màu của Self Tag (nếu có)
      */
     private void resetAssignedTagAndRestoreColor(String cardId) {
+        // [THAY ĐỔI] Logic đơn giản hơn nhiều nhờ cấu trúc dữ liệu mới
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("assignedTagId", null);
+        updates.put("assignedTagColor", null); // Xóa màu được gán
+
+        cardsRef.child(cardId).updateChildren(updates);
+    }
+
+    /**
+     * [MỚI] Kiểm tra thẻ nguồn (Source Check).
+     * Nếu thẻ bị di chuyển là thẻ Nguồn (có tạo Tag), thì tất cả các thẻ đang nhận Tag đó
+     * phải bị hủy liên kết ngay lập tức (để đảm bảo tính đúng đắn luồng trái-phải).
+     */
+    private void checkAndResetSubscribersIfSource(String cardId) {
         cardsRef.child(cardId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 Card card = snapshot.getValue(Card.class);
-                if (card == null) return;
+                // Nếu thẻ này có tạo ra Tag (SelfTagId không null)
+                if (card != null && card.getSelfTagId() != null && !card.getSelfTagId().isEmpty()) {
+                    String sourceTagId = card.getSelfTagId();
 
-                // Chuẩn bị Map update
-                Map<String, Object> updates = new HashMap<>();
-                updates.put("assignedTagId", null); // 1. Hủy liên kết Tag gán
-
-                // 2. Logic Khôi phục màu
-                if (card.getSelfTagId() != null && !card.getSelfTagId().isEmpty()) {
-                    // Nếu thẻ có Self Tag -> Lấy màu của Self Tag để hiển thị lại
-                    tagsRef.child(card.getSelfTagId()).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot tagSnap) {
-                            Tag selfTag = tagSnap.getValue(Tag.class);
-                            String originalColor = (selfTag != null) ? selfTag.getColor() : "";
-
-                            updates.put("labelColor", originalColor);
-                            cardsRef.child(cardId).updateChildren(updates); // Thực thi update
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {}
-                    });
-                } else {
-                    // Nếu không có Self Tag -> Trả về màu trắng/rỗng
-                    updates.put("labelColor", "");
-                    cardsRef.child(cardId).updateChildren(updates); // Thực thi update
+                    // Tìm trong TOÀN BỘ database các thẻ đang có assignedTagId == sourceTagId
+                    // Lưu ý: Cần Index trên Firebase Rules để query này nhanh
+                    cardsRef.orderByChild("assignedTagId").equalTo(sourceTagId)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot subSnap) {
+                                    if (subSnap.exists()) {
+                                        for (DataSnapshot ds : subSnap.getChildren()) {
+                                            String subscriberCardId = ds.getKey();
+                                            // Reset thẻ đó về trạng thái gốc
+                                            resetAssignedTagAndRestoreColor(subscriberCardId);
+                                        }
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {}
+                            });
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
@@ -276,37 +352,91 @@ public class BangSpaceViewModel extends ViewModel {
 
     /**
      * 1. Di chuyển thẻ sang Danh sách khác
-     * -> Cập nhật listId MỚI + Gọi hàm reset Tag gán
      */
     public void moveCardToNewList(String cardId, String newListId) {
-        // Cập nhật vị trí
-        cardsRef.child(cardId).child("listId").setValue(newListId);
+        // BƯỚC 1: Lấy dữ liệu thẻ hiện tại để kiểm tra xem nó có phải là "Thẻ Nguồn" không
+        cardsRef.child(cardId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Card card = snapshot.getValue(Card.class);
+                if (card == null) return;
 
-        // [QUAN TRỌNG] Hủy tag gán vì đã đổi cột
-        resetAssignedTagAndRestoreColor(cardId);
+                // Kiểm tra: Nếu thẻ này đang là Nguồn (có selfTagId)
+                if (card.getSelfTagId() != null && !card.getSelfTagId().isEmpty()) {
+                    // => Thực hiện Reset diện rộng (Cascading Reset)
+                    // Reset các thẻ khác VÀ xóa quyền làm nguồn của thẻ này
+                    resetSubscribersAndSelf(cardId, card.getSelfTagId(), newListId);
+                } else {
+                    // Nếu thẻ bình thường (hoặc thẻ đang đi mượn tag)
+                    // Chỉ cần reset trạng thái đi mượn của chính nó (cho sạch sẽ) rồi di chuyển
+                    resetAssignedTagAndRestoreColor(cardId);
+                    performMove(cardId, newListId);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void performMove(String cardId, String newListId) {
+        cardsRef.child(cardId).child("listId").setValue(newListId);
+    }
+
+    private void resetSubscribersAndSelf(String sourceCardId, String tagId, String targetListId) {
+        // 1. Tìm tất cả thẻ đang mượn Tag này (assignedTagId == tagId)
+        cardsRef.orderByChild("assignedTagId").equalTo(tagId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Map<String, Object> updates = new HashMap<>();
+
+                        // A. Reset các thẻ con (Subscribers)
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            String subCardId = ds.getKey();
+                            updates.put("/" + subCardId + "/assignedTagId", null);
+                            updates.put("/" + subCardId + "/assignedTagColor", null);
+                        }
+
+                        // B. Tước quyền thẻ nguồn (Source Card) vì đã rời khỏi DS1
+                        // Xóa selfTagId, selfTagColor và cả labelColor (để về trắng)
+                        updates.put("/" + sourceCardId + "/selfTagId", null);
+                        updates.put("/" + sourceCardId + "/selfTagColor", null);
+                        updates.put("/" + sourceCardId + "/labelColor", null);
+
+                        // C. Cập nhật vị trí mới luôn trong lần update này
+                        updates.put("/" + sourceCardId + "/listId", targetListId);
+
+                        // Thực thi update hàng loạt (Atomic Update)
+                        cardsRef.updateChildren(updates, (error, ref) -> {
+                            if (error == null) {
+                                // Nếu muốn xóa luôn cái Tag trong bảng 'tags' cho sạch DB thì gọi thêm dòng này:
+                                // tagsRef.child(tagId).removeValue();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {}
+                });
     }
 
     /**
      * 2. Cập nhật vị trí Danh sách (Kéo thả cột)
-     * -> Cập nhật position MỚI + Reset Tag của toàn bộ thẻ trong cột đó
      */
     public void updateListPosition(String listId, double newPosition) {
-        // Cập nhật vị trí danh sách
         listsRef.child(listId).child("position").setValue(newPosition);
 
-        // [QUAN TRỌNG] Vì cột di chuyển vị trí, luồng dữ liệu thay đổi
-        // -> Quét tất cả thẻ trong cột này để hủy Assigned Tag cho an toàn
-        sanitizeTagsInList(listId);
-    }
-
-    // Helper: Quét và reset thẻ trong 1 danh sách
-    private void sanitizeTagsInList(String listId) {
+        // Vì cột di chuyển vị trí, luồng dữ liệu thay đổi -> Quét tất cả thẻ trong cột này
         cardsRef.orderByChild("listId").equalTo(listId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for (DataSnapshot ds : snapshot.getChildren()) {
-                    // Reset từng thẻ một
-                    resetAssignedTagAndRestoreColor(ds.getKey());
+                    String cardId = ds.getKey();
+                    // 1. Reset tag gán của thẻ
+                    resetAssignedTagAndRestoreColor(cardId);
+                    // 2. Kiểm tra nếu thẻ là nguồn -> Reset các subscriber
+                    checkAndResetSubscribersIfSource(cardId);
                 }
             }
             @Override
@@ -315,8 +445,7 @@ public class BangSpaceViewModel extends ViewModel {
     }
 
     /**
-     * 3. Di chuyển thẻ Lên/Xuống trong CÙNG 1 danh sách
-     * (Giữ nguyên logic cũ, không cần reset tag vì không đổi luồng)
+     * 3. Di chuyển thẻ Lên/Xuống (Swap)
      */
     public void moveCardVertically(String listId, String currentCardId, boolean isUp) {
         Query query = cardsRef.orderByChild("listId").equalTo(listId);

@@ -98,7 +98,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                 @Override
                 public void onError(String message) {}
             });
-            listenForLists(boardId);
         } else {
             Toast.makeText(getContext(), "Lỗi: Không tìm thấy ID Bảng", Toast.LENGTH_LONG).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
@@ -236,16 +235,27 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         List<ListModel> allLists = listModelAdapter.getCurrentList();
         int targetIndex = currentPosition + direction;
 
-        // Kiểm tra biên (không thể sang trái nếu ở đầu, không thể sang phải nếu ở cuối)
+        // Kiểm tra biên
         if (targetIndex < 0 || targetIndex >= allLists.size()) {
             Toast.makeText(getContext(), "Không thể di chuyển thêm nữa", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // --- [MỚI] LUẬT: KHÓA DANH SÁCH ĐẦU TIÊN ---
+        // Nếu đang cố di chuyển DS số 1 (index 0) HOẶC cố di chuyển một DS khác vào vị trí số 1
+        if (currentPosition == 0 || targetIndex == 0) {
+            new AlertDialog.Builder(getContext())
+                    .setTitle("Thao tác bị chặn")
+                    .setMessage("Danh sách đầu tiên là 'Danh sách Nguồn' (chứa Tag gốc). Bạn không thể di chuyển nó hoặc thay thế vị trí của nó.")
+                    .setPositiveButton("Đã hiểu", null)
+                    .show();
+            return;
+        }
+        // ---------------------------------------------
+
         ListModel targetList = allLists.get(targetIndex);
 
-        // Logic đổi chỗ: Hoán đổi giá trị 'position' của 2 danh sách trong Database
-        // Firebase sẽ tự động trigger onChildChanged và sắp xếp lại UI
+        // Logic đổi chỗ: Hoán đổi giá trị 'position'
         double pos1 = currentList.getPosition();
         double pos2 = targetList.getPosition();
 

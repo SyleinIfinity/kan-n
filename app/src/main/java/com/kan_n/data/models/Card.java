@@ -25,6 +25,9 @@ public class Card {
     private String selfTagId;
     private String assignedTagId;
 
+    private String selfTagColor;     // Màu của Tag tự tạo (Gốc)
+    private String assignedTagColor; // Màu của Tag được gán (Mượn)
+
     private boolean isCompleted; // Cho ic_tron_v1
     private String coverImageUrl;  // Cho ảnh bìa (background)
     private int attachmentCount;   // Cho ic_dinhkem
@@ -53,6 +56,8 @@ public class Card {
         this.selfTagId = null;
         this.assignedTagId = null;
         this.labelColor = ""; // Mặc định không màu
+        this.selfTagColor = "";
+        this.assignedTagColor = "";
     }
 
     // --- Getters and Setters ---
@@ -105,6 +110,12 @@ public class Card {
     public String getAssignedTagId() { return assignedTagId; }
     public void setAssignedTagId(String assignedTagId) { this.assignedTagId = assignedTagId; }
 
+    public String getSelfTagColor() { return selfTagColor; }
+    public void setSelfTagColor(String selfTagColor) { this.selfTagColor = selfTagColor; }
+
+    public String getAssignedTagColor() { return assignedTagColor; }
+    public void setAssignedTagColor(String assignedTagColor) { this.assignedTagColor = assignedTagColor; }
+
     @Exclude
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
@@ -125,6 +136,8 @@ public class Card {
         result.put("selfTagId", selfTagId);
         result.put("assignedTagId", assignedTagId);
         result.put("labelColor", labelColor);
+        result.put("selfTagColor", selfTagColor);
+        result.put("assignedTagColor", assignedTagColor);
         return result;
     }
 }

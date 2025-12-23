@@ -1,4 +1,5 @@
 // Đặt tại: src/main/java/com/kan_n/ui/adapters/adapter/CardAdapter.java
+
 package com.kan_n.ui.adapters.adapter;
 
 import android.content.Context;
@@ -185,40 +186,47 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             cbComplete.setChecked(card.isCompleted());
 
             // --- XỬ LÝ CLICK ---
-            // Tạo một OnClickListener chung
             View.OnClickListener commonClickListener = v -> {
                 if (listener != null) listener.onCardClick(card);
             };
 
-            // Gán click cho cả itemView và Title
             itemView.setOnClickListener(commonClickListener);
             tvCardTitle.setOnClickListener(commonClickListener);
 
-            // --- XỬ LÝ LONG CLICK (QUAN TRỌNG) ---
-            // Tạo một OnLongClickListener chung
+            // --- XỬ LÝ LONG CLICK ---
             View.OnLongClickListener commonLongListener = v -> {
                 if (longListener != null) {
                     longListener.onCardLongClick(card, itemView);
-                    return true; // Trả về true để báo là sự kiện đã được xử lý
+                    return true;
                 }
                 return false;
             };
 
-            // [FIX LỖI] Gán Long Click cho cả itemView VÀ TextView Tiêu đề
             itemView.setOnLongClickListener(commonLongListener);
             tvCardTitle.setOnLongClickListener(commonLongListener);
 
 
-            // --- MÀU SẮC ---
-            if (card.getLabelColor() != null && !card.getLabelColor().isEmpty()) {
-                try {
-                    layoutRoot.setBackgroundColor(Color.parseColor(card.getLabelColor()));
-                } catch (IllegalArgumentException e) {
-                    layoutRoot.setBackgroundColor(Color.parseColor("#CCF2FB"));
-                }
-            } else {
+            // --- [CẬP NHẬT] XỬ LÝ HIỂN THỊ MÀU SẮC (Ưu tiên: Assigned > Self > Label > Mặc định) ---
+            String colorToDisplay = "#CCF2FB"; // Màu mặc định (Xanh nhạt)
+
+            if (card.getAssignedTagColor() != null && !card.getAssignedTagColor().isEmpty()) {
+                // 1. Ưu tiên cao nhất: Màu được gán từ thẻ khác
+                colorToDisplay = card.getAssignedTagColor();
+            } else if (card.getSelfTagColor() != null && !card.getSelfTagColor().isEmpty()) {
+                // 2. Ưu tiên nhì: Màu do chính mình tạo ra (Self Tag)
+                colorToDisplay = card.getSelfTagColor();
+            } else if (card.getLabelColor() != null && !card.getLabelColor().isEmpty()) {
+                // 3. Ưu tiên ba: Màu label cũ (nếu có)
+                colorToDisplay = card.getLabelColor();
+            }
+
+            try {
+                layoutRoot.setBackgroundColor(Color.parseColor(colorToDisplay));
+            } catch (IllegalArgumentException e) {
+                // Nếu mã màu lỗi, quay về màu mặc định
                 layoutRoot.setBackgroundColor(Color.parseColor("#CCF2FB"));
             }
+            // ----------------------------------------------------------------------------------------
 
             // --- ẢNH BÌA ---
             String coverUrl = card.getCoverImageUrl();
