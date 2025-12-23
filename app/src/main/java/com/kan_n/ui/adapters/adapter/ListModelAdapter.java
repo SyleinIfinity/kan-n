@@ -41,7 +41,12 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private static final int VIEW_TYPE_ADD = 1;
 
     private final OnListMenuClickListener listMenuListener;
+    private boolean isEditable = false;
 
+    public void setEditable(boolean editable) {
+        this.isEditable = editable;
+        notifyDataSetChanged();
+    }
     public interface OnListMenuClickListener {
         void onListMenuClick(View view, ListModel listModel, int position);
     }
@@ -84,7 +89,8 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return listModelList.size() + 1;
+        // Nếu không được sửa, ẩn cột "Thêm danh sách" ở cuối
+        return isEditable ? listModelList.size() + 1 : listModelList.size();
     }
 
     @Override
@@ -232,6 +238,8 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             String currentListId = listModel.getUid();
             tvListTitle.setText(listModel.getTitle());
 
+            ivMenuDanhSach.setVisibility(isEditable ? View.VISIBLE : View.GONE);
+
             if (this.currentListId != null) {
                 viewModel.removeCardListener(this.currentListId);
             }
@@ -269,6 +277,7 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                         }
                     }
             );
+            cardAdapter.setEditable(isEditable);
             rvCards.setAdapter(cardAdapter);
 
 

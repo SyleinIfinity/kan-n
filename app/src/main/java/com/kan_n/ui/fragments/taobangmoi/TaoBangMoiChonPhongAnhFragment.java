@@ -14,6 +14,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.kan_n.R;
+import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.models.Background;
 import com.kan_n.databinding.FragmentTaoBangmoiChonphongAnhBinding;
 import com.kan_n.ui.adapters.adapter.BackgroundAdapter;
@@ -78,8 +79,33 @@ public class TaoBangMoiChonPhongAnhFragment extends Fragment implements Backgrou
      */
     @Override
     public void onBackgroundClick(Background background) {
-        viewModel.selectBackground(background);
-        navController.popBackStack(R.id.taoBangMoiFragment, false);
+        // Kiểm tra xem có đang ở chế độ chỉnh sửa (đổi nền) không
+        boolean isEditing = getArguments() != null && getArguments().getBoolean("isEditing", false);
+        String boardId = getArguments() != null ? getArguments().getString("boardId") : null;
+
+        if (isEditing && boardId != null) {
+            // TRƯỜNG HỢP: ĐỔI NỀN BẢNG HIỆN TẠI
+            viewModel.updateBoardBackground(boardId, background, new BoardRepository.GeneralCallback() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(getContext(), "Đã cập nhật hình nền bảng", Toast.LENGTH_SHORT).show();
+                    // Quay về MenuBangFragment
+                    navController.popBackStack(R.id.MenuBangFragment, false);
+                }
+
+                @Override
+                public void onError(String message) {
+                    Toast.makeText(getContext(), "Lỗi: " + message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            // TRƯỜNG HỢP: CHỌN NỀN KHI TẠO BẢNG MỚI
+            viewModel.selectBackground(background);
+            // Quay về màn hình Tạo Bảng
+            if (!navController.popBackStack(R.id.taoBangMoiFragment, false)) {
+                navController.popBackStack();
+            }
+        }
     }
 
     @Override

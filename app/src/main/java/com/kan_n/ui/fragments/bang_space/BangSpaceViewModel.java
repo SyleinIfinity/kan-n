@@ -12,6 +12,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.interfaces.CardRepository;
 import com.kan_n.data.interfaces.ListRepository;
+import com.kan_n.data.models.Membership;
 import com.kan_n.data.models.Tag;
 import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.data.repository.CardRepositoryImpl;
@@ -44,6 +45,12 @@ public class BangSpaceViewModel extends ViewModel {
     private Map<String, Query> cardQueries = new HashMap<>();
     private Map<String, ChildEventListener> cardListeners = new HashMap<>();
     private final BoardRepository boardRepository;
+    private final androidx.lifecycle.MutableLiveData<String> userPermission = new androidx.lifecycle.MutableLiveData<>("view"); // Mặc định là view
+
+    private DatabaseReference membershipsRef;
+    public androidx.lifecycle.LiveData<String> getUserPermission() {
+        return userPermission;
+    }
 
 
 
@@ -51,10 +58,12 @@ public class BangSpaceViewModel extends ViewModel {
         this.listRepository = new ListRepositoryImpl();
         this.cardRepository = new CardRepositoryImpl();
         this.boardRepository = new BoardRepositoryImpl();
+        this.membershipsRef = FirebaseUtils.getDatabaseInstance().getReference("memberships");
     }
     public void getBoardDetails(String boardId, BoardRepository.BoardCallback callback) {
         boardRepository.getBoardDetails(boardId, callback);
     }
+
     /**
      * Bắt đầu lắng nghe các danh sách (cột)
      */
@@ -65,6 +74,31 @@ public class BangSpaceViewModel extends ViewModel {
 
         this.listsQuery.addChildEventListener(listener);
     }
+
+    public void fetchUserPermission(String boardId) {
+        String userId = FirebaseUtils.getCurrentUserId();
+        if (userId == null) return;
+
+        membershipsRef.orderByChild("boardId").equalTo(boardId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    Membership m = ds.getValue(Membership.class);
+                    if (m != null && userId.equals(m.getUserId())) {
+                        // Nếu là Owner hoặc có quyền edit
+                        if ("owner".equals(m.getRole()) || "edit".equals(m.getPermission())) {
+                            userPermission.setValue("edit");
+                        } else {
+                            userPermission.setValue("view");
+                        }
+                        return;
+                    }
+                }
+            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
 
     /**
      * Bắt đầu lắng nghe các thẻ (card) cho MỘT danh sách
@@ -214,64 +248,20 @@ public class BangSpaceViewModel extends ViewModel {
 
     // 2. Di chuyển Lên/Xuống trong cùng 1 danh sách
     // 2. Di chuyển Lên/Xuống trong cùng 1 danh sách
-    public void moveCardVertically(String listId, String currentCardId, boolean isUp) {
-        // Lấy tất cả thẻ trong list đó ra để tính toán
-        Query query = cardsRef.orderByChild("listId").equalTo(listId);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
+    public void moveCardVertically(String listId, String cardId, boolean isUp) {
+        cardsRef.child(cardId).child("position").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<com.kan_n.data.models.Card> cardsInList = new ArrayList<>();
-                for (DataSnapshot data : snapshot.getChildren()) {
-                    com.kan_n.data.models.Card c = data.getValue(com.kan_n.data.models.Card.class);
-                    if (c != null) {
-                        c.setUid(data.getKey());
-                        cardsInList.add(c);
-                    }
-                }
-
-                // [SỬA LỖI] Dùng Collections.sort thay vì cardsInList.sort để hỗ trợ API cũ
-                Collections.sort(cardsInList, new Comparator<com.kan_n.data.models.Card>() {
-                    @Override
-                    public int compare(com.kan_n.data.models.Card o1, com.kan_n.data.models.Card o2) {
-                        return Double.compare(o1.getPosition(), o2.getPosition());
-                    }
-                });
-
-                // Tìm vị trí (index) của thẻ hiện tại trong list
-                int currentIndex = -1;
-                for (int i = 0; i < cardsInList.size(); i++) {
-                    if (cardsInList.get(i).getUid().equals(currentCardId)) {
-                        currentIndex = i;
-                        break;
-                    }
-                }
-
-                if (currentIndex == -1) return; // Không tìm thấy thẻ
-
-                // Xử lý Logic Hoán đổi vị trí
-                if (isUp) {
-                    // Di chuyển LÊN (Swap với thẻ đứng trước: index - 1)
-                    if (currentIndex > 0) {
-                        com.kan_n.data.models.Card currentCard = cardsInList.get(currentIndex);
-                        com.kan_n.data.models.Card targetCard = cardsInList.get(currentIndex - 1); // Thẻ ở trên
-                        swapCardPositions(currentCard, targetCard);
-                    }
-                } else {
-                    // Di chuyển XUỐNG (Swap với thẻ đứng sau: index + 1)
-                    if (currentIndex < cardsInList.size() - 1) {
-                        com.kan_n.data.models.Card currentCard = cardsInList.get(currentIndex);
-                        com.kan_n.data.models.Card targetCard = cardsInList.get(currentIndex + 1); // Thẻ ở dưới
-                        swapCardPositions(currentCard, targetCard);
-                    }
+                Double currentPos = snapshot.getValue(Double.class);
+                if (currentPos != null) {
+                    double newPos = isUp ? currentPos - 500 : currentPos + 500;
+                    cardsRef.child(cardId).child("position").setValue(newPos);
                 }
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // Handle error
-            }
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
+
     // Hàm phụ trợ: Hoán đổi vị trí 2 thẻ trên Firebase
     private void swapCardPositions(com.kan_n.data.models.Card card1, com.kan_n.data.models.Card card2) {
         double pos1 = card1.getPosition();

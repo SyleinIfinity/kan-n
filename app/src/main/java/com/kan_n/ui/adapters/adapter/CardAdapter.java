@@ -28,6 +28,7 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<Card> cardList = new ArrayList<>();
     private Context context;
 
+    private boolean isEditable = false;
     // Hằng số cho kiểu xem
     private static final int VIEW_TYPE_CARD = 0;
     private static final int VIEW_TYPE_ADD_CARD = 1;
@@ -67,7 +68,8 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public int getItemCount() {
-        return cardList.size() + 1;
+        // Nếu không được sửa, không hiển thị item "Thêm thẻ"
+        return isEditable ? cardList.size() + 1 : cardList.size();
     }
 
     @NonNull
@@ -85,14 +87,10 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder.getItemViewType() == VIEW_TYPE_CARD) {
+        if (holder instanceof CardViewHolder) {
             Card card = cardList.get(position);
-            if (card == null) return;
-            // [CẬP NHẬT] Truyền thêm longClickListener vào bind
-            ((CardViewHolder) holder).bind(card, context, cardClickListener, cardLongClickListener);
-
-        } else {
-            ((AddCardViewHolder) holder).bind(addCardClickListener);
+            // Truyền isEditable vào bind
+            ((CardViewHolder) holder).bind(card, context, cardClickListener, cardLongClickListener, isEditable);
         }
     }
 
@@ -104,6 +102,11 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
         }
         return cardList.size();
+    }
+
+    public void setEditable(boolean editable) {
+        this.isEditable = editable;
+        notifyDataSetChanged();
     }
 
     public void addCard(Card card) {
@@ -179,7 +182,7 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // Thêm tham số listener vào hàm bind
         public void bind(final Card card, Context context,
                          final OnCardClickListener listener,
-                         final OnCardLongClickListener longListener) {
+                         final OnCardLongClickListener longListener, boolean isEditable) {
 
             tvCardTitle.setText(card.getTitle());
             cbComplete.setChecked(card.isCompleted());
@@ -204,9 +207,13 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 return false;
             };
 
-            // [FIX LỖI] Gán Long Click cho cả itemView VÀ TextView Tiêu đề
-            itemView.setOnLongClickListener(commonLongListener);
-            tvCardTitle.setOnLongClickListener(commonLongListener);
+            if (isEditable) {
+                itemView.setOnLongClickListener(commonLongListener);
+                tvCardTitle.setOnLongClickListener(commonLongListener);
+            } else {
+                itemView.setOnLongClickListener(null);
+                tvCardTitle.setOnLongClickListener(null);
+            }
 
 
             // --- MÀU SẮC ---

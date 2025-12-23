@@ -85,6 +85,16 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
         navController = NavHostFragment.findNavController(this);
 
+        if (boardId != null) {
+            // 1. Lấy quyền của người dùng
+            viewModel.fetchUserPermission(boardId);
+
+            // 2. Theo dõi quyền và cập nhật giao diện
+            viewModel.getUserPermission().observe(getViewLifecycleOwner(), permission -> {
+                boolean canEdit = "edit".equals(permission);
+                listModelAdapter.setEditable(canEdit);
+            });
+        }
 
         if (boardId != null) {
             listenForLists(boardId);
@@ -98,7 +108,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                 @Override
                 public void onError(String message) {}
             });
-            listenForLists(boardId);
         } else {
             Toast.makeText(getContext(), "Lỗi: Không tìm thấy ID Bảng", Toast.LENGTH_LONG).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
