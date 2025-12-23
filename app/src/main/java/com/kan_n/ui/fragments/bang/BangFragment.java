@@ -37,14 +37,14 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
     private WorkspaceAdapter workspaceAdapter;
     private RecyclerView rvWorkspaces;
     private NavController navController;
-    private BoardRepository boardRepository; // Thêm repository để xử lý data
+    private BoardRepository boardRepository;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         bangViewModel = new ViewModelProvider(this).get(BangViewModel.class);
         binding = FragmentBangBinding.inflate(inflater, container, false);
-        boardRepository = new BoardRepositoryImpl(); // Khởi tạo Repository
+        boardRepository = new BoardRepositoryImpl();
 
         return binding.getRoot();
     }
@@ -53,28 +53,30 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Khởi tạo NavController
         navController = NavHostFragment.findNavController(this);
-
         setupRecyclerView();
 
-        // Quan sát LiveData từ ViewModel để cập nhật giao diện
+        // 1. Quan sát danh sách Workspace để hiển thị
         bangViewModel.getWorkspaces().observe(getViewLifecycleOwner(), workspaces -> {
             if (workspaces != null) {
                 workspaceAdapter.updateData(workspaces);
             }
         });
 
-        // XỬ LÝ NHẤN GIỮ VÀO BẢNG
-        workspaceAdapter.setOnBoardLongClickListener(new BoardAdapter.OnBoardLongClickListener() {
-            @Override
-            public void onBoardLongClick(View view, Board board) {
-                showBoardPopupMenu(view, board);
+        // ✨ [THÊM MỚI] Quan sát ID Workspace vừa tìm được (FIX BUG ĐĂNG KÝ MỚI & USER CŨ)
+        bangViewModel.getFoundActiveWorkspaceId().observe(getViewLifecycleOwner(), newId -> {
+            if (newId != null && !newId.isEmpty()) {
+                // Lưu ID đúng vào SharedPreferences ngay lập tức
+                SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
+                prefs.edit().putString("active_ws_id", newId).apply();
             }
         });
-        // XỬ LÝ TẠO BẢNG MỚI
+
+        // Xử lý nhấn giữ
+        workspaceAdapter.setOnBoardLongClickListener(this::showBoardPopupMenu);
+
+        // Tạo bảng mới
         binding.btnTaoBangMoi.setOnClickListener(v -> {
-            // Sử dụng Action ID đã định nghĩa trong mobile_thanh_dieu_huong.xml
             navController.navigate(R.id.action_bangFragment_to_taoBangMoiFragment);
         });
 
@@ -83,15 +85,11 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
 
     private void setupRecyclerView() {
         rvWorkspaces = binding.rvWorkspaces;
-        // Khởi tạo Adapter với chế độ hiển thị (isManageMode = false)
         workspaceAdapter = new WorkspaceAdapter(getContext(), new ArrayList<>(), this);
         rvWorkspaces.setLayoutManager(new LinearLayoutManager(getContext()));
         rvWorkspaces.setAdapter(workspaceAdapter);
     }
 
-    /**
-     * Hiển thị PopupMenu khi nhấn giữ vào một Bảng
-     */
     private void showBoardPopupMenu(View view, Board board) {
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
         popupMenu.getMenu().add(0, 1, 0, "Đổi tên bảng");
@@ -112,9 +110,6 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         popupMenu.show();
     }
 
-    /**
-     * Dialog nhập tên mới cho Bảng
-     */
     private void showRenameBoardDialog(Board board) {
         EditText input = new EditText(getContext());
         input.setText(board.getName());
@@ -129,8 +124,8 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                         boardRepository.updateBoard(board.getUid(), newName, new BoardRepository.GeneralCallback() {
                             @Override
                             public void onSuccess() {
-                                bangViewModel.loadWorkspaces();
-
+                                // ✨ [SỬA ĐỔI] Gọi loadDataSmart thay vì loadWorkspaces
+                                bangViewModel.loadDataSmart();
                                 Toast.makeText(getContext(), "Đã đổi tên bảng", Toast.LENGTH_SHORT).show();
                             }
 
@@ -145,9 +140,6 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                 .show();
     }
 
-    /**
-     * Xác nhận trước khi xóa Bảng
-     */
     private void showDeleteBoardConfirm(Board board) {
         new AlertDialog.Builder(getContext())
                 .setTitle("Xóa bảng")
@@ -156,7 +148,8 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
                     boardRepository.deleteBoard(board.getUid(), new BoardRepository.GeneralCallback() {
                         @Override
                         public void onSuccess() {
-                            bangViewModel.loadWorkspaces();
+                            // ✨ [SỬA ĐỔI] Gọi loadDataSmart
+                            bangViewModel.loadDataSmart();
                             Toast.makeText(getContext(), "Đã xóa bảng", Toast.LENGTH_SHORT).show();
                         }
 
@@ -176,7 +169,6 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
             Bundle args = new Bundle();
             args.putString("boardId", board.getUid());
             args.putString("boardTitle", board.getName());
-
             navController.navigate(R.id.action_bangFragment_to_bangSpaceFragment, args);
         }
     }
@@ -193,7 +185,8 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         String activeWsId = prefs.getString("active_ws_id", "ws_1_id");
 
         bangViewModel.setActiveWsId(activeWsId);
-        bangViewModel.loadWorkspaces();
+        // ✨ [SỬA ĐỔI] Gọi hàm thông minh
+        bangViewModel.loadDataSmart();
     }
 
     @Override
