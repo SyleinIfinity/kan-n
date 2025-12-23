@@ -366,25 +366,29 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
     // 4. Dialog Chọn Tag
     private void showTagSelectionDialog(Card card) {
-        // Tải danh sách tag từ Firebase thông qua ViewModel
-        viewModel.loadAllTags(new BangSpaceViewModel.TagListCallback() {
+        // Gọi hàm logic mới trong ViewModel: loadEligibleTags
+        // Tham số truyền vào: boardId và listId hiện tại của thẻ
+        viewModel.loadEligibleTags(boardId, card.getListId(), new BangSpaceViewModel.TagListCallback() {
             @Override
             public void onTagsLoaded(List<Tag> tags) {
                 if (getContext() == null) return;
 
-                // Tạo Adapter để hiển thị List Tag kèm màu sắc
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                builder.setTitle("Chọn nhãn màu");
+                builder.setTitle("Chọn Tag từ các cột trước");
 
-                // Tạo custom adapter đơn giản
+                // Adapter hiển thị danh sách Tag
                 ArrayAdapter<Tag> adapter = new ArrayAdapter<Tag>(getContext(), android.R.layout.select_dialog_singlechoice, tags) {
                     @NonNull
                     @Override
                     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                        // Hiển thị tên Tag + Màu
                         TextView view = (TextView) super.getView(position, convertView, parent);
                         Tag tag = getItem(position);
+
+                        // Hiển thị: Tên Tag
                         view.setText(tag.getName());
+                        view.setTypeface(null, android.graphics.Typeface.BOLD);
+                        view.setPadding(30, 20, 30, 20);
+
                         try {
                             view.setTextColor(Color.parseColor(tag.getColor()));
                         } catch (Exception e) {
@@ -396,9 +400,11 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
                 builder.setAdapter(adapter, (dialog, which) -> {
                     Tag selectedTag = tags.get(which);
-                    // Cập nhật card với tag mới
-                    viewModel.updateCardTag(card.getUid(), selectedTag);
-                    Toast.makeText(getContext(), "Đã gắn tag: " + selectedTag.getName(), Toast.LENGTH_SHORT).show();
+
+                    // Logic Gán Tag: Cập nhật assignedTagId và đổi màu thẻ
+                    viewModel.assignTagToCard(card.getUid(), selectedTag);
+
+                    Toast.makeText(getContext(), "Đã gán Tag: " + selectedTag.getName(), Toast.LENGTH_SHORT).show();
                 });
 
                 builder.setNegativeButton("Hủy", null);
@@ -407,7 +413,14 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
             @Override
             public void onError(String message) {
-                Toast.makeText(getContext(), "Lỗi tải Tag: " + message, Toast.LENGTH_SHORT).show();
+                if (getContext() != null) {
+                    // Thông báo rõ ràng cho người dùng hiểu quy luật
+                    new AlertDialog.Builder(getContext())
+                            .setTitle("Không có Tag khả dụng")
+                            .setMessage("Chỉ có thể lấy Tag từ các thẻ nằm ở các danh sách BÊN TRÁI.\n\n(" + message + ")")
+                            .setPositiveButton("Đã hiểu", null)
+                            .show();
+                }
             }
         });
     }
