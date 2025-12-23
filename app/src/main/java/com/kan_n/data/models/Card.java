@@ -19,7 +19,12 @@ public class Card {
     private String createdBy;
     private long createdAt;
     private boolean archived;
+    @Deprecated
     private Map<String, Boolean> tagIds = new HashMap<>();
+
+    private String selfTagId;
+    private String assignedTagId;
+
     private boolean isCompleted; // Cho ic_tron_v1
     private String coverImageUrl;  // Cho ảnh bìa (background)
     private int attachmentCount;   // Cho ic_dinhkem
@@ -45,6 +50,9 @@ public class Card {
         this.attachmentCount = 0;
         this.checklistTotal = 0;
         this.checklistCompleted = 0;
+        this.selfTagId = null;
+        this.assignedTagId = null;
+        this.labelColor = ""; // Mặc định không màu
     }
 
     // --- Getters and Setters ---
@@ -91,6 +99,12 @@ public class Card {
     public String getLabelColor() { return labelColor; }
     public void setLabelColor(String labelColor) { this.labelColor = labelColor; }
 
+    public String getSelfTagId() { return selfTagId; }
+    public void setSelfTagId(String selfTagId) { this.selfTagId = selfTagId; }
+
+    public String getAssignedTagId() { return assignedTagId; }
+    public void setAssignedTagId(String assignedTagId) { this.assignedTagId = assignedTagId; }
+
     @Exclude
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
@@ -108,6 +122,8 @@ public class Card {
         result.put("attachmentCount", attachmentCount);
         result.put("checklistTotal", checklistTotal);
         result.put("checklistCompleted", checklistCompleted);
+        result.put("selfTagId", selfTagId);
+        result.put("assignedTagId", assignedTagId);
         result.put("labelColor", labelColor);
         return result;
     }
