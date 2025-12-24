@@ -10,7 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:src="@drawable/ic_hoatdong"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"/>
 
         <TextView
             android:id="@+id/tv_header_title"
@@ -19,15 +26,14 @@
             android:layout_weight="1"
             android:text="Hoạt động"
             android:textColor="#000000"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:background="@drawable/ic_menu_option"
-            android:layout_marginEnd="14dp"/>
-
     </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvActivityLog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false"/>
 
 </LinearLayout>

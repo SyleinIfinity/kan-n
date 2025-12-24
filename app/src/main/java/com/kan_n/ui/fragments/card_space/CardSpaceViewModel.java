@@ -44,4 +44,14 @@ public class CardSpaceViewModel extends ViewModel {
     }
 
 
+    public void logActivity(String cardId, String content) {
+        if (cardId == null) return;
+
+        com.kan_n.data.models.Activity activity = new com.kan_n.data.models.Activity(content, System.currentTimeMillis());
+
+        // Lưu vào node "activities"
+        mDatabase.child("cards").child(cardId).child("activities").push().setValue(activity);
+    }
+
+
 }

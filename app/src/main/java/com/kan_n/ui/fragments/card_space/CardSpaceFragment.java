@@ -1,5 +1,6 @@
 package com.kan_n.ui.fragments.card_space;
 
+
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -16,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,6 +42,9 @@ import com.kan_n.data.models.Tag;
 import com.kan_n.databinding.FragmentCardSpaceBinding;
 import com.kan_n.ui.adapters.adapter.AttachmentAdapter;
 import com.kan_n.ui.adapters.adapter.ChecklistAdapter;
+import com.kan_n.ui.adapters.adapter.ActivityAdapter;
+import com.kan_n.data.models.Activity;
+import com.kan_n.R;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 
 public class CardSpaceFragment extends Fragment {
 
@@ -82,6 +88,11 @@ public class CardSpaceFragment extends Fragment {
     // Biến tạm để chọn ngày giờ
     private Calendar tempDate;
     private List<CheckItem> currentCheckList = new ArrayList<>(); // Lưu checklist hiện tại để cập nhật
+    //
+    private RecyclerView rvActivityLog;
+    private ActivityAdapter activityAdapter;
+    private List<Activity> activityList = new ArrayList<>();
+
 
     @Nullable
     @Override
@@ -114,6 +125,7 @@ public class CardSpaceFragment extends Fragment {
         // --- 2. Load dữ liệu thẻ ---
         if (mCardId != null) {
             loadCardData();
+            loadActivities();
         }
 
         binding.btnCreateSelfTag.setVisibility(View.GONE);
@@ -138,6 +150,9 @@ public class CardSpaceFragment extends Fragment {
         // Lấy view gốc từ thẻ include
         View includedInfo = binding.includedInfo.getRoot();
 
+        View includedActivityView = binding.includedActivity.getRoot();
+        rvActivityLog = includedActivityView.findViewById(R.id.rvActivityLog);
+
         // Ánh xạ View
         tvStartDateVal = includedInfo.findViewById(com.kan_n.R.id.tvStartDateVal);
         tvDueDateVal = includedInfo.findViewById(com.kan_n.R.id.tvDueDateVal);
@@ -147,6 +162,15 @@ public class CardSpaceFragment extends Fragment {
         btnUploadFile = includedInfo.findViewById(com.kan_n.R.id.btnUploadFile);
         layoutStartDate = includedInfo.findViewById(com.kan_n.R.id.layoutStartDate);
         layoutDueDate = includedInfo.findViewById(com.kan_n.R.id.layoutDueDate);
+
+        //Setup Adapter cho Log
+        activityAdapter = new ActivityAdapter();
+        LinearLayoutManager logLayoutManager = new LinearLayoutManager(getContext());
+
+        logLayoutManager.setReverseLayout(true); // Đảo ngược để thấy tin mới nhất ở trên đầu
+        logLayoutManager.setStackFromEnd(true);
+        rvActivityLog.setLayoutManager(logLayoutManager);
+        rvActivityLog.setAdapter(activityAdapter);
 
         // --- Setup Adapter Checklist ---
         checklistAdapter = new ChecklistAdapter(new ChecklistAdapter.OnCheckItemActionListener() {
@@ -274,12 +298,20 @@ public class CardSpaceFragment extends Fragment {
 
                 long timestamp = tempDate.getTimeInMillis();
 
-                // Gọi ViewModel lưu lên Firebase
+                // Gọi ViewModel lưu lên Firebase & Ghi Log
                 if (isStartDate) {
                     viewModel.updateCardStartDate(mCardId, timestamp);
+                    // [QUAN TRỌNG] Ghi lại lịch sử
+                    viewModel.logActivity(mCardId, "Đã đặt ngày bắt đầu: " + formatDate(timestamp));
                 } else {
                     viewModel.updateCardDueDate(mCardId, timestamp);
+                    // [QUAN TRỌNG] Ghi lại lịch sử
+                    viewModel.logActivity(mCardId, "Đã hẹn ngày kết thúc: " + formatDate(timestamp));
                 }
+
+                // Load lại log ngay lập tức để người dùng thấy
+                loadActivities();
+
             }, tempDate.get(Calendar.HOUR_OF_DAY), tempDate.get(Calendar.MINUTE), true).show();
 
         }, tempDate.get(Calendar.YEAR), tempDate.get(Calendar.MONTH), tempDate.get(Calendar.DAY_OF_MONTH)).show();
@@ -307,6 +339,11 @@ public class CardSpaceFragment extends Fragment {
             if (!taskName.isEmpty()) {
                 CheckItem newItem = new CheckItem(taskName, false);
                 viewModel.addChecklistItem(mCardId, newItem);
+
+                // [QUAN TRỌNG] Ghi lại lịch sử
+                viewModel.logActivity(mCardId, "Đã thêm công việc: " + taskName);
+
+                loadActivities(); // Load lại log
             }
         });
         builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
@@ -608,6 +645,43 @@ public class CardSpaceFragment extends Fragment {
         builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
         builder.show();
     }
+
+    // --- HÀM TẢI LỊCH SỬ HOẠT ĐỘNG TỪ FIREBASE ---
+    private void loadActivities() {
+        if (mCardId == null) return;
+
+
+        mDatabase.child("cards").child(mCardId).child("activities")
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        activityList.clear();
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+
+                            com.kan_n.data.models.Activity activity = ds.getValue(com.kan_n.data.models.Activity.class);
+                            if (activity != null) {
+                                activityList.add(activity);
+                            }
+                        }
+
+
+                        if (activityAdapter != null) {
+                            activityAdapter.setActivities(activityList);
+
+                            // Tự động cuộn xuống dòng mới nhất (cuối danh sách)
+                            if (!activityList.isEmpty()) {
+                                rvActivityLog.smoothScrollToPosition(activityList.size() - 1);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+    }
+
 
     @Override
     public void onDestroyView() {
