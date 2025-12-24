@@ -85,19 +85,23 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
         navController = NavHostFragment.findNavController(this);
 
+
         if (boardId != null) {
-            // 1. Lấy quyền của người dùng
+            // Kiểm tra quyền của User hiện tại
             viewModel.fetchUserPermission(boardId);
 
-            // 2. Theo dõi quyền và cập nhật giao diện
+            // Quan sát kết quả quyền hạn trả về
             viewModel.getUserPermission().observe(getViewLifecycleOwner(), permission -> {
+                // Nếu là "edit"
                 boolean canEdit = "edit".equals(permission);
-                listModelAdapter.setEditable(canEdit);
-            });
-        }
 
-        if (boardId != null) {
-            listenForLists(boardId);
+                // Hiện/ẩn các nút Thêm thẻ/danh sách
+                if (listModelAdapter != null) {
+                    listModelAdapter.setEditable(canEdit);
+                }
+            });
+
+            // 3. Load chi tiết bảng và danh sách
             viewModel.getBoardDetails(boardId, new BoardRepository.BoardCallback() {
                 @Override
                 public void onSuccess(Board board) {
@@ -105,19 +109,20 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                         applyDynamicColors(board.getBackground().getValue());
                     }
                 }
-                @Override
-                public void onError(String message) {}
+                @Override public void onError(String message) {}
             });
+
+            listenForLists(boardId);
         } else {
             Toast.makeText(getContext(), "Lỗi: Không tìm thấy ID Bảng", Toast.LENGTH_LONG).show();
             requireActivity().getOnBackPressedDispatcher().onBackPressed();
         }
 
-        // Trong phương thức onViewCreated
+        // Sự kiện nút Option (3 chấm)
         binding.ivMenuOptions.setOnClickListener(v -> {
-            // [FIX] Tạo Bundle để truyền boardId sang MenuBangFragment
             Bundle bundle = new Bundle();
-            bundle.putString("boardId", boardId); // boardId đã có sẵn trong BangSpaceFragment
+            bundle.putString("boardId", boardId);
+            bundle.putString("boardTitle", boardTitle);
             navController.navigate(R.id.action_BangSpaceFragment_to_MenuBangFragment, bundle);
         });
 
@@ -158,7 +163,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     private void setupRecyclerView() {
         // Khởi tạo Adapter với 4 tham số listener đầy đủ
         listModelAdapter = new ListModelAdapter(getContext(), viewModel, this,
-                // 1. Click vào thẻ (Mở chi tiết thẻ - Code cũ của bạn)
                 new ListModelAdapter.OnItemCardClickListener() {
                     @Override
                     public void onCardClick(Card card) {
@@ -171,14 +175,14 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                         } catch (Exception e) { e.printStackTrace(); }
                     }
                 },
-                // 2. Nhấn giữ thẻ (Hiện menu tùy chọn thẻ - Code cũ của bạn)
+                // Nhấn giữ thẻ
                 new ListModelAdapter.OnItemCardLongClickListener() {
                     @Override
                     public void onCardLongClick(Card card, View view) {
                         showCardOptionsDialog(card);
                     }
                 },
-                // 3. [MỚI] Click vào menu danh sách (Dấu 3 chấm ở cột list)
+                // 3. Nhấn vào menu danh sách
                 new ListModelAdapter.OnListMenuClickListener() {
                     @Override
                     public void onListMenuClick(View view, ListModel listModel, int position) {
@@ -284,7 +288,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
     private void showCardOptionsDialog(Card card) {
         if (getContext() == null) return;
 
-        // [CẬP NHẬT] Thêm tùy chọn "Di chuyển thẻ" vào vị trí số 2 (index 1)
+        // Thêm tùy chọn "Di chuyển thẻ" vào vị trí số 2 (index 1)
         String[] options = {"Đổi tên thẻ", "Di chuyển thẻ", "Gắn Tag (Nhãn màu)", "Xóa thẻ"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -294,7 +298,7 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
                 case 0: // Đổi tên
                     showRenameCardDialog(card);
                     break;
-                case 1: // [MỚI] Di chuyển
+                case 1: // Di chuyển
                     showMoveCardOptionsDialog(card);
                     break;
                 case 2: // Gắn Tag
@@ -334,16 +338,16 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
         builder.show();
     }
 
-    // 2. Dialog chọn danh sách đích (Khi chọn "Di chuyển sang danh sách khác")
+    // 2. Dialog chọn danh sách đích
     private void showMoveToListDialog(Card card) {
         if (getContext() == null || listModelAdapter == null) return;
 
-        // Lấy toàn bộ danh sách hiện có từ Adapter
+        // Lấy toàn bộ danh sách hiện có
         List<ListModel> allLists = listModelAdapter.getCurrentList();
         List<ListModel> targetLists = new ArrayList<>();
         List<String> targetListTitles = new ArrayList<>();
 
-        // Lọc: Chỉ lấy các danh sách KHÁC danh sách hiện tại của thẻ
+        // Lọc: Chỉ lấy các danh sách KHÁC
         for (ListModel list : allLists) {
             if (!list.getUid().equals(card.getListId())) {
                 targetLists.add(list);
@@ -572,7 +576,6 @@ public class BangSpaceFragment extends Fragment implements ListModelAdapter.OnAd
 
                 @Override
                 public void onError(String message) {
-                    // Xử lý lỗi nếu cần
                 }
             });
         }

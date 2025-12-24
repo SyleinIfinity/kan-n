@@ -219,41 +219,26 @@ public class BoardRepositoryImpl implements BoardRepository {
 
     @Override
     public void removeMemberFromBoard(String boardId, String userId, GeneralCallback callback) {
-        mMembershipsRef.orderByChild("boardId").equalTo(boardId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    callback.onError("Không tìm thấy thành viên nào trong bảng này.");
-                    return;
-                }
-
-                String membershipIdToDelete = null;
-                for (DataSnapshot memSnap : snapshot.getChildren()) {
-                    Membership membership = memSnap.getValue(Membership.class);
-                    if (membership != null && membership.getUserId().equals(userId)) {
-                        membershipIdToDelete = memSnap.getKey();
-                        break;
-                    }
-                }
-
-                if (membershipIdToDelete != null) {
-                    mMembershipsRef.child(membershipIdToDelete).removeValue().addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            callback.onSuccess();
-                        } else {
-                            callback.onError(task.getException().getMessage());
+        // Tìm đúng node membership của user trong bảng này
+        mMembershipsRef.orderByChild("boardId").equalTo(boardId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            Membership m = ds.getValue(Membership.class);
+                            if (m != null && m.getUserId().equals(userId)) {
+                                ds.getRef().removeValue().addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) callback.onSuccess();
+                                    else callback.onError(task.getException().getMessage());
+                                });
+                                return;
+                            }
                         }
-                    });
-                } else {
-                    callback.onError("Không tìm thấy thành viên này trong bảng.");
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                callback.onError(error.getMessage());
-            }
-        });
+                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) {
+                        callback.onError(error.getMessage());
+                    }
+                });
     }
     @Override
     public void getBoardMembers(String boardId, BoardMembersCallback callback) {
@@ -467,4 +452,5 @@ public class BoardRepositoryImpl implements BoardRepository {
                     @Override public void onCancelled(@NonNull DatabaseError error) { callback.onError(error.getMessage()); }
                 });
     }
+
 }

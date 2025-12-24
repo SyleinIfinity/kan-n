@@ -41,13 +41,14 @@ public class BangSpaceViewModel extends ViewModel {
     private Query listsQuery;
     private ChildEventListener listsListener;
 
-    // Cần thiết để gỡ bỏ listener của thẻ khi list-item bị recycle
     private Map<String, Query> cardQueries = new HashMap<>();
     private Map<String, ChildEventListener> cardListeners = new HashMap<>();
     private final BoardRepository boardRepository;
     private final androidx.lifecycle.MutableLiveData<String> userPermission = new androidx.lifecycle.MutableLiveData<>("view"); // Mặc định là view
 
     private DatabaseReference membershipsRef;
+    private ValueEventListener permissionListener;
+    private Query permissionQuery;
     public androidx.lifecycle.LiveData<String> getUserPermission() {
         return userPermission;
     }
@@ -79,24 +80,40 @@ public class BangSpaceViewModel extends ViewModel {
         String userId = FirebaseUtils.getCurrentUserId();
         if (userId == null) return;
 
-        membershipsRef.orderByChild("boardId").equalTo(boardId).addListenerForSingleValueEvent(new ValueEventListener() {
+        // Gỡ listener cũ nếu có (đề phòng trường hợp chuyển bảng)
+        if (permissionListener != null && permissionQuery != null) {
+            permissionQuery.removeEventListener(permissionListener);
+        }
+
+        // Thiết lập Query
+        permissionQuery = membershipsRef.orderByChild("boardId").equalTo(boardId);
+
+        permissionListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                boolean found = false;
                 for (DataSnapshot ds : snapshot.getChildren()) {
                     Membership m = ds.getValue(Membership.class);
                     if (m != null && userId.equals(m.getUserId())) {
-                        // Nếu là Owner hoặc có quyền edit
+                        // Cập nhật LiveData ngay khi dữ liệu trên Firebase thay đổi
                         if ("owner".equals(m.getRole()) || "edit".equals(m.getPermission())) {
                             userPermission.setValue("edit");
                         } else {
                             userPermission.setValue("view");
                         }
-                        return;
+                        found = true;
+                        break;
                     }
                 }
+                if (!found) {
+                    userPermission.setValue("view");
+                }
             }
+
             @Override public void onCancelled(@NonNull DatabaseError error) {}
-        });
+        };
+
+        permissionQuery.addValueEventListener(permissionListener);
     }
 
 
@@ -104,6 +121,8 @@ public class BangSpaceViewModel extends ViewModel {
      * Bắt đầu lắng nghe các thẻ (card) cho MỘT danh sách
      */
     public void listenForCards(String listId, ChildEventListener listener) {
+        // Gỡ listener cũ của listId
+        removeCardListener(listId);
 
         Query cardQuery = cardsRef.orderByChild("listId").equalTo(listId);
 
@@ -114,7 +133,7 @@ public class BangSpaceViewModel extends ViewModel {
     }
 
     /**
-     * [QUAN TRỌNG] Gỡ listener của thẻ khi ListModelViewHolder bị recycle
+     * Gỡ listener của thẻ khi ListModelViewHolder bị recycle
      */
     public void removeCardListener(String listId) {
         ChildEventListener listener = cardListeners.get(listId);
@@ -134,20 +153,18 @@ public class BangSpaceViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-        // Gỡ listener của danh sách
+        if (permissionQuery != null && permissionListener != null) {
+            permissionQuery.removeEventListener(permissionListener);
+        }
         if (listsQuery != null && listsListener != null) {
             listsQuery.removeEventListener(listsListener);
         }
-
-        // Gỡ tất cả listener của các thẻ
         for (Map.Entry<String, Query> entry : cardQueries.entrySet()) {
             ChildEventListener listener = cardListeners.get(entry.getKey());
             if (listener != null) {
                 entry.getValue().removeEventListener(listener);
             }
         }
-        cardQueries.clear();
-        cardListeners.clear();
     }
 
     // --- CÁC PHƯƠNG THỨC ACTION (GOI REPOSITORY) ---
@@ -176,7 +193,7 @@ public class BangSpaceViewModel extends ViewModel {
 
     // 3. Cập nhật Tag cho Card (1 Card 1 Tag)
     public void updateCardTag(String cardId, Tag tag) {
-        // Lưu Tag ID vào map (như cấu trúc cũ)
+        // Lưu Tag ID vào map
         Map<String, Object> updates = new HashMap<>();
 
         // Xóa hết tag cũ, chỉ để lại 1 tag mới
@@ -184,7 +201,7 @@ public class BangSpaceViewModel extends ViewModel {
         newTags.put(tag.getUid(), true);
         updates.put("tagIds", newTags);
 
-        // [QUAN TRỌNG] Lưu màu của tag trực tiếp vào card để hiển thị nhanh
+        // Lưu màu của tag trực tiếp vào card để hiển thị nhanh
         updates.put("labelColor", tag.getColor());
 
         cardsRef.child(cardId).updateChildren(updates);
@@ -230,12 +247,7 @@ public class BangSpaceViewModel extends ViewModel {
 
     // 7. Xóa danh sách
     public void deleteList(String listId) {
-        // Lưu ý: Nên xóa cả các thẻ (cards) thuộc danh sách này nếu muốn sạch data
-        // Ở đây mình xóa danh sách trước theo yêu cầu
         listsRef.child(listId).removeValue();
-
-        // (Tùy chọn) Xóa các thẻ con
-        // cardsRef.orderByChild("listId").equalTo(listId).addListenerForSingleValueEvent(... xóa ...);
     }
 
     //

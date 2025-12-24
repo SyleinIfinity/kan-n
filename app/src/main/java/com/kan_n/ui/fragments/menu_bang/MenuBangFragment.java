@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider; // Import ViewModelProvider
 import androidx.navigation.NavController;
@@ -69,7 +70,7 @@ public class MenuBangFragment extends Fragment {
 
         setupRecyclerView();
 
-        // [FIX QUAN TRONG] Phai goi ham nay de thiet lap su kien cho nut 3 cham
+        // Thiet lap su kien cho nut 3 cham
         setupOptionsMenu();
 
         if (boardId != null) {
@@ -112,24 +113,77 @@ public class MenuBangFragment extends Fragment {
         builder.show();
     }
 
-    private void setupOptionsMenu() {
-        binding.ivMenuOptions.setOnClickListener(v -> {
-            PopupMenu popup = new PopupMenu(getContext(), v);
-            popup.getMenu().add("Đổi tên bảng");
-            popup.getMenu().add("Đổi nền bảng");
-            popup.getMenu().add("Xóa bảng");
-            popup.getMenu().add("Quản lý thành viên");
 
+    private void setupOptionsMenu() {
+
+        binding.ivMenuOptions.setOnClickListener(v -> {
+            // Khởi tạo PopupMenu gắn vào icon 3 chấm
+            PopupMenu popup = new PopupMenu(getContext(), v);
+
+            // Lấy vai trò của người dùng hiện tại từ ViewModel
+            // Giá trị này được cập nhật thông qua fetchCurrentUserRole(boardId) trong onViewCreated
+            String role = viewModel.getCurrentUserRole();
+
+            // PHÂN QUYỀN MENU HIỂN THỊ
+            if ("owner".equals(role)) {
+                // Chủ sở hữu có toàn quyền quản trị
+                popup.getMenu().add("Đổi tên bảng");
+                popup.getMenu().add("Đổi nền bảng");
+                popup.getMenu().add("Xóa bảng");
+                popup.getMenu().add("Danh sách thành viên");
+            } else {
+                // Thành viên bình thường chỉ có quyền xem danh sách và rút lui
+                popup.getMenu().add("Danh sách thành viên");
+                popup.getMenu().add("Rời khỏi bảng");
+            }
+
+            // XỬ LÝ SỰ KIỆN KHI NHẤN VÀO TỪNG OPTION
             popup.setOnMenuItemClickListener(item -> {
                 String title = item.getTitle().toString();
-                if (title.equals("Đổi tên bảng")) showRenameDialog();
-                else if (title.equals("Đổi nền bảng")) navigateToChangeBackground();
-                else if (title.equals("Xóa bảng")) showDeleteConfirm();
-                else if (title.equals("Quản lý thành viên")) showManageMembersDialog();
+
+                switch (title) {
+                    case "Đổi tên bảng":
+                        showRenameDialog();
+                        break;
+
+                    case "Đổi nền bảng":
+                        navigateToChangeBackground();
+                        break;
+
+                    case "Xóa bảng":
+                        showDeleteConfirm();
+                        break;
+
+                    case "Danh sách thành viên":
+                        // Hiển thị dialog danh sách thành viên (có nút xóa thành viên nếu là owner)
+                        showManageMembersDialog();
+                        break;
+
+                    case "Rời khỏi bảng":
+                        // Thành viên tự xóa chính mình khỏi node memberships
+                        showLeaveBoardConfirm();
+                        break;
+                }
                 return true;
             });
+
             popup.show();
         });
+    }
+
+    private void showLeaveBoardConfirm() {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Rời khỏi bảng")
+                .setMessage("Bạn có chắc chắn muốn rời khỏi bảng này?")
+                .setPositiveButton("Rời bảng", (d, w) -> {
+                    viewModel.leaveOrRemoveMember(boardId, FirebaseUtils.getCurrentUserId(), new BoardRepository.GeneralCallback() {
+                        @Override
+                        public void onSuccess() {
+                            navController.navigate(R.id.thanhDieuHuong_Bang); // Quay về trang chủ
+                        }
+                        @Override public void onError(String msg) {}
+                    });
+                }).setNegativeButton("Hủy", null).show();
     }
     private void showRenameDialog() {
         EditText etInput = new EditText(getContext());
@@ -173,43 +227,80 @@ public class MenuBangFragment extends Fragment {
     private void showManageMembersDialog() {
         BottomSheetDialog bottomSheet = new BottomSheetDialog(requireContext());
         View view = getLayoutInflater().inflate(R.layout.dialog_manage_members, null);
+
         RecyclerView rv = view.findViewById(R.id.rv_members_list);
+        // [MỚI] Tìm nút Đóng trong layout dialog
+        AppCompatButton btnClose = view.findViewById(R.id.btn_close_dialog);
+
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // Gắn sự kiện cho nút Đóng
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> bottomSheet.dismiss());
+        }
 
         viewModel.getBoardMembers(boardId, new BoardRepository.BoardMembersCallback() {
             @Override
             public void onSuccess(List<Pair<User, String>> members) {
-                // Su dung constructor day du cua MemberAdapter
                 MemberAdapter adapter = new MemberAdapter(getContext(), members, (memberUser, role) -> {
-                    showMemberPermissionOptions(memberUser);
+                    // Truyền thêm instance của bottomSheet để có thể đóng/mở lại khi xóa thành công
+                    showMemberPermissionOptions(memberUser, bottomSheet);
                 });
                 rv.setAdapter(adapter);
             }
-            @Override public void onError(String msg) {}
+            @Override public void onError(String msg) {
+                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+            }
         });
 
         bottomSheet.setContentView(view);
         bottomSheet.show();
     }
-    private void showMemberPermissionOptions(User targetUser) {
-        String[] options = {"Quyền Xem (View)", "Quyền Chỉnh sửa (Edit)"};
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Quyền hạn của " + targetUser.getUsername());
+    private void showMemberPermissionOptions(User targetUser, BottomSheetDialog parentBottomSheet) {
+        String role = viewModel.getCurrentUserRole();
+        String currentUserId = FirebaseUtils.getCurrentUserId();
 
-        if ("owner".equals(viewModel.getCurrentUserRole())) {
-            builder.setItems(options, (dialog, which) -> {
-                String newPerm = (which == 0) ? "view" : "edit";
-                viewModel.updateMemberPermission(boardId, targetUser.getUid(), newPerm, new BoardRepository.GeneralCallback() {
-                    @Override public void onSuccess() {
-                        Toast.makeText(getContext(), "Đã cập nhật quyền", Toast.LENGTH_SHORT).show();
-                    }
-                    @Override public void onError(String msg) {}
-                });
-            });
-        } else {
-            builder.setMessage("Bạn không có quyền thay đổi phân quyền của thành viên này.");
+        if (!"owner".equals(role)) {
+            Toast.makeText(getContext(), "Chỉ quản trị viên mới có quyền này", Toast.LENGTH_SHORT).show();
+            return;
         }
-        builder.show();
+
+        if (targetUser.getUid().equals(currentUserId)) {
+            Toast.makeText(getContext(), "Đây là tài khoản của bạn", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] options = {"Quyền Xem", "Quyền Chỉnh sửa", "Xóa khỏi bảng"};
+        new AlertDialog.Builder(getContext())
+                .setTitle("Quản lý: " + targetUser.getUsername())
+                .setItems(options, (dialog, which) -> {
+                    if (which == 2) { // Xóa khỏi bảng
+                        viewModel.leaveOrRemoveMember(boardId, targetUser.getUid(), new BoardRepository.GeneralCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Toast.makeText(getContext(), "Đã xóa thành viên", Toast.LENGTH_SHORT).show();
+                                // [LOAD LẠI TRANG] Đóng dialog hiện tại và mở lại để cập nhật danh sách
+                                if (parentBottomSheet != null) parentBottomSheet.dismiss();
+                                showManageMembersDialog();
+                                // Cập nhật cả danh sách ở màn hình chính fragment
+                                viewModel.loadMembers(boardId);
+                            }
+                            @Override public void onError(String msg) {
+                                Toast.makeText(getContext(), "Lỗi: " + msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    } else {
+                        // Xử lý phân quyền Xem/Sửa
+                        String newPerm = (which == 0) ? "view" : "edit";
+                        viewModel.updateMemberPermission(boardId, targetUser.getUid(), newPerm, new BoardRepository.GeneralCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Toast.makeText(getContext(), "Đã cập nhật quyền", Toast.LENGTH_SHORT).show();
+                            }
+                            @Override public void onError(String msg) {}
+                        });
+                    }
+                }).show();
     }
     private void navigateToChangeBackground() {
         Bundle args = new Bundle();

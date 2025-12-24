@@ -16,7 +16,9 @@ import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.utils.FirebaseUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BangViewModel extends ViewModel {
 
@@ -24,15 +26,14 @@ public class BangViewModel extends ViewModel {
     private final MutableLiveData<List<Workspace>> workspacesLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> errorLiveData = new MutableLiveData<>();
 
-    // ✨ [THÊM MỚI] LiveData này sẽ báo cho Fragment biết ID thật của Workspace vừa tìm thấy
     private final MutableLiveData<String> foundActiveWorkspaceId = new MutableLiveData<>();
 
     private DatabaseReference membershipsRef;
-    private DatabaseReference workspacesRef; // ✨ [THÊM MỚI] Tham chiếu để tìm workspace
-    private DatabaseReference boardsRef;     // ✨ [THÊM MỚI] Tham chiếu để tra cứu từ board ra workspace
+    private DatabaseReference workspacesRef;
+    private DatabaseReference boardsRef;
     private ValueEventListener membershipListener;
     private String currentUserId;
-
+    private final Map<String, String> boardRolesMap = new HashMap<>();
     private String activeWsId;
 
     public void setActiveWsId(String activeWsId) {
@@ -57,7 +58,6 @@ public class BangViewModel extends ViewModel {
         return errorLiveData;
     }
 
-    // ✨ [THÊM MỚI] Getter cho LiveData tìm ID
     public LiveData<String> getFoundActiveWorkspaceId() {
         return foundActiveWorkspaceId;
     }
@@ -68,7 +68,13 @@ public class BangViewModel extends ViewModel {
             membershipListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    // ✨ [SỬA ĐỔI] Gọi hàm thông minh thay vì loadWorkspaces() trực tiếp
+                    boardRolesMap.clear();
+                    for (DataSnapshot memSnap : snapshot.getChildren()) {
+                        Membership mem = memSnap.getValue(Membership.class);
+                        if (mem != null && mem.getBoardId() != null) {
+                            boardRolesMap.put(mem.getBoardId(), mem.getRole());
+                        }
+                    }
                     loadDataSmart();
                 }
                 @Override public void onCancelled(@NonNull DatabaseError error) {}
@@ -77,26 +83,25 @@ public class BangViewModel extends ViewModel {
                     .addValueEventListener(membershipListener);
         }
     }
+    public String getUserRoleInBoard(String boardId) {
+        if (boardId == null) return "member";
+        String role = boardRolesMap.get(boardId);
+        return (role != null) ? role : "member"; // Mặc định là member nếu chưa có data
+    }
 
-    /**
-     * ✨ [THÊM MỚI] Hàm logic trung tâm:
-     * Kiểm tra nếu ID hiện tại bị lỗi (rỗng hoặc mặc định), thì đi tìm ID đúng.
-     */
+
     public void loadDataSmart() {
         if (currentUserId == null) return;
 
         // Nếu activeWsId là null hoặc là giá trị rác mặc định "ws_1_id"
         if (activeWsId == null || "ws_1_id".equals(activeWsId) || activeWsId.isEmpty()) {
-            findWorkspaceByOwner(); // 🚀 Bắt đầu BƯỚC 1
+            findWorkspaceByOwner();
         } else {
-            loadWorkspaces(); // ID có vẻ ổn, load bình thường
+            loadWorkspaces();
         }
     }
 
-    /**
-     * ✨ [THÊM MỚI] BƯỚC 1: Tìm Workspace do user SỞ HỮU (createdBy)
-     * (Dành cho New User hoặc Old User có tạo workspace riêng)
-     */
+
     private void findWorkspaceByOwner() {
         if (workspacesRef == null) return;
 
@@ -105,29 +110,24 @@ public class BangViewModel extends ViewModel {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists() && snapshot.getChildrenCount() > 0) {
-                            // ✅ Tìm thấy! Lấy cái đầu tiên
                             for (DataSnapshot wsSnap : snapshot.getChildren()) {
                                 updateActiveWorkspace(wsSnap.getKey());
                                 return;
                             }
                         } else {
-                            // ❌ Không tìm thấy -> Chuyển sang BƯỚC 2
                             findWorkspaceByMembership();
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        // Lỗi query -> Thử bước 2 luôn cho chắc
+                        // Lỗi query
                         findWorkspaceByMembership();
                     }
                 });
     }
 
-    /**
-     * ✨ [THÊM MỚI] BƯỚC 2: Tìm Workspace mà user THAM GIA (Membership)
-     * (Dành cho Old User chỉ được invite vào bảng của người khác)
-     */
+
     private void findWorkspaceByMembership() {
         if (membershipsRef == null) return;
 
@@ -146,7 +146,6 @@ public class BangViewModel extends ViewModel {
                                 }
                             }
                         }
-                        // Vẫn không có -> User này hoàn toàn trắng tinh
                         workspacesLiveData.postValue(new ArrayList<>());
                     }
 
@@ -157,9 +156,6 @@ public class BangViewModel extends ViewModel {
                 });
     }
 
-    /**
-     * ✨ [THÊM MỚI] Helper: Từ BoardID tra ngược ra WorkspaceID
-     */
     private void findWorkspaceFromBoard(String boardId) {
         if (boardsRef == null) return;
         boardsRef.child(boardId).child("workspaceId").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -181,13 +177,10 @@ public class BangViewModel extends ViewModel {
         });
     }
 
-    /**
-     * ✨ [THÊM MỚI] Cập nhật ID tìm được và load lại dữ liệu
-     */
     private void updateActiveWorkspace(String id) {
         activeWsId = id;
-        foundActiveWorkspaceId.postValue(id); // 📢 Bắn tín hiệu cho Fragment lưu lại
-        loadWorkspaces(); // Load dữ liệu thật
+        foundActiveWorkspaceId.postValue(id);
+        loadWorkspaces(); // Load dữ liệu
     }
 
     public void loadWorkspaces() {
