@@ -6,6 +6,7 @@ import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @IgnoreExtraProperties
 public class Card {
@@ -34,6 +35,19 @@ public class Card {
     private int checklistTotal;    // Cho ic_checked (tổng số)
     private int checklistCompleted;// Cho ic_checked (đã hoàn thành)
     private String labelColor;
+    private long startDate;
+
+    private List<String> attachmentUrls;
+    private List<CheckItem> checkList;
+
+    public long getStartDate() { return startDate; }
+    public void setStartDate(long startDate) { this.startDate = startDate; }
+
+    public List<String> getAttachmentUrls() { return attachmentUrls; }
+    public void setAttachmentUrls(List<String> attachmentUrls) { this.attachmentUrls = attachmentUrls; }
+
+    public List<CheckItem> getCheckList() { return checkList; }
+    public void setCheckList(List<CheckItem> checkList) { this.checkList = checkList; }
 
     public Card() {
         // Constructor trống
@@ -140,4 +154,6 @@ public class Card {
         result.put("assignedTagColor", assignedTagColor);
         return result;
     }
+
+
 }

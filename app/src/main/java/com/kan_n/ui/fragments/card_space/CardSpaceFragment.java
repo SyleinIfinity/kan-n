@@ -1,8 +1,12 @@
 package com.kan_n.ui.fragments.card_space;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,8 +21,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -26,16 +33,26 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.kan_n.data.models.ListModel;
-import com.kan_n.databinding.FragmentCardSpaceBinding;
 import com.kan_n.data.models.Card;
+import com.kan_n.data.models.CheckItem;
+import com.kan_n.data.models.ListModel;
 import com.kan_n.data.models.Tag;
+import com.kan_n.databinding.FragmentCardSpaceBinding;
+import com.kan_n.ui.adapters.adapter.AttachmentAdapter;
+import com.kan_n.ui.adapters.adapter.ChecklistAdapter;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class CardSpaceFragment extends Fragment {
 
+    private CardSpaceViewModel viewModel;
     private FragmentCardSpaceBinding binding;
     private NavController navController;
 
@@ -53,6 +70,19 @@ public class CardSpaceFragment extends Fragment {
 
     private boolean isCardInFirstList = false;
 
+    // --- Biến View cho phần mở rộng ---
+    private TextView tvStartDateVal, tvDueDateVal;
+    private RecyclerView rvAttachments, rvCheckList;
+    private View btnAddCheckItem, btnUploadFile;
+    private View layoutStartDate, layoutDueDate;
+
+    private ChecklistAdapter checklistAdapter;
+    private AttachmentAdapter attachmentAdapter;
+
+    // Biến tạm để chọn ngày giờ
+    private Calendar tempDate;
+    private List<CheckItem> currentCheckList = new ArrayList<>(); // Lưu checklist hiện tại để cập nhật
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -63,8 +93,14 @@ public class CardSpaceFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        navController = Navigation.findNavController(view);
+
+        // Khởi tạo ViewModel và Firebase
+        viewModel = new ViewModelProvider(this).get(CardSpaceViewModel.class);
         mDatabase = FirebaseDatabase.getInstance().getReference();
+        navController = Navigation.findNavController(view);
+
+        // Gọi hàm setup giao diện mở rộng
+        setupExtendedInfo();
 
         // --- 1. Nhận dữ liệu ---
         if (getArguments() != null) {
@@ -75,7 +111,7 @@ public class CardSpaceFragment extends Fragment {
             if (mCardTitle != null) binding.tvTitle.setText(mCardTitle);
         }
 
-        // --- 2. Load dữ liệu thẻ & Tag ---
+        // --- 2. Load dữ liệu thẻ ---
         if (mCardId != null) {
             loadCardData();
         }
@@ -83,8 +119,7 @@ public class CardSpaceFragment extends Fragment {
         binding.btnCreateSelfTag.setVisibility(View.GONE);
 
         if (mBoardId != null && mCardId != null) {
-            loadCardData(); // Code cũ
-            checkIfCardInFirstListAndSetupUI(); // [MỚI] Gọi hàm kiểm tra quyền
+            checkIfCardInFirstListAndSetupUI();
         }
 
         // --- 3. Sự kiện ---
@@ -94,8 +129,207 @@ public class CardSpaceFragment extends Fragment {
         binding.btnCreateSelfTag.setOnClickListener(v -> showAdvancedColorPickerDialog());
     }
 
+    /**
+     * Hàm thiết lập các View và Adapter cho phần thông tin mở rộng (Ngày, Checklist, File)
+     */
+    private void setupExtendedInfo() {
+        if (binding == null) return;
+
+        // Lấy view gốc từ thẻ include
+        View includedInfo = binding.includedInfo.getRoot();
+
+        // Ánh xạ View
+        tvStartDateVal = includedInfo.findViewById(com.kan_n.R.id.tvStartDateVal);
+        tvDueDateVal = includedInfo.findViewById(com.kan_n.R.id.tvDueDateVal);
+        rvAttachments = includedInfo.findViewById(com.kan_n.R.id.rvAttachments);
+        rvCheckList = includedInfo.findViewById(com.kan_n.R.id.rvCheckList);
+        btnAddCheckItem = includedInfo.findViewById(com.kan_n.R.id.btnAddCheckItem);
+        btnUploadFile = includedInfo.findViewById(com.kan_n.R.id.btnUploadFile);
+        layoutStartDate = includedInfo.findViewById(com.kan_n.R.id.layoutStartDate);
+        layoutDueDate = includedInfo.findViewById(com.kan_n.R.id.layoutDueDate);
+
+        // --- Setup Adapter Checklist ---
+        checklistAdapter = new ChecklistAdapter((item, position, isChecked) -> {
+            // Khi tick vào checkbox -> Cập nhật trạng thái item trong list tạm
+            if (position >= 0 && position < currentCheckList.size()) {
+                currentCheckList.get(position).setChecked(isChecked);
+                // Lưu toàn bộ list cập nhật lên Firebase
+                viewModel.updateCheckList(mCardId, currentCheckList);
+            }
+        });
+        rvCheckList.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvCheckList.setAdapter(checklistAdapter);
+
+        // --- Setup Adapter Attachment ---
+        attachmentAdapter = new AttachmentAdapter();
+        rvAttachments.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvAttachments.setAdapter(attachmentAdapter);
+
+        // --- Các sự kiện Click ---
+
+        // 1. Chọn ngày bắt đầu
+        layoutStartDate.setOnClickListener(v -> showDateTimePicker(true));
+
+        // 2. Chọn ngày kết thúc
+        layoutDueDate.setOnClickListener(v -> showDateTimePicker(false));
+
+        // 3. Thêm công việc
+        btnAddCheckItem.setOnClickListener(v -> showAddCheckItemDialog());
+
+        // 4. Chọn File
+        btnUploadFile.setOnClickListener(v -> openFilePicker());
+    }
+
+    /**
+     * Load dữ liệu thẻ từ Firebase và cập nhật giao diện
+     */
+    private void loadCardData() {
+        mCardListener = mDatabase.child("cards").child(mCardId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Card card = snapshot.getValue(Card.class);
+                if (card != null) {
+                    // --- Xử lý phần Self Tag (Code cũ) ---
+                    if (card.getSelfTagId() != null && !card.getSelfTagId().isEmpty()) {
+                        currentSelfTagId = card.getSelfTagId();
+                        loadTagDetails(currentSelfTagId);
+                    } else {
+                        currentSelfTagId = null;
+                        resetUIForCreateMode();
+                    }
+
+                    // --- [QUAN TRỌNG] Cập nhật giao diện mở rộng ---
+                    updateExtendedInfoUI(card);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                if (getContext() != null)
+                    Toast.makeText(getContext(), "Lỗi tải thẻ: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * Hàm cập nhật giao diện mở rộng dựa trên dữ liệu Card tải về
+     */
+    private void updateExtendedInfoUI(Card card) {
+        // 1. Cập nhật ngày tháng
+        tvStartDateVal.setText(formatDate(card.getStartDate()));
+        tvDueDateVal.setText(formatDate(card.getDueDate()));
+
+        // Kiểm tra quá hạn (Deadline)
+        if (card.getDueDate() > 0 && System.currentTimeMillis() > card.getDueDate()) {
+            tvDueDateVal.setTextColor(Color.RED);
+            tvDueDateVal.setText(formatDate(card.getDueDate()) + " (Quá hạn)");
+        } else {
+            tvDueDateVal.setTextColor(Color.BLACK);
+        }
+
+        // 2. Cập nhật Checklist
+        // Lưu ý: Firebase có thể trả về List hoặc HashMap tùy vào cách lưu
+        // Ở đây ta giả sử ViewModel/Model đã xử lý convert về List
+        if (card.getCheckList() != null) {
+            currentCheckList = new ArrayList<>(card.getCheckList()); // Copy ra list mới để thao tác
+            checklistAdapter.setItems(currentCheckList);
+        } else {
+            currentCheckList = new ArrayList<>();
+            checklistAdapter.setItems(currentCheckList);
+        }
+
+        // 3. Cập nhật File đính kèm
+        if (card.getAttachmentUrls() != null) {
+            attachmentAdapter.setFiles(card.getAttachmentUrls());
+            rvAttachments.setVisibility(View.VISIBLE);
+        } else {
+            rvAttachments.setVisibility(View.GONE);
+        }
+    }
+
+    // --- CÁC HÀM XỬ LÝ LOGIC NGÀY GIỜ ---
+
+    private void showDateTimePicker(boolean isStartDate) {
+        if (getContext() == null) return;
+        tempDate = Calendar.getInstance();
+
+        // 1. Chọn Ngày
+        new DatePickerDialog(getContext(), (view, year, month, dayOfMonth) -> {
+            tempDate.set(Calendar.YEAR, year);
+            tempDate.set(Calendar.MONTH, month);
+            tempDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+            // 2. Chọn Giờ
+            new TimePickerDialog(getContext(), (timeView, hourOfDay, minute) -> {
+                tempDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                tempDate.set(Calendar.MINUTE, minute);
+
+                long timestamp = tempDate.getTimeInMillis();
+
+                // Gọi ViewModel lưu lên Firebase
+                if (isStartDate) {
+                    viewModel.updateCardStartDate(mCardId, timestamp);
+                } else {
+                    viewModel.updateCardDueDate(mCardId, timestamp);
+                }
+            }, tempDate.get(Calendar.HOUR_OF_DAY), tempDate.get(Calendar.MINUTE), true).show();
+
+        }, tempDate.get(Calendar.YEAR), tempDate.get(Calendar.MONTH), tempDate.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private String formatDate(long timestamp) {
+        if (timestamp == 0) return "--/--/---- --:--";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        return sdf.format(new Date(timestamp));
+    }
+
+    // --- CÁC HÀM XỬ LÝ LOGIC CHECKLIST & FILE ---
+
+    private void showAddCheckItemDialog() {
+        if (getContext() == null) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Thêm công việc");
+
+        final EditText input = new EditText(getContext());
+        input.setHint("Nhập tên công việc...");
+        builder.setView(input);
+
+        builder.setPositiveButton("Thêm", (dialog, which) -> {
+            String taskName = input.getText().toString().trim();
+            if (!taskName.isEmpty()) {
+                CheckItem newItem = new CheckItem(taskName, false);
+                viewModel.addChecklistItem(mCardId, newItem);
+            }
+        });
+        builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*"); // Cho phép chọn mọi loại file
+        startActivityForResult(intent, 101);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 101 && resultCode == android.app.Activity.RESULT_OK && data != null) {
+            Uri fileUri = data.getData();
+            if (fileUri != null) {
+                // TODO: Gọi ViewModel để upload file lên Firebase Storage
+                // Tạm thời hiển thị Toast
+                Toast.makeText(getContext(), "Đã chọn file: " + fileUri.getLastPathSegment(), Toast.LENGTH_SHORT).show();
+
+                // Demo: Thêm tên file vào danh sách (thực tế cần upload xong lấy URL)
+                // viewModel.addAttachment(mCardId, fileUri.getLastPathSegment());
+            }
+        }
+    }
+
+    // --- CÁC HÀM CŨ (Tag, Permission) GIỮ NGUYÊN ---
+
     private void checkIfCardInFirstListAndSetupUI() {
-        // 1. Lấy thông tin thẻ để biết nó nằm ở list nào (listId)
         mDatabase.child("cards").child(mCardId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot cardSnap) {
@@ -103,7 +337,6 @@ public class CardSpaceFragment extends Fragment {
                 if (card == null) return;
                 String currentListId = card.getListId();
 
-                // 2. Lấy tất cả danh sách trong Bảng để tìm ra danh sách đầu tiên
                 mDatabase.child("lists").orderByChild("boardId").equalTo(mBoardId)
                         .addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
@@ -114,7 +347,6 @@ public class CardSpaceFragment extends Fragment {
                                 for (DataSnapshot ds : listSnap.getChildren()) {
                                     ListModel list = ds.getValue(ListModel.class);
                                     if (list != null) {
-                                        // Tìm list có position nhỏ nhất
                                         if (list.getPosition() < minPos) {
                                             minPos = list.getPosition();
                                             firstList = list;
@@ -123,59 +355,21 @@ public class CardSpaceFragment extends Fragment {
                                     }
                                 }
 
-                                // 3. So sánh
                                 if (firstList != null && firstList.getUid().equals(currentListId)) {
-                                    // Đây là thẻ thuộc DS1 -> ĐƯỢC QUYỀN TẠO/SỬA TAG
                                     isCardInFirstList = true;
                                     binding.btnCreateSelfTag.setVisibility(View.VISIBLE);
                                 } else {
-                                    // Thẻ ở DS2, DS3... -> KHÔNG ĐƯỢC QUYỀN TẠO TAG
                                     isCardInFirstList = false;
                                     binding.btnCreateSelfTag.setVisibility(View.GONE);
                                 }
                             }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError error) {}
+                            @Override public void onCancelled(@NonNull DatabaseError error) {}
                         });
             }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
-    /**
-     * [MỚI] Load dữ liệu thẻ để biết đã có Tag hay chưa
-     */
-    private void loadCardData() {
-        mCardListener = mDatabase.child("cards").child(mCardId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Card card = snapshot.getValue(Card.class);
-                if (card != null) {
-                    // Kiểm tra xem thẻ có Self Tag không
-                    if (card.getSelfTagId() != null && !card.getSelfTagId().isEmpty()) {
-                        // Đã có Tag -> Chuyển sang chế độ "Sửa"
-                        currentSelfTagId = card.getSelfTagId();
-                        loadTagDetails(currentSelfTagId);
-                    } else {
-                        // Chưa có Tag -> Chế độ "Tạo mới"
-                        currentSelfTagId = null;
-                        resetUIForCreateMode();
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getContext(), "Lỗi tải thẻ: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    /**
-     * Load chi tiết Tag (Tên, Màu) từ node "tags"
-     */
     private void loadTagDetails(String tagId) {
         mDatabase.child("tags").child(tagId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -187,16 +381,13 @@ public class CardSpaceFragment extends Fragment {
                     updateUIForEditMode();
                 }
             }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
         });
     }
 
     private void updateUIForEditMode() {
         if (binding == null) return;
         binding.btnCreateSelfTag.setText("Sửa Tag");
-        // Có thể đổi màu nút theo màu Tag để đẹp hơn
         try {
             binding.btnCreateSelfTag.setBackgroundColor(Color.parseColor(currentTagColor));
         } catch (Exception e) {
@@ -207,17 +398,13 @@ public class CardSpaceFragment extends Fragment {
     private void resetUIForCreateMode() {
         if (binding == null) return;
         binding.btnCreateSelfTag.setText("Tạo Tag Mới");
-        binding.btnCreateSelfTag.setBackgroundColor(Color.parseColor("#2196F3")); // Màu mặc định
+        binding.btnCreateSelfTag.setBackgroundColor(Color.parseColor("#2196F3"));
         currentTagName = "";
         currentTagColor = "#FF0000";
     }
 
-    /**
-     * Dialog chọn màu & tên (Đã cải tiến Logic Pre-fill dữ liệu cũ)
-     */
     private void showAdvancedColorPickerDialog() {
         if (getContext() == null) return;
-
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         boolean isEditing = (currentSelfTagId != null);
         builder.setTitle(isEditing ? "Sửa Tag hiện tại" : "Tạo Tag mới");
@@ -226,13 +413,11 @@ public class CardSpaceFragment extends Fragment {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(50, 40, 50, 10);
 
-        // 1. Ô nhập tên Tag (Điền sẵn nếu đang sửa)
         final EditText etTagName = new EditText(getContext());
         etTagName.setHint("Nhập tên Tag...");
-        etTagName.setText(currentTagName); // Pre-fill
+        etTagName.setText(currentTagName);
         layout.addView(etTagName);
 
-        // 2. View Preview
         View colorPreview = new View(getContext());
         LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 200);
@@ -242,7 +427,6 @@ public class CardSpaceFragment extends Fragment {
         GradientDrawable previewShape = new GradientDrawable();
         previewShape.setCornerRadius(20);
 
-        // Parse màu hiện tại (hoặc mặc định)
         int initialColor;
         try {
             initialColor = Color.parseColor(currentTagColor);
@@ -253,7 +437,6 @@ public class CardSpaceFragment extends Fragment {
         colorPreview.setBackground(previewShape);
         layout.addView(colorPreview);
 
-        // 3. SeekBar Spectrum
         TextView tvLabel = new TextView(getContext());
         tvLabel.setText("Kéo để đổi màu:");
         layout.addView(tvLabel);
@@ -262,10 +445,9 @@ public class CardSpaceFragment extends Fragment {
         colorSeekBar.setMax(360);
         colorSeekBar.setPadding(20, 20, 20, 20);
 
-        // Tính toán vị trí SeekBar dựa trên màu hiện tại (để thanh trượt nằm đúng chỗ màu cũ)
         float[] hsvCurrent = new float[3];
         Color.colorToHSV(initialColor, hsvCurrent);
-        colorSeekBar.setProgress((int) hsvCurrent[0]); // Set vị trí thanh trượt theo Hue
+        colorSeekBar.setProgress((int) hsvCurrent[0]);
 
         GradientDrawable rainbow = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[] {0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000});
@@ -276,7 +458,6 @@ public class CardSpaceFragment extends Fragment {
 
         final String[] selectedColorHex = {currentTagColor};
 
-        // Listener SeekBar
         colorSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -285,7 +466,6 @@ public class CardSpaceFragment extends Fragment {
                 hsv[1] = 1.0f;
                 hsv[2] = 1.0f;
                 int color = Color.HSVToColor(hsv);
-
                 previewShape.setColor(color);
                 colorPreview.setBackground(previewShape);
                 selectedColorHex[0] = String.format("#%06X", (0xFFFFFF & color));
@@ -295,7 +475,6 @@ public class CardSpaceFragment extends Fragment {
         });
 
         builder.setView(layout);
-
         builder.setPositiveButton(isEditing ? "Cập nhật" : "Tạo mới", (dialog, which) -> {
             String tagName = etTagName.getText().toString().trim();
             if (tagName.isEmpty()) {
@@ -305,19 +484,14 @@ public class CardSpaceFragment extends Fragment {
             saveOrUpdateSelfTag(tagName, selectedColorHex[0]);
         });
 
-        // Nút xóa Tag (chỉ hiện khi đang sửa)
         if (isEditing) {
             builder.setNeutralButton("Gỡ Tag", (dialog, which) -> removeSelfTag());
         } else {
             builder.setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss());
         }
-
         builder.show();
     }
 
-    /**
-     * Logic Lưu hoặc Cập nhật Tag
-     */
     private void saveOrUpdateSelfTag(String tagName, String colorCode) {
         if (mCardId == null) return;
         String userId = (FirebaseAuth.getInstance().getCurrentUser() != null) ?
@@ -328,16 +502,11 @@ public class CardSpaceFragment extends Fragment {
         String tagIdToSave;
 
         if (currentSelfTagId != null) {
-            // --- LOGIC SỬA (Update) ---
             tagIdToSave = currentSelfTagId;
             updates.put("/tags/" + tagIdToSave + "/name", tagName);
             updates.put("/tags/" + tagIdToSave + "/color", colorCode);
-
-            // [MỚI - QUAN TRỌNG] Đồng bộ màu cho TẤT CẢ thẻ khác đang dùng Tag này
             syncColorToSubscribers(tagIdToSave, colorCode);
-
         } else {
-            // --- LOGIC TẠO MỚI (Create) ---
             tagIdToSave = db.child("tags").push().getKey();
             Tag newTag = new Tag(tagName, colorCode, userId);
             newTag.setUid(tagIdToSave);
@@ -346,67 +515,53 @@ public class CardSpaceFragment extends Fragment {
             updates.put("/tags/" + tagIdToSave, tagMap);
         }
 
-        // Cập nhật chính thẻ này
         updates.put("/cards/" + mCardId + "/selfTagId", tagIdToSave);
         updates.put("/cards/" + mCardId + "/labelColor", colorCode);
 
         db.updateChildren(updates).addOnSuccessListener(unused -> {
-            Toast.makeText(getContext(), currentSelfTagId != null ? "Đã cập nhật Tag!" : "Đã tạo Tag mới!", Toast.LENGTH_SHORT).show();
-        }).addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            if (getContext() != null)
+                Toast.makeText(getContext(), currentSelfTagId != null ? "Đã cập nhật Tag!" : "Đã tạo Tag mới!", Toast.LENGTH_SHORT).show();
+        }).addOnFailureListener(e -> {
+            if (getContext() != null)
+                Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void syncColorToSubscribers(String tagId, String newColor) {
         DatabaseReference cardsRef = FirebaseDatabase.getInstance().getReference("cards");
-
-        // Tìm tất cả thẻ có assignedTagId == tagId
         cardsRef.orderByChild("assignedTagId").equalTo(tagId)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         Map<String, Object> bulkUpdates = new HashMap<>();
-
                         for (DataSnapshot ds : snapshot.getChildren()) {
                             String cardKey = ds.getKey();
-                            // Tạo path update cho từng thẻ
                             bulkUpdates.put("/" + cardKey + "/labelColor", newColor);
                         }
-
                         if (!bulkUpdates.isEmpty()) {
                             cardsRef.updateChildren(bulkUpdates);
                         }
                     }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        // Log lỗi nếu cần
-                    }
+                    @Override public void onCancelled(@NonNull DatabaseError error) {}
                 });
     }
 
-    /**
-     * Logic Xóa/Gỡ Tag
-     */
     private void removeSelfTag() {
         if (mCardId == null || currentSelfTagId == null) return;
-
-        // Bạn có thể chọn: Xóa hẳn tag trong node 'tags' hay chỉ gỡ khỏi card?
-        // Theo logic "Tag bản thân" (1-1), nên xóa luôn Tag trong node tags để không rác DB
-
         Map<String, Object> updates = new HashMap<>();
-        updates.put("/tags/" + currentSelfTagId, null); // Xóa tag
-        updates.put("/cards/" + mCardId + "/selfTagId", null); // Gỡ khỏi card
-        updates.put("/cards/" + mCardId + "/labelColor", ""); // Xóa màu
+        updates.put("/tags/" + currentSelfTagId, null);
+        updates.put("/cards/" + mCardId + "/selfTagId", null);
+        updates.put("/cards/" + mCardId + "/labelColor", "");
 
         mDatabase.updateChildren(updates).addOnSuccessListener(unused -> {
-            Toast.makeText(getContext(), "Đã gỡ Tag", Toast.LENGTH_SHORT).show();
-            // UI sẽ tự reset nhờ loadCardData lắng nghe
+            if (getContext() != null)
+                Toast.makeText(getContext(), "Đã gỡ Tag", Toast.LENGTH_SHORT).show();
         });
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Gỡ listener để tránh memory leak
         if (mCardListener != null && mCardId != null) {
             mDatabase.child("cards").child(mCardId).removeEventListener(mCardListener);
         }
@@ -417,7 +572,8 @@ public class CardSpaceFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if (getActivity() != null && getActivity() instanceof AppCompatActivity) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
+            if (((AppCompatActivity) getActivity()).getSupportActionBar() != null)
+                ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
         }
     }
 }
