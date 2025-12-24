@@ -30,8 +30,6 @@ public class TaoBangMoiFragment extends Fragment {
     private TaoBangMoiViewModel viewModel;
     private NavController navController;
     private ArrayAdapter<Workspace> workspaceAdapter;
-
-    // ✨ Biến tạm để lưu ID workspace người dùng chọn
     private String currentSelectedWorkspaceId = "";
 
     @Override
@@ -107,7 +105,7 @@ public class TaoBangMoiFragment extends Fragment {
             String visibility = mapVisibility(selectedVisibilityString);
             String workspaceId = (selectedWorkspace != null) ? selectedWorkspace.getUid() : null;
 
-            // ✨ Lưu lại ID workspace đã chọn để gửi về BangFragment khi thành công
+            // Lưu lại ID workspace đã chọn để gửi về BangFragment khi thành công
             if (workspaceId != null) {
                 this.currentSelectedWorkspaceId = workspaceId;
             }
@@ -155,7 +153,7 @@ public class TaoBangMoiFragment extends Fragment {
                 case SUCCESS:
                     Toast.makeText(getContext(), "Tạo bảng thành công!", Toast.LENGTH_SHORT).show();
 
-                    // ✨ [LOGIC MỚI] Gửi kết quả về BangFragment
+                    // Gửi kết quả về BangFragment
                     // Giống như callback onSuccess của Delete/Update: "Tôi đã làm xong, hãy reload đi"
                     Bundle result = new Bundle();
                     result.putBoolean("refresh_needed", true);

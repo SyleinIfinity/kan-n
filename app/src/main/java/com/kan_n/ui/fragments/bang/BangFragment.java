@@ -70,7 +70,7 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
             }
         });
 
-        // --- ✨ LẮNG NGHE KẾT QUẢ TỪ MÀN HÌNH TẠO BẢNG ---
+
         // Đây là phần logic tương đương với callback onSuccess của Xóa/Sửa
         getParentFragmentManager().setFragmentResultListener("key_create_board", getViewLifecycleOwner(), (requestKey, result) -> {
             if (result.getBoolean("refresh_needed")) {

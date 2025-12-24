@@ -22,7 +22,5 @@ public interface InvitationRepository {
 
     void acceptInvitation(Invitation invitation, InviteCallback callback);
     void declineInvitation(String invitationId, InviteCallback callback);
-
-    // ✨ [MỚI] Thêm hàm này để hủy lắng nghe khi thoát màn hình
     void removeListener();
 }
