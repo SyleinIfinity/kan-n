@@ -16,13 +16,16 @@ import java.util.List;
 public class ChecklistAdapter extends RecyclerView.Adapter<ChecklistAdapter.ViewHolder> {
 
     private List<CheckItem> items = new ArrayList<>();
-    private OnItemCheckListener listener;
+    private final OnCheckItemActionListener listener;
 
-    public interface OnItemCheckListener {
+    // [QUAN TRỌNG] Định nghĩa Interface này để Fragment gọi
+    public interface OnCheckItemActionListener {
         void onItemChecked(CheckItem item, int position, boolean isChecked);
+        void onItemLongClicked(CheckItem item, int position); // Sự kiện nhấn giữ
     }
 
-    public ChecklistAdapter(OnItemCheckListener listener) {
+    // Constructor nhận Interface mới
+    public ChecklistAdapter(OnCheckItemActionListener listener) {
         this.listener = listener;
     }
 
@@ -34,7 +37,6 @@ public class ChecklistAdapter extends RecyclerView.Adapter<ChecklistAdapter.View
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Sử dụng layout item_checklist.xml vừa tạo
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_checklist, parent, false);
         return new ViewHolder(view);
     }
@@ -45,7 +47,9 @@ public class ChecklistAdapter extends RecyclerView.Adapter<ChecklistAdapter.View
     }
 
     @Override
-    public int getItemCount() { return items != null ? items.size() : 0; }
+    public int getItemCount() {
+        return items != null ? items.size() : 0;
+    }
 
     class ViewHolder extends RecyclerView.ViewHolder {
         CheckBox cb;
@@ -59,18 +63,30 @@ public class ChecklistAdapter extends RecyclerView.Adapter<ChecklistAdapter.View
 
         void bind(CheckItem item, int position) {
             tv.setText(item.getTitle());
-            cb.setOnCheckedChangeListener(null); // Tránh trigger khi setChecked
+
+            cb.setOnCheckedChangeListener(null);
             cb.setChecked(item.isChecked());
 
             // Gạch ngang chữ nếu đã hoàn thành
             if (item.isChecked()) {
                 tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                tv.setTextColor(android.graphics.Color.GRAY);
             } else {
                 tv.setPaintFlags(tv.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+                tv.setTextColor(android.graphics.Color.BLACK);
             }
 
+            // Sự kiện Check
             cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (listener != null) listener.onItemChecked(item, position, isChecked);
+            });
+
+            // Sự kiện Nhấn giữ vào dòng chữ (để sửa tên)
+            tv.setOnLongClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemLongClicked(item, position);
+                }
+                return true;
             });
         }
     }

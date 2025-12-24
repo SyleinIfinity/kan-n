@@ -149,14 +149,22 @@ public class CardSpaceFragment extends Fragment {
         layoutDueDate = includedInfo.findViewById(com.kan_n.R.id.layoutDueDate);
 
         // --- Setup Adapter Checklist ---
-        checklistAdapter = new ChecklistAdapter((item, position, isChecked) -> {
-            // Khi tick vào checkbox -> Cập nhật trạng thái item trong list tạm
-            if (position >= 0 && position < currentCheckList.size()) {
-                currentCheckList.get(position).setChecked(isChecked);
-                // Lưu toàn bộ list cập nhật lên Firebase
-                viewModel.updateCheckList(mCardId, currentCheckList);
+        checklistAdapter = new ChecklistAdapter(new ChecklistAdapter.OnCheckItemActionListener() {
+            @Override
+            public void onItemChecked(CheckItem item, int position, boolean isChecked) {
+                if (position >= 0 && position < currentCheckList.size()) {
+                    currentCheckList.get(position).setChecked(isChecked);
+                    viewModel.updateCheckList(mCardId, currentCheckList);
+                }
+            }
+
+            @Override
+            public void onItemLongClicked(CheckItem item, int position) {
+
+                showRenameCheckItemDialog(item, position);
             }
         });
+
         rvCheckList.setLayoutManager(new LinearLayoutManager(getContext()));
         rvCheckList.setAdapter(checklistAdapter);
 
@@ -557,6 +565,48 @@ public class CardSpaceFragment extends Fragment {
             if (getContext() != null)
                 Toast.makeText(getContext(), "Đã gỡ Tag", Toast.LENGTH_SHORT).show();
         });
+    }
+
+    // --- HỘP THOẠI ĐỔI TÊN CÔNG VIỆC ---
+    private void showRenameCheckItemDialog(CheckItem item, int position) {
+        if (getContext() == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Sửa tên công việc");
+
+        final EditText input = new EditText(getContext());
+        input.setText(item.getTitle()); // Điền sẵn tên cũ
+        // Đặt con trỏ về cuối dòng để tiện nhập tiếp
+        input.setSelection(item.getTitle().length());
+
+        // Thêm padding cho đẹp
+        LinearLayout container = new LinearLayout(getContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(50, 0, 50, 0);
+        input.setLayoutParams(params);
+        container.addView(input);
+
+        builder.setView(container);
+
+        builder.setPositiveButton("Cập nhật", (dialog, which) -> {
+            String newName = input.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                // 1. Cập nhật dữ liệu trong list tạm
+                currentCheckList.get(position).setTitle(newName);
+
+                // 2. Cập nhật lên Firebase
+                viewModel.updateCheckList(mCardId, currentCheckList);
+
+                Toast.makeText(getContext(), "Đã cập nhật", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Tên không được để trống", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
+        builder.show();
     }
 
     @Override
