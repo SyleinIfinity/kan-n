@@ -19,6 +19,7 @@ public class User {
     private String birthDate;
     private long createdAt;
     private boolean isActive;
+    private String lastActiveWorkspace;
 
     public User() {
         // Constructor trống
@@ -65,7 +66,9 @@ public class User {
     public void setBirthDate(String birthDate) { this.birthDate = birthDate; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
-
+    // Getter/Setter cho lastActiveWorkspace
+    public String getLastActiveWorkspace(){ return lastActiveWorkspace;}
+    public void setLastActiveWorkspace(String lastActiveWorkspace){this.lastActiveWorkspace = lastActiveWorkspace;}
     @Exclude
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
@@ -78,6 +81,9 @@ public class User {
         result.put("birthDate", birthDate);
         result.put("createdAt", createdAt);
         result.put("isActive", isActive);
+        if(lastActiveWorkspace != null){
+            result.put("lastActiveWorkspace", lastActiveWorkspace);
+        }
         return result;
     }
 }

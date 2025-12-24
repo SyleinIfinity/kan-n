@@ -1,6 +1,8 @@
 package com.kan_n.ui.fragments.thongtin;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -61,6 +63,9 @@ public class TrangCaiDatFragment extends Fragment {
         });
 
         binding.itemDangxuat.getRoot().setOnClickListener(v -> {
+            //Xóa ID Workspace của tài khoản cũ khỏi bộ nhớ máy
+            SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
+            prefs.edit().remove("active_ws_id").apply();
             // 1. Gọi hàm logout từ ViewModel
             thongTinViewModel.logout();
 
