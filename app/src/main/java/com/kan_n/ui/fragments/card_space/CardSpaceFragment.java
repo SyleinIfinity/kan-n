@@ -179,6 +179,13 @@ public class CardSpaceFragment extends Fragment {
                 if (position >= 0 && position < currentCheckList.size()) {
                     currentCheckList.get(position).setChecked(isChecked);
                     viewModel.updateCheckList(mCardId, currentCheckList);
+
+                    // Ghi log hoạt động Check/Uncheck
+                    String action = isChecked ? "Đã hoàn thành công việc: " : "Đã gỡ hoàn thành công việc: ";
+                    viewModel.logActivity(mCardId, action + item.getTitle());
+
+                    // Tải lại lịch sử
+                    loadActivities();
                 }
             }
 
@@ -353,24 +360,26 @@ public class CardSpaceFragment extends Fragment {
     private void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("*/*"); // Cho phép chọn mọi loại file
-        startActivityForResult(intent, 101);
+        filePickerLauncher.launch(intent);
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 101 && resultCode == android.app.Activity.RESULT_OK && data != null) {
-            Uri fileUri = data.getData();
-            if (fileUri != null) {
-                // TODO: Gọi ViewModel để upload file lên Firebase Storage
-                // Tạm thời hiển thị Toast
-                Toast.makeText(getContext(), "Đã chọn file: " + fileUri.getLastPathSegment(), Toast.LENGTH_SHORT).show();
 
-                // Demo: Thêm tên file vào danh sách (thực tế cần upload xong lấy URL)
-                // viewModel.addAttachment(mCardId, fileUri.getLastPathSegment());
-            }
-        }
-    }
+
+    private final androidx.activity.result.ActivityResultLauncher<Intent> filePickerLauncher =
+            registerForActivityResult(new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    Uri fileUri = result.getData().getData();
+                    if (fileUri != null) {
+                        // Xử lý file (Code cũ chuyển vào đây)
+                        String fileName = fileUri.getLastPathSegment();
+                        Toast.makeText(getContext(), "Đã chọn file: " + fileName, Toast.LENGTH_SHORT).show();
+
+                        // Ghi log và load lại
+                        viewModel.logActivity(mCardId, "Đã tải lên tệp: " + fileName);
+                        loadActivities();
+                    }
+                }
+            });
 
     // --- CÁC HÀM CŨ (Tag, Permission) GIỮ NGUYÊN ---
 
@@ -564,8 +573,14 @@ public class CardSpaceFragment extends Fragment {
         updates.put("/cards/" + mCardId + "/labelColor", colorCode);
 
         db.updateChildren(updates).addOnSuccessListener(unused -> {
-            if (getContext() != null)
-                Toast.makeText(getContext(), currentSelfTagId != null ? "Đã cập nhật Tag!" : "Đã tạo Tag mới!", Toast.LENGTH_SHORT).show();
+            if (getContext() != null) {
+                String msg = (currentSelfTagId != null) ? "Đã cập nhật Tag" : "Đã tạo Tag mới";
+                Toast.makeText(getContext(), msg + "!", Toast.LENGTH_SHORT).show();
+
+                // Ghi log hoạt động
+                viewModel.logActivity(mCardId, msg + ": " + tagName);
+                loadActivities(); // Refresh log
+            }
         }).addOnFailureListener(e -> {
             if (getContext() != null)
                 Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -599,8 +614,13 @@ public class CardSpaceFragment extends Fragment {
         updates.put("/cards/" + mCardId + "/labelColor", "");
 
         mDatabase.updateChildren(updates).addOnSuccessListener(unused -> {
-            if (getContext() != null)
+            if (getContext() != null) {
                 Toast.makeText(getContext(), "Đã gỡ Tag", Toast.LENGTH_SHORT).show();
+
+                // Ghi log hoạt động
+                viewModel.logActivity(mCardId, "Đã gỡ Tag khỏi thẻ");
+                loadActivities(); // Refresh log
+            }
         });
     }
 
@@ -612,11 +632,10 @@ public class CardSpaceFragment extends Fragment {
         builder.setTitle("Sửa tên công việc");
 
         final EditText input = new EditText(getContext());
-        input.setText(item.getTitle()); // Điền sẵn tên cũ
-        // Đặt con trỏ về cuối dòng để tiện nhập tiếp
-        input.setSelection(item.getTitle().length());
+        String oldName = item.getTitle(); // Lưu tên cũ để ghi log
+        input.setText(oldName);
+        input.setSelection(oldName.length());
 
-        // Thêm padding cho đẹp
         LinearLayout container = new LinearLayout(getContext());
         container.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -630,18 +649,17 @@ public class CardSpaceFragment extends Fragment {
         builder.setPositiveButton("Cập nhật", (dialog, which) -> {
             String newName = input.getText().toString().trim();
             if (!newName.isEmpty()) {
-                // 1. Cập nhật dữ liệu trong list tạm
+                // 1. Cập nhật dữ liệu
                 currentCheckList.get(position).setTitle(newName);
-
-                // 2. Cập nhật lên Firebase
                 viewModel.updateCheckList(mCardId, currentCheckList);
 
+                // [MỚI] Ghi vào lịch sử
+                viewModel.logActivity(mCardId, "Đã đổi tên công việc: \"" + oldName + "\" thành \"" + newName + "\"");
+                loadActivities(); // Tải lại log ngay
+
                 Toast.makeText(getContext(), "Đã cập nhật", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(), "Tên không được để trống", Toast.LENGTH_SHORT).show();
             }
         });
-
         builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
         builder.show();
     }

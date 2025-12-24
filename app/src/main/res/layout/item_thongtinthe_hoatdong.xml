@@ -33,7 +33,9 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvActivityLog"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:nestedScrollingEnabled="false"/>
+        android:layout_height="300dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false"
+        android:nestedScrollingEnabled="true" />
 
 </LinearLayout>
