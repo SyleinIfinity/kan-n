@@ -548,43 +548,66 @@ public class CardSpaceFragment extends Fragment {
 
     private void saveOrUpdateSelfTag(String tagName, String colorCode) {
         if (mCardId == null) return;
-        String userId = (FirebaseAuth.getInstance().getCurrentUser() != null) ?
-                FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
 
-        DatabaseReference db = FirebaseDatabase.getInstance().getReference();
-        Map<String, Object> updates = new HashMap<>();
-        String tagIdToSave;
-
+        // TRƯỜNG HỢP 1: CẬP NHẬT TAG CŨ (QUAN TRỌNG: Dùng hàm mới để đồng bộ màu)
         if (currentSelfTagId != null) {
-            tagIdToSave = currentSelfTagId;
-            updates.put("/tags/" + tagIdToSave + "/name", tagName);
-            updates.put("/tags/" + tagIdToSave + "/color", colorCode);
-            syncColorToSubscribers(tagIdToSave, colorCode);
-        } else {
-            tagIdToSave = db.child("tags").push().getKey();
+            viewModel.updateTagAndPropagate(mCardId, currentSelfTagId, tagName, colorCode, new CardSpaceViewModel.TagUpdateCallback() {
+                @Override
+                public void onSuccess() {
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Đã cập nhật Tag và đồng bộ màu sắc!", Toast.LENGTH_SHORT).show();
+
+                        // Ghi log hoạt động
+                        viewModel.logActivity(mCardId, "Đã cập nhật Tag: " + tagName);
+                        loadActivities();
+
+                        // Cập nhật UI cục bộ
+                        currentTagName = tagName;
+                        currentTagColor = colorCode;
+                        updateUIForEditMode();
+                    }
+                }
+
+                @Override
+                public void onError(String message) {
+                    if (getContext() != null) {
+                        Toast.makeText(getContext(), "Lỗi cập nhật: " + message, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+        // TRƯỜNG HỢP 2: TẠO TAG MỚI (Logic tạo mới giữ nguyên vì chưa có ai mượn tag này)
+        else {
+            String userId = (FirebaseAuth.getInstance().getCurrentUser() != null) ?
+                    FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            DatabaseReference db = FirebaseDatabase.getInstance().getReference();
+            Map<String, Object> updates = new HashMap<>();
+
+            String tagIdToSave = db.child("tags").push().getKey();
             Tag newTag = new Tag(tagName, colorCode, userId);
             newTag.setUid(tagIdToSave);
+
             Map<String, Object> tagMap = newTag.toMap();
             if (mBoardId != null) tagMap.put("boardId", mBoardId);
+
+            // Lưu tag mới vào bảng tags
             updates.put("/tags/" + tagIdToSave, tagMap);
+            // Gán tag cho thẻ hiện tại
+            updates.put("/cards/" + mCardId + "/selfTagId", tagIdToSave);
+            updates.put("/cards/" + mCardId + "/selfTagColor", colorCode); // [MỚI] Lưu thêm field này cho chuẩn
+            updates.put("/cards/" + mCardId + "/labelColor", colorCode);
+
+            db.updateChildren(updates).addOnSuccessListener(unused -> {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Đã tạo Tag mới!", Toast.LENGTH_SHORT).show();
+                    viewModel.logActivity(mCardId, "Đã tạo Tag mới: " + tagName);
+                    loadActivities();
+                }
+            }).addOnFailureListener(e -> {
+                if (getContext() != null)
+                    Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
         }
-
-        updates.put("/cards/" + mCardId + "/selfTagId", tagIdToSave);
-        updates.put("/cards/" + mCardId + "/labelColor", colorCode);
-
-        db.updateChildren(updates).addOnSuccessListener(unused -> {
-            if (getContext() != null) {
-                String msg = (currentSelfTagId != null) ? "Đã cập nhật Tag" : "Đã tạo Tag mới";
-                Toast.makeText(getContext(), msg + "!", Toast.LENGTH_SHORT).show();
-
-                // Ghi log hoạt động
-                viewModel.logActivity(mCardId, msg + ": " + tagName);
-                loadActivities(); // Refresh log
-            }
-        }).addOnFailureListener(e -> {
-            if (getContext() != null)
-                Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        });
     }
 
     private void syncColorToSubscribers(String tagId, String newColor) {
