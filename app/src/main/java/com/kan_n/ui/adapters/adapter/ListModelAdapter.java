@@ -35,28 +35,31 @@ import java.util.Comparator;
 public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<ListModel> listModelList = new ArrayList<>();
-    private Context context;
-    private BangSpaceViewModel viewModel;
+    private final Context context;
+    private final BangSpaceViewModel viewModel;
+
     private static final int VIEW_TYPE_LIST = 0;
     private static final int VIEW_TYPE_ADD = 1;
 
+    private boolean isEditable = false;
+
+    // Listeners
     private final OnListMenuClickListener listMenuListener;
+    private final OnAddListClickListener addListClickListener;
+    private final OnItemCardClickListener cardClickListener;
+    private final OnItemCardLongClickListener cardLongClickListener;
 
     public interface OnListMenuClickListener {
         void onListMenuClick(View view, ListModel listModel, int position);
     }
 
-    private final OnAddListClickListener addListClickListener;
     public interface OnAddListClickListener {
         void onAddListClick();
     }
 
-    private final OnItemCardClickListener cardClickListener;
     public interface OnItemCardClickListener {
         void onCardClick(Card card);
     }
-
-    private final OnItemCardLongClickListener cardLongClickListener;
 
     public interface OnItemCardLongClickListener {
         void onCardLongClick(Card card, View view);
@@ -67,24 +70,28 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                             OnAddListClickListener addListener,
                             OnItemCardClickListener cardListener,
                             OnItemCardLongClickListener longListener,
-                            OnListMenuClickListener listMenuListener) { // <--- Thêm tham số này
+                            OnListMenuClickListener listMenuListener) {
         this.context = context;
         this.viewModel = viewModel;
         this.addListClickListener = addListener;
         this.cardClickListener = cardListener;
         this.cardLongClickListener = longListener;
-        this.listMenuListener = listMenuListener; // <--- Gán
+        this.listMenuListener = listMenuListener;
     }
 
-    //Vi tri trai phai cua danh sach
+    public void setEditable(boolean editable) {
+        this.isEditable = editable;
+        notifyDataSetChanged();
+    }
+
     public List<ListModel> getCurrentList() {
         return listModelList;
     }
 
-
     @Override
     public int getItemCount() {
-        return listModelList.size() + 1;
+        // Chỉ hiện nút "Thêm danh sách" ở cuối nếu có quyền edit
+        return isEditable ? listModelList.size() + 1 : listModelList.size();
     }
 
     @Override
@@ -96,9 +103,9 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        if (viewType == 0) { // VIEW_TYPE_LIST
+        if (viewType == VIEW_TYPE_LIST) {
             View view = inflater.inflate(R.layout.item_listmodel, parent, false);
-            return new ListModelViewHolder(view); // Class này cần sửa constructor bên dưới
+            return new ListModelViewHolder(view);
         } else {
             View view = inflater.inflate(R.layout.item_add_list, parent, false);
             return new AddListViewHolder(view);
@@ -110,8 +117,7 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (holder instanceof ListModelViewHolder) {
             ListModel listModel = listModelList.get(position);
             if (listModel != null) {
-                // Truyền position
-                ((ListModelViewHolder) holder).bind(listModel, cardLongClickListener, position);
+                ((ListModelViewHolder) holder).bind(listModel, position);
             }
         } else if (holder instanceof AddListViewHolder) {
             ((AddListViewHolder) holder).bind(addListClickListener);
@@ -126,12 +132,10 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
-    // --- Các hàm quản lý dữ liệu list ---
+    // --- Quản lý dữ liệu List ---
     private int getInsertPosition(ListModel list) {
         for (int i = 0; i < listModelList.size(); i++) {
-            if (listModelList.get(i).getPosition() > list.getPosition()) {
-                return i;
-            }
+            if (listModelList.get(i).getPosition() > list.getPosition()) return i;
         }
         return listModelList.size();
     }
@@ -145,10 +149,9 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public void updateList(ListModel updatedList) {
         for (int i = 0; i < listModelList.size(); i++) {
             if (listModelList.get(i).getUid().equals(updatedList.getUid())) {
-                // 1. Cập nhật dữ liệu mới
+                // Cập nhật dữ liệu mới
                 listModelList.set(i, updatedList);
 
-                // 2. [QUAN TRỌNG] Sắp xếp lại danh sách theo 'position' tăng dần
                 Collections.sort(listModelList, new Comparator<ListModel>() {
                     @Override
                     public int compare(ListModel o1, ListModel o2) {
@@ -156,7 +159,6 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                     }
                 });
 
-                // 3. Thông báo cho RecyclerView vẽ lại toàn bộ theo thứ tự mới
                 notifyDataSetChanged();
                 return;
             }
@@ -183,9 +185,7 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         TextView tvListTitle;
         RecyclerView rvCards;
         ImageView ivMenuDanhSach;
-
-
-        private CardAdapter cardAdapter;
+        private final CardAdapter cardAdapter;
         private String currentListId;
 
         public ListModelViewHolder(@NonNull View itemView) {
@@ -193,86 +193,37 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             tvListTitle = itemView.findViewById(R.id.tvTieuDeDanhSach);
             rvCards = itemView.findViewById(R.id.rvDanhSachThe);
             ivMenuDanhSach = itemView.findViewById(R.id.ivMenuDanhSach);
-            rvCards.setLayoutManager(new LinearLayoutManager(context));
 
-            // 1. Listener mở Dialog Thêm thẻ
-            CardAdapter.OnAddCardClickListener addCardListener = new CardAdapter.OnAddCardClickListener() {
-                @Override
-                public void onAddCardClick() {
-                    if (currentListId != null) showAddCardDialog(currentListId);
-                }
-            };
-
-            // Listener Click thẻ
-            CardAdapter.OnCardClickListener itemClickListener = new CardAdapter.OnCardClickListener() {
-                @Override
-                public void onCardClick(Card card) {
-                    if (cardClickListener != null) {
-                        cardClickListener.onCardClick(card);
-                    }
-                }
-            };
-
-            CardAdapter.OnCardLongClickListener itemLongClickListener = new CardAdapter.OnCardLongClickListener() {
-                @Override
-                public void onCardLongClick(Card card, View view) {
-                    if (cardLongClickListener != null) {
-                        cardLongClickListener.onCardLongClick(card, view);
-                    }
-                }
-            };
-
-            cardAdapter = new CardAdapter(context, addCardListener, itemClickListener, itemLongClickListener);
+            // Khởi tạo CardAdapter
+            cardAdapter = new CardAdapter(context,
+                    () -> { if (currentListId != null) showAddCardDialog(currentListId); },
+                    card -> { if (cardClickListener != null) cardClickListener.onCardClick(card); },
+                    (card, view) -> { if (cardLongClickListener != null) cardLongClickListener.onCardLongClick(card, view); }
+            );
 
             rvCards.setLayoutManager(new LinearLayoutManager(context));
             rvCards.setAdapter(cardAdapter);
         }
 
-        public void bind(ListModel listModel, OnItemCardLongClickListener longListener, int position) {
-            String currentListId = listModel.getUid();
-            tvListTitle.setText(listModel.getTitle());
-
-            if (this.currentListId != null) {
-                viewModel.removeCardListener(this.currentListId);
-            }
+        public void bind(ListModel listModel, int position) {
             this.currentListId = listModel.getUid();
             tvListTitle.setText(listModel.getTitle());
 
-            // Sự kiện click vào Menu danh sách
+            // Ẩn hiện menu tùy chọn của cột
+            ivMenuDanhSach.setVisibility(isEditable ? View.VISIBLE : View.GONE);
             ivMenuDanhSach.setOnClickListener(v -> {
-                if (listMenuListener != null) {
-                    listMenuListener.onListMenuClick(ivMenuDanhSach, listModel, position);
-                }
+                if (listMenuListener != null) listMenuListener.onListMenuClick(v, listModel, position);
             });
 
-            // Tạo Adapter cho Card bên trong List
-            cardAdapter = new CardAdapter(context,
-                    // Add Listener
-                    new CardAdapter.OnAddCardClickListener() {
-                        @Override
-                        public void onAddCardClick() {
-                            showAddCardDialog(currentListId);
-                        }
-                    },
-                    // Click Listener
-                    new CardAdapter.OnCardClickListener() {
-                        @Override
-                        public void onCardClick(Card card) {
-                            if (cardClickListener != null) cardClickListener.onCardClick(card);
-                        }
-                    },
-                    // Long Click Listener
-                    new CardAdapter.OnCardLongClickListener() {
-                        @Override
-                        public void onCardLongClick(Card card, View view) {
-                            if (longListener != null) longListener.onCardLongClick(card, view);
-                        }
-                    }
-            );
-            rvCards.setAdapter(cardAdapter);
+            // Cập nhật quyền cho CardAdapter bên trong, nạp lại dữ liệu và xóa dữ liệu thẻ cũ
+            if (cardAdapter != null) {
+                cardAdapter.clearData();
+                cardAdapter.setEditable(isEditable);
+            }
 
-
-            ChildEventListener cardListener = new ChildEventListener() {
+            // Xử lý nạp dữ liệu thẻ từ Firebase
+            viewModel.removeCardListener(this.currentListId);
+            viewModel.listenForCards(this.currentListId, new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                     Card card = snapshot.getValue(Card.class);
@@ -293,33 +244,24 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 public void onChildRemoved(@NonNull DataSnapshot snapshot) {
                     cardAdapter.removeCard(snapshot.getKey());
                 }
-                @Override
-                public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { }
-                @Override
-                public void onCancelled(@NonNull DatabaseError error) { }
-            };
-
-
-            viewModel.listenForCards(this.currentListId, cardListener);
+                @Override public void onChildMoved(@NonNull DataSnapshot s, @Nullable String p) {}
+                @Override public void onCancelled(@NonNull DatabaseError e) {}
+            });
         }
 
         public void clearListener() {
-            // Hàm này được gọi khi view bị hủy hoặc recycle
             if (viewModel != null && this.currentListId != null) {
                 viewModel.removeCardListener(this.currentListId);
-                this.currentListId = null; // Reset ID để tránh gọi remove nhiều lần
             }
         }
 
         private void showAddCardDialog(String listId) {
-            if (context == null || viewModel == null) return;
-
             com.google.android.material.dialog.MaterialAlertDialogBuilder builder =
                     new com.google.android.material.dialog.MaterialAlertDialogBuilder(context);
             builder.setTitle("Thêm thẻ mới");
 
-            final View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_text, null);
-            final EditText input = dialogView.findViewById(R.id.et_input_title);
+            View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_input_text, null);
+            EditText input = dialogView.findViewById(R.id.et_input_title);
             input.setHint("Nhập tiêu đề thẻ");
             builder.setView(dialogView);
 
@@ -328,15 +270,11 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 if (!title.isEmpty()) {
                     double newPosition = cardAdapter.getLastItemPosition() + 1000.0;
                     viewModel.createNewCard(listId, title, newPosition, new CardRepository.GeneralCallback() {
-                        @Override
-                        public void onSuccess() { }
-                        @Override
-                        public void onError(String message) {
-                            Toast.makeText(context, "Lỗi tạo thẻ: " + message, Toast.LENGTH_SHORT).show();
+                        @Override public void onSuccess() {}
+                        @Override public void onError(String message) {
+                            Toast.makeText(context, "Lỗi: " + message, Toast.LENGTH_SHORT).show();
                         }
                     });
-                } else {
-                    Toast.makeText(context, "Tiêu đề không được rỗng", Toast.LENGTH_SHORT).show();
                 }
             });
             builder.setNegativeButton("Hủy", (dialog, which) -> dialog.cancel());
@@ -346,21 +284,13 @@ public class ListModelAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     // --- ViewHolder 2: Cho Nút "Thêm Danh sách" ---
     public static class AddListViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout layoutThemDanhSach;
-
         public AddListViewHolder(@NonNull View itemView) {
             super(itemView);
-            layoutThemDanhSach = itemView.findViewById(R.id.layoutThemDanhSach);
         }
-
         public void bind(final OnAddListClickListener listener) {
             itemView.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onAddListClick();
-                }
+                if (listener != null) listener.onAddListClick();
             });
         }
     }
-
-
 }

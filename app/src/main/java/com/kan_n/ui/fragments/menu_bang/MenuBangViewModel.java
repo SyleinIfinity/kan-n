@@ -96,4 +96,7 @@ public class MenuBangViewModel extends ViewModel {
     public void updateMemberPermission(String boardId, String userId, String newPermission, BoardRepository.GeneralCallback callback) {
         ((BoardRepositoryImpl) boardRepository).updateMemberPermission(boardId, userId, newPermission, callback);
     }
+    public void leaveOrRemoveMember(String boardId, String userId, BoardRepository.GeneralCallback callback) {
+        boardRepository.removeMemberFromBoard(boardId, userId, callback);
+    }
 }

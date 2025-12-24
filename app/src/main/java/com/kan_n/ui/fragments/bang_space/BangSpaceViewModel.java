@@ -13,6 +13,7 @@ import com.kan_n.data.interfaces.CardRepository;
 import com.kan_n.data.interfaces.ListRepository;
 import com.kan_n.data.models.Card;
 import com.kan_n.data.models.ListModel;
+import com.kan_n.data.models.Membership;
 import com.kan_n.data.models.Tag;
 import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.data.repository.CardRepositoryImpl;
@@ -31,7 +32,7 @@ public class BangSpaceViewModel extends ViewModel {
 
     private final ListRepository listRepository;
     private final CardRepository cardRepository;
-    private final BoardRepository boardRepository;
+    // private final BoardRepository boardRepository;
 
     // Database references
     private final DatabaseReference listsRef = FirebaseUtils.getDatabaseInstance().getReference("lists");
@@ -41,35 +42,98 @@ public class BangSpaceViewModel extends ViewModel {
     // Listener Management
     private Query listsQuery;
     private ChildEventListener listsListener;
+
     private Map<String, Query> cardQueries = new HashMap<>();
     private Map<String, ChildEventListener> cardListeners = new HashMap<>();
+    private final BoardRepository boardRepository;
+    private final androidx.lifecycle.MutableLiveData<String> userPermission = new androidx.lifecycle.MutableLiveData<>("view"); // Mặc định là view
+
+    private DatabaseReference membershipsRef;
+    private ValueEventListener permissionListener;
+    private Query permissionQuery;
+    public androidx.lifecycle.LiveData<String> getUserPermission() {
+        return userPermission;
+    }
+
+
 
     public BangSpaceViewModel() {
         this.listRepository = new ListRepositoryImpl();
         this.cardRepository = new CardRepositoryImpl();
         this.boardRepository = new BoardRepositoryImpl();
+        this.membershipsRef = FirebaseUtils.getDatabaseInstance().getReference("memberships");
     }
 
     public void getBoardDetails(String boardId, BoardRepository.BoardCallback callback) {
         boardRepository.getBoardDetails(boardId, callback);
     }
 
-    // =========================================================================
-    // PHẦN 1: LISTENER (GIỮ NGUYÊN)
-    // =========================================================================
+    /**
+     * Bắt đầu lắng nghe các danh sách (cột)
+     */
     public void listenForLists(String boardId, ChildEventListener listener) {
         this.listsListener = listener;
         this.listsQuery = listsRef.orderByChild("boardId").equalTo(boardId);
         this.listsQuery.addChildEventListener(listener);
     }
 
+    public void fetchUserPermission(String boardId) {
+        String userId = FirebaseUtils.getCurrentUserId();
+        if (userId == null) return;
+
+        // Gỡ listener cũ nếu có (đề phòng trường hợp chuyển bảng)
+        if (permissionListener != null && permissionQuery != null) {
+            permissionQuery.removeEventListener(permissionListener);
+        }
+
+        // Thiết lập Query
+        permissionQuery = membershipsRef.orderByChild("boardId").equalTo(boardId);
+
+        permissionListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                boolean found = false;
+                for (DataSnapshot ds : snapshot.getChildren()) {
+                    Membership m = ds.getValue(Membership.class);
+                    if (m != null && userId.equals(m.getUserId())) {
+                        // Cập nhật LiveData ngay khi dữ liệu trên Firebase thay đổi
+                        if ("owner".equals(m.getRole()) || "edit".equals(m.getPermission())) {
+                            userPermission.setValue("edit");
+                        } else {
+                            userPermission.setValue("view");
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    userPermission.setValue("view");
+                }
+            }
+
+            @Override public void onCancelled(@NonNull DatabaseError error) {}
+        };
+
+        permissionQuery.addValueEventListener(permissionListener);
+    }
+
+
+    /**
+     * Bắt đầu lắng nghe các thẻ (card) cho MỘT danh sách
+     */
     public void listenForCards(String listId, ChildEventListener listener) {
+        // Gỡ listener cũ của listId
+        removeCardListener(listId);
+
         Query cardQuery = cardsRef.orderByChild("listId").equalTo(listId);
         cardQueries.put(listId, cardQuery);
         cardListeners.put(listId, listener);
         cardQuery.addChildEventListener(listener);
     }
 
+    /**
+     * Gỡ listener của thẻ khi ListModelViewHolder bị recycle
+     */
     public void removeCardListener(String listId) {
         ChildEventListener listener = cardListeners.get(listId);
         Query query = cardQueries.get(listId);
@@ -83,6 +147,9 @@ public class BangSpaceViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
+        if (permissionQuery != null && permissionListener != null) {
+            permissionQuery.removeEventListener(permissionListener);
+        }
         if (listsQuery != null && listsListener != null) {
             listsQuery.removeEventListener(listsListener);
         }
@@ -90,8 +157,6 @@ public class BangSpaceViewModel extends ViewModel {
             ChildEventListener listener = cardListeners.get(entry.getKey());
             if (listener != null) entry.getValue().removeEventListener(listener);
         }
-        cardQueries.clear();
-        cardListeners.clear();
     }
 
     // =========================================================================

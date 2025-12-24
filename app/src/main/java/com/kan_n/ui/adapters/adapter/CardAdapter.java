@@ -29,30 +29,30 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<Card> cardList = new ArrayList<>();
     private Context context;
 
+    private boolean isEditable = false;
     // Hằng số cho kiểu xem
     private static final int VIEW_TYPE_CARD = 0;
     private static final int VIEW_TYPE_ADD_CARD = 1;
 
-    // 1. Listener cho nút "Thêm thẻ"
     private final OnAddCardClickListener addCardClickListener;
 
     public interface OnAddCardClickListener {
         void onAddCardClick();
     }
 
-    // Listener cho việc Click vào thẻ để xem chi tiết
     private final OnCardClickListener cardClickListener;
 
-    // Interface cho click vào thẻ
     public interface OnCardClickListener {
         void onCardClick(Card card);
     }
+
 
     private final OnCardLongClickListener cardLongClickListener;
 
     public interface OnCardLongClickListener {
         void onCardLongClick(Card card, View view);
     }
+
 
     public CardAdapter(Context context, OnAddCardClickListener addListener, OnCardClickListener cardListener, OnCardLongClickListener longClickListener) {
         this.context = context;
@@ -66,10 +66,9 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return (position == cardList.size()) ? VIEW_TYPE_ADD_CARD : VIEW_TYPE_CARD;
     }
 
-    @Override
-    public int getItemCount() {
-        return cardList.size() + 1;
-    }
+
+
+
 
     @NonNull
     @Override
@@ -86,13 +85,13 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder.getItemViewType() == VIEW_TYPE_CARD) {
+        if (holder instanceof CardViewHolder) {
             Card card = cardList.get(position);
-            if (card == null) return;
-            // [CẬP NHẬT] Truyền thêm longClickListener vào bind
-            ((CardViewHolder) holder).bind(card, context, cardClickListener, cardLongClickListener);
-
-        } else {
+            // Truyền isEditable vào bind
+            ((CardViewHolder) holder).bind(card, context, cardClickListener, cardLongClickListener, isEditable);
+        }
+        else if (holder instanceof AddCardViewHolder) {
+            // Gán OnAddCardClickListener cho nút bấm
             ((AddCardViewHolder) holder).bind(addCardClickListener);
         }
     }
@@ -107,6 +106,17 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return cardList.size();
     }
 
+
+    public void setEditable(boolean editable) {
+        this.isEditable = editable;
+        notifyDataSetChanged();
+    }
+    @Override
+    public int getItemCount() {
+        return isEditable ? cardList.size() + 1 : cardList.size();
+    }
+
+
     public void addCard(Card card) {
         int position = getInsertPosition(card);
         cardList.add(position, card);
@@ -117,19 +127,14 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public void updateCard(Card updatedCard) {
         for (int i = 0; i < cardList.size(); i++) {
             if (cardList.get(i).getUid().equals(updatedCard.getUid())) {
-                // 1. Cập nhật dữ liệu thẻ
                 cardList.set(i, updatedCard);
 
-                // 2. [QUAN TRỌNG] Sắp xếp lại toàn bộ thẻ theo 'position' tăng dần
-                // Đoạn này giúp thẻ "nhảy" lên hoặc xuống ngay lập tức
                 Collections.sort(cardList, new Comparator<Card>() {
                     @Override
                     public int compare(Card o1, Card o2) {
                         return Double.compare(o1.getPosition(), o2.getPosition());
                     }
                 });
-
-                // 3. Làm mới toàn bộ danh sách để hiển thị đúng thứ tự
                 notifyDataSetChanged();
                 return;
             }
@@ -180,12 +185,11 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         // Thêm tham số listener vào hàm bind
         public void bind(final Card card, Context context,
                          final OnCardClickListener listener,
-                         final OnCardLongClickListener longListener) {
+                         final OnCardLongClickListener longListener, boolean isEditable) {
 
             tvCardTitle.setText(card.getTitle());
             cbComplete.setChecked(card.isCompleted());
 
-            // --- XỬ LÝ CLICK ---
             View.OnClickListener commonClickListener = v -> {
                 if (listener != null) listener.onCardClick(card);
             };
@@ -193,7 +197,7 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             itemView.setOnClickListener(commonClickListener);
             tvCardTitle.setOnClickListener(commonClickListener);
 
-            // --- XỬ LÝ LONG CLICK ---
+            // Tạo một OnLongClickListener chung
             View.OnLongClickListener commonLongListener = v -> {
                 if (longListener != null) {
                     longListener.onCardLongClick(card, itemView);
@@ -202,8 +206,13 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 return false;
             };
 
-            itemView.setOnLongClickListener(commonLongListener);
-            tvCardTitle.setOnLongClickListener(commonLongListener);
+            if (isEditable) {
+                itemView.setOnLongClickListener(commonLongListener);
+                tvCardTitle.setOnLongClickListener(commonLongListener);
+            } else {
+                itemView.setOnLongClickListener(null);
+                tvCardTitle.setOnLongClickListener(null);
+            }
 
 
             // --- [CẬP NHẬT] XỬ LÝ HIỂN THỊ MÀU SẮC (Ưu tiên: Assigned > Self > Label > Mặc định) ---
@@ -281,5 +290,9 @@ public class CardAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 }
             });
         }
+    }
+    public void clearData() {
+        this.cardList.clear();
+        notifyDataSetChanged();
     }
 }

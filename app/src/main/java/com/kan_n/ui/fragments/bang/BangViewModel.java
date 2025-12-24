@@ -17,7 +17,9 @@ import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.utils.FirebaseUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BangViewModel extends ViewModel {
 
@@ -33,7 +35,7 @@ public class BangViewModel extends ViewModel {
     private DatabaseReference usersRef;
     private ValueEventListener membershipListener;
     private String currentUserId;
-
+    private final Map<String, String> boardRolesMap = new HashMap<>();
     private String activeWsId;
 
     public void setActiveWsId(String activeWsId) {
@@ -69,6 +71,13 @@ public class BangViewModel extends ViewModel {
             membershipListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    boardRolesMap.clear();
+                    for (DataSnapshot memSnap : snapshot.getChildren()) {
+                        Membership mem = memSnap.getValue(Membership.class);
+                        if (mem != null && mem.getBoardId() != null) {
+                            boardRolesMap.put(mem.getBoardId(), mem.getRole());
+                        }
+                    }
                     loadDataSmart();
                 }
                 @Override public void onCancelled(@NonNull DatabaseError error) {}
@@ -77,74 +86,25 @@ public class BangViewModel extends ViewModel {
                     .addValueEventListener(membershipListener);
         }
     }
+    public String getUserRoleInBoard(String boardId) {
+        if (boardId == null) return "member";
+        String role = boardRolesMap.get(boardId);
+        return (role != null) ? role : "member"; // Mặc định là member nếu chưa có data
+    }
 
-    /**
-     * 1. Nếu ID local rỗng/rác -> Check trên Cloud.
-     * 2. Nếu Cloud có ID -> Kiểm tra tồn tại -> Load.
-     * 3. Nếu Cloud không có hoặc Workspace đã xóa -> Tìm thủ công (Owner -> Member).
-     */
+
     public void loadDataSmart() {
         if (currentUserId == null) return;
 
         // Nếu activeWsId chưa có hoặc là mặc định
         if (activeWsId == null || "ws_1_id".equals(activeWsId) || activeWsId.isEmpty()) {
-            fetchLastActiveWorkspaceFromCloud(); // 🚀 Ưu tiên lấy từ Cloud
+            findWorkspaceByOwner();
         } else {
-            // ID có vẻ ổn, nhưng cần validate xem nó còn tồn tại không (phòng trường hợp đã bị xóa ở máy khác)
-            validateAndLoadWorkspace(activeWsId);
+            loadWorkspaces();
         }
     }
 
-    //Lấy ID đã lưu trên Cloud về
-    private void fetchLastActiveWorkspaceFromCloud() {
-        if (usersRef == null) return;
-        usersRef.child(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                if (user != null && user.getLastActiveWorkspace() != null && !user.getLastActiveWorkspace().isEmpty()) {
-                    // Có ID trên Cloud -> Kiểm tra xem nó còn sống không
-                    validateAndLoadWorkspace(user.getLastActiveWorkspace());
-                } else {
-                    // Không có trên Cloud -> Tìm thủ công
-                    findWorkspaceByOwner();
-                }
-            }
-            @Override public void onCancelled(@NonNull DatabaseError error) { findWorkspaceByOwner(); }
-        });
-    }
 
-    //Kiểm tra Workspace có tồn tại không trước khi load
-    private void validateAndLoadWorkspace(String targetWsId) {
-        if (workspacesRef == null) return;
-        workspacesRef.child(targetWsId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    // Workspace tồn tại -> Load nó & Update lại biến local
-                    updateActiveWorkspace(targetWsId);
-                } else {
-                    // ❌ Workspace này đã bị XÓA -> Tìm cái khác thay thế
-                    findWorkspaceByOwner();
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                findWorkspaceByOwner();
-            }
-        });
-    }
-
-    // Hàm lưu ID đang chọn lên Cloud
-    public void saveCurrentWorkspaceToCloud(String wsId) {
-        if (currentUserId != null && wsId != null && usersRef != null) {
-            usersRef.child(currentUserId).child("lastActiveWorkspace").setValue(wsId);
-        }
-    }
-
-    /**
-     * BƯỚC 1: Tìm Workspace do user SỞ HỮU
-     */
     private void findWorkspaceByOwner() {
         if (workspacesRef == null) return;
 
@@ -164,14 +124,12 @@ public class BangViewModel extends ViewModel {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
+                        // Lỗi query
                         findWorkspaceByMembership();
                     }
                 });
     }
 
-    /**
-     * BƯỚC 2: Tìm Workspace mà user THAM GIA
-     */
     private void findWorkspaceByMembership() {
         if (membershipsRef == null) return;
 
@@ -217,10 +175,9 @@ public class BangViewModel extends ViewModel {
     }
 
     private void updateActiveWorkspace(String id) {
-        this.activeWsId = id;
+        activeWsId = id;
         foundActiveWorkspaceId.postValue(id);
-        saveCurrentWorkspaceToCloud(id);
-        loadWorkspaces();
+        loadWorkspaces(); // Load dữ liệu
     }
 
     public void loadWorkspaces() {

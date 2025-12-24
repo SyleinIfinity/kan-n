@@ -63,15 +63,14 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
             }
         });
 
-        // Quan sát ID tìm được (từ logic SmartFix đã làm ở bước trước)
+        // Quan sát ID tìm được
         bangViewModel.getFoundActiveWorkspaceId().observe(getViewLifecycleOwner(), newId -> {
             if (newId != null && !newId.isEmpty()) {
                 saveActiveWorkspaceId(newId);
             }
         });
 
-
-        // Đây là phần logic tương đương với callback onSuccess của Xóa/Sửa
+        // Phần logic tương đương với callback onSuccess của Xóa/Sửa
         getParentFragmentManager().setFragmentResultListener("key_create_board", getViewLifecycleOwner(), (requestKey, result) -> {
             if (result.getBoolean("refresh_needed")) {
                 String targetWsId = result.getString("target_workspace_id");
@@ -89,7 +88,15 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         });
 
         // Xử lý sự kiện UI
-        workspaceAdapter.setOnBoardLongClickListener(this::showBoardPopupMenu);
+        workspaceAdapter.setOnBoardLongClickListener((v, board) -> {
+            // Kiểm tra vai trò của user hiện tại đối với bảng này
+            String role = bangViewModel.getUserRoleInBoard(board.getUid());
+
+            // Chỉ hiển thị Popup nếu là Owner
+            if ("owner".equals(role)) {
+                showBoardPopupMenu(v, board);
+            }
+        });
 
         binding.btnTaoBangMoi.setOnClickListener(v -> {
             SharedPreferences prefs = requireActivity().getSharedPreferences("KanN_Prefs", Context.MODE_PRIVATE);
@@ -203,7 +210,6 @@ public class BangFragment extends Fragment implements BoardAdapter.OnBoardClickL
         String activeWsId = prefs.getString("active_ws_id", "ws_1_id");
         bangViewModel.setActiveWsId(activeWsId);
 
-        // Sử dụng loadDataSmart như đã thống nhất ở vấn đề 1
         bangViewModel.loadDataSmart();
     }
 
