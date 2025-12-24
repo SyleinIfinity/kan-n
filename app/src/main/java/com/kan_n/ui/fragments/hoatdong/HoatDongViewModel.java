@@ -33,7 +33,7 @@ public class HoatDongViewModel extends ViewModel {
         return mMessage;
     }
 
-    // ✨ [MỚI] Hàm xóa thông báo để tránh hiển thị lặp lại
+    //Hàm xóa thông báo để tránh hiển thị lặp lại
     public void clearMessage() {
         mMessage.setValue(null);
     }
@@ -83,7 +83,7 @@ public class HoatDongViewModel extends ViewModel {
         });
     }
 
-    // ✨ [QUAN TRỌNG] Hủy lắng nghe khi thoát màn hình để tránh rò rỉ bộ nhớ
+    //Hủy lắng nghe khi thoát màn hình để tránh rò rỉ bộ nhớ
     @Override
     protected void onCleared() {
         super.onCleared();

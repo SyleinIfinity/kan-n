@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.Query; // ✨ Thêm import Query
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.InvitationRepository;
 import com.kan_n.data.models.Invitation;
@@ -20,7 +20,6 @@ import java.util.Map;
 public class InvitationRepositoryImpl implements InvitationRepository {
     private final DatabaseReference mRootRef;
 
-    // ✨ [MỚI] Biến để quản lý listener
     private ValueEventListener invitationListener;
     private Query invitationQuery;
 
@@ -82,7 +81,7 @@ public class InvitationRepositoryImpl implements InvitationRepository {
         // Xóa listener cũ nếu có để tránh trùng lặp
         removeListener();
 
-        // ✨ [QUAN TRỌNG] Tạo Query lắng nghe Realtime
+        //Tạo Query lắng nghe Realtime
         invitationQuery = mRootRef.child("invitations").orderByChild("receiverId").equalTo(currentUserId);
 
         invitationListener = new ValueEventListener() {
@@ -111,7 +110,7 @@ public class InvitationRepositoryImpl implements InvitationRepository {
         invitationQuery.addValueEventListener(invitationListener);
     }
 
-    // ✨ [MỚI] Hàm dọn dẹp listener
+    //Hàm dọn dẹp listener
     @Override
     public void removeListener() {
         if (invitationQuery != null && invitationListener != null) {

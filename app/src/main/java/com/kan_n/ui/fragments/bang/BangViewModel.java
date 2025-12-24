@@ -11,7 +11,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.kan_n.data.interfaces.BoardRepository;
 import com.kan_n.data.models.Membership;
-import com.kan_n.data.models.User; // ✨ Import User
+import com.kan_n.data.models.User;
 import com.kan_n.data.models.Workspace;
 import com.kan_n.data.repository.BoardRepositoryImpl;
 import com.kan_n.utils.FirebaseUtils;
@@ -30,7 +30,7 @@ public class BangViewModel extends ViewModel {
     private DatabaseReference membershipsRef;
     private DatabaseReference workspacesRef;
     private DatabaseReference boardsRef;
-    private DatabaseReference usersRef; // ✨ [MỚI] Tham chiếu User
+    private DatabaseReference usersRef;
     private ValueEventListener membershipListener;
     private String currentUserId;
 
@@ -47,7 +47,7 @@ public class BangViewModel extends ViewModel {
             this.membershipsRef = FirebaseUtils.getRootRef().child("memberships");
             this.workspacesRef = FirebaseUtils.getRootRef().child("workspaces");
             this.boardsRef = FirebaseUtils.getRootRef().child("boards");
-            this.usersRef = FirebaseUtils.getRootRef().child("users"); // ✨ [MỚI]
+            this.usersRef = FirebaseUtils.getRootRef().child("users");
         }
     }
 
@@ -79,7 +79,6 @@ public class BangViewModel extends ViewModel {
     }
 
     /**
-     * ✨ LOGIC THÔNG MINH (CẬP NHẬT):
      * 1. Nếu ID local rỗng/rác -> Check trên Cloud.
      * 2. Nếu Cloud có ID -> Kiểm tra tồn tại -> Load.
      * 3. Nếu Cloud không có hoặc Workspace đã xóa -> Tìm thủ công (Owner -> Member).
@@ -96,7 +95,7 @@ public class BangViewModel extends ViewModel {
         }
     }
 
-    // ✨ [MỚI] Lấy ID đã lưu trên Cloud về
+    //Lấy ID đã lưu trên Cloud về
     private void fetchLastActiveWorkspaceFromCloud() {
         if (usersRef == null) return;
         usersRef.child(currentUserId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -115,7 +114,7 @@ public class BangViewModel extends ViewModel {
         });
     }
 
-    // ✨ [MỚI] Kiểm tra Workspace có tồn tại không trước khi load
+    //Kiểm tra Workspace có tồn tại không trước khi load
     private void validateAndLoadWorkspace(String targetWsId) {
         if (workspacesRef == null) return;
         workspacesRef.child(targetWsId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -136,7 +135,7 @@ public class BangViewModel extends ViewModel {
         });
     }
 
-    // ✨ [MỚI] Hàm lưu ID đang chọn lên Cloud
+    // Hàm lưu ID đang chọn lên Cloud
     public void saveCurrentWorkspaceToCloud(String wsId) {
         if (currentUserId != null && wsId != null && usersRef != null) {
             usersRef.child(currentUserId).child("lastActiveWorkspace").setValue(wsId);
@@ -219,8 +218,8 @@ public class BangViewModel extends ViewModel {
 
     private void updateActiveWorkspace(String id) {
         this.activeWsId = id;
-        foundActiveWorkspaceId.postValue(id); // Báo UI
-        saveCurrentWorkspaceToCloud(id); // ✨ [MỚI] Lưu lên Cloud để đồng bộ
+        foundActiveWorkspaceId.postValue(id);
+        saveCurrentWorkspaceToCloud(id);
         loadWorkspaces();
     }
 

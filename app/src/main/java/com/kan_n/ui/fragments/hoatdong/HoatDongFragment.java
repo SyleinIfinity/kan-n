@@ -67,7 +67,7 @@ public class HoatDongFragment extends Fragment implements InvitationAdapter.OnIn
         hoatDongViewModel.getMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-                // ✨ [SỬA LỖI] Xóa thông báo ngay sau khi hiện để không bị lặp lại lần sau
+                //Xóa thông báo ngay sau khi hiện để không bị lặp lại lần sau
                 hoatDongViewModel.clearMessage();
             }
         });
